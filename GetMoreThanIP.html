@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHOST_PROTOCOL // TERMINAL V5 (ENHANCED)</title>
+    <style>
+        /* --- CORE VISUALS & RESET --- */
+        :root {
+            --neon-green: #0f0;
+            --neon-cyan: #0ff;
+            --neon-alert: #f00;
+            --bg-color: #050a05;
+            --font-main: 'Courier New', Courier, monospace;
+            --font-display: 'Lucida Console', Monaco, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--neon-green);
+            font-family: var(--font-main);
+            overflow-x: hidden;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        /* --- BACKGROUND EFFECTS --- */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            opacity: 0.2;
+        }
+
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            ), linear-gradient(
+                90deg, 
+                rgba(255, 0, 0, 0.06), 
+                rgba(0, 255, 0, 0.02), 
+                rgba(0, 0, 255, 0.06)
+            );
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            z-index: 100;
+            animation: flicker 0.15s infinite;
+        }
+
+        .scanline {
+            width: 100%;
+            height: 10px;
+            z-index: 101;
+            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(33, 255, 0, 0.1) 50%, rgba(0,0,0,0) 100%);
+            opacity: 0.1;
+            position: fixed;
+            bottom: 100%;
+            pointer-events: none;
+            animation: scanline 10s linear infinite;
+        }
+
+        /* --- LAYOUT --- */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- TYPOGRAPHY & COMPONENTS --- */
+        h1 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 5px var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            opacity: 0.8;
+            border-bottom: 1px solid var(--neon-green);
+            padding-bottom: 1rem;
+        }
+
+        .section {
+            border: 1px solid var(--neon-green);
+            background: rgba(0, 20, 0, 0.6);
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+            transition: opacity 0.5s ease;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed var(--neon-green);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            color: var(--neon-cyan);
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-light {
+            width: 10px;
+            height: 10px;
+            background-color: var(--neon-green);
+            border-radius: 50%;
+            box-shadow: 0 0 5px var(--neon-green);
+            display: inline-block;
+        }
+
+        .status-light.scanning {
+            animation: pulse-red 0.5s infinite alternate;
+            background-color: var(--neon-alert);
+            box-shadow: 0 0 5px var(--neon-alert);
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            border-bottom: 1px dotted rgba(0, 255, 0, 0.2);
+            padding-bottom: 2px;
+        }
+
+        .data-label {
+            opacity: 0.7;
+        }
+
+        .data-value {
+            font-weight: bold;
+            text-align: right;
+            color: #fff;
+            text-shadow: 0 0 2px rgba(255,255,255,0.5);
+        }
+
+        .alert-text {
+            color: var(--neon-alert);
+            text-shadow: 0 0 5px var(--neon-alert);
+            font-weight: bold;
+        }
+
+        /* --- DNS TABLE --- */
+        .dns-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        
+        .dns-table th {
+            text-align: left;
+            color: var(--neon-cyan);
+            border-bottom: 1px solid var(--neon-green);
+            padding: 4px;
+        }
+
+        .dns-table td {
+            padding: 4px;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+            word-break: break-all;
+        }
+
+        /* --- LOGGER --- */
+        #system-log {
+            margin-top: auto;
+            border-top: 2px solid var(--neon-green);
+            padding-top: 1rem;
+            font-size: 0.8rem;
+            height: 150px;
+            overflow-y: auto;
+            font-family: var(--font-main);
+            color: rgba(0, 255, 0, 0.7);
+            background: rgba(0,0,0,0.3);
+        }
+
+        .log-entry { margin-bottom: 4px; }
+        .log-timestamp { color: var(--neon-cyan); margin-right: 8px; }
+
+        /* --- FOOTER --- */
+        footer {
+            margin-top: 2rem;
+            font-size: 0.7rem;
+            text-align: center;
+            opacity: 0.5;
+            border-top: 1px solid #333;
+            padding-top: 1rem;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes scanline {
+            0% { bottom: 100%; }
+            100% { bottom: -10%; }
+        }
+
+        @keyframes pulse-red {
+            from { opacity: 0.3; background-color: #500; }
+            to { opacity: 1; background-color: #f00; }
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.95; }
+            5% { opacity: 0.85; }
+            10% { opacity: 0.95; }
+            15% { opacity: 0.99; }
+            50% { opacity: 0.95; }
+            80% { opacity: 0.85; }
+            100% { opacity: 0.95; }
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #001100; }
+        ::-webkit-scrollbar-thumb { background: var(--neon-green); }
+    </style>
+</head>
+<body>
+
+    <canvas id="matrix-canvas"></canvas>
+    <div class="crt-overlay"></div>
+    <div class="scanline"></div>
+
+    <div class="container">
+        <h1>// SYSTEM OVERRIDE //</h1>
+        <div class="subtitle">
+            <span id="main-status-text">ESTABLISHING SECURE UPLINK...</span>
+            <span id="main-status-indicator" class="status-light scanning" style="margin-left:10px;"></span>
+        </div>
+
+        <!-- Section 1: Connection Lock -->
+        <div class="section" id="sec-connection">
+            <div class="section-header">
+                <span class="section-title">01. CONNECTION LOCK</span>
+                <span class="status-light"></span>
+            </div>
+            <div class="data-grid">
+                <div class="data-row"><span class="data-label">TARGET IP</span><span class="data-value" id="val-ip">SCANNING...</span></div>
+                <div class="data-row"><span class="data-label">COORDINATES</span><span class="data-value" id="val-coords">...</span></div>
+                <div class="data-row"><span class="data-label">VECTOR</span><span class="data-value" id="val-loc">...</span></div>
+                <div class="data-row"><span class="data-label">TIMEZONE</span><span class="data-value" id="val-tz">...</span></div>
+            </div>
+        </div>
+
+        <!-- Section 2: Network Surface -->
+        <div class="section" id="sec-network">
+            <div class="section-header">
+                <span class="section-title">02. NETWORK SURFACE</span>
+                <span class="status-light"></span>
+            </div>
+            <div class="data-grid">
+                <div class="data-row"><span class="data-label">ISP NODE</span><span class="data-value" id="val-isp">...</span></div>
+                <div class="data-row"><span class="data-label">ASN ROUTE</span><span class="data-value" id="val-asn">...</span></div>
+                <div class="data-row"><span class="data-label">LINK TYPE</span><span class="data-value" id="val-conn">...</span></div>
+                <div class="data-row"><span class="data-label">SECURITY FLAGS</span><span class="data-value" id="val-sec">SCANNING</span></div>
+            </div>
+        </div>
+
+        <!-- Section 3: DNS Footprint -->
+        <div class="section" id="sec-dns">
+            <div class="section-header">
+                <span class="section-title">03. DNS FOOTPRINT</span>
+                <span class="status-light"></span>
+            </div>
+            <p style="font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--neon-cyan);">>> INTERCEPTED QUERIES (DoH)</p>
+            <table class="dns-table">
+                <thead>
+                    <tr>
+                        <th>TYPE</th>
+                        <th>NAME</th>
+                        <th>DATA</th>
+                        <th>TTL</th>
+                    </tr>
+                </thead>
+                <tbody id="dns-tbody"></tbody>
+            </table>
+            <div id="dns-status" style="font-size:0.8rem; margin-top:5px; color:#666;">Waiting for target domain...</div>
+        </div>
+
+        <!-- Section 4: System Fingerprint -->
+        <div class="section" id="sec-system">
+            <div class="section-header">
+                <span class="section-title">04. SYSTEM FINGERPRINT</span>
+                <span class="status-light"></span>
+            </div>
+            <div class="data-grid">
+                <div class="data-row"><span class="data-label">BROWSER CORE</span><span class="data-value" id="val-browser">...</span></div>
+                <div class="data-row"><span class="data-label">KERNEL FAMILY</span><span class="data-value" id="val-os">...</span></div>
+                <div class="data-row"><span class="data-label">DISPLAY VECTOR</span><span class="data-value" id="val-res">...</span></div>
+                <div class="data-row"><span class="data-label">LOCALE PREF</span><span class="data-value" id="val-lang">...</span></div>
+                <div class="data-row"><span class="data-label">CPU THREADS</span><span class="data-value" id="val-cpu">...</span></div>
+                <div class="data-row"><span class="data-label">MEMORY EST.</span><span class="data-value" id="val-mem">...</span></div>
+            </div>
+        </div>
+
+        <!-- Section 5: Temporal Control -->
+        <div class="section" id="sec-time">
+            <div class="section-header">
+                <span class="section-title">05. TEMPORAL CONTROL</span>
+                <span class="status-light"></span>
+            </div>
+            <div class="data-grid">
+                <div class="data-row"><span class="data-label">LOCAL DEVICE TIME</span><span class="data-value" id="val-local-time">...</span></div>
+                <div class="data-row"><span class="data-label">NETWORK ATOMIC TIME</span><span class="data-value" id="val-net-time">SYNCING...</span></div>
+                <div class="data-row"><span class="data-label">DAY CYCLE</span><span class="data-value" id="val-day">...</span></div>
+                <div class="data-row"><span class="data-label">SYNC STATUS</span><span class="data-value" id="val-sync-status">CHECKING</span></div>
+            </div>
+        </div>
+
+        <!-- Section 6: Environmental Telemetry (ENHANCED) -->
+        <div class="section" id="sec-env">
+            <div class="section-header">
+                <span class="section-title">06. ENVIRONMENTAL TELEMETRY</span>
+                <span class="status-light"></span>
+            </div>
+            <div style="font-size: 0.9rem; color: #ccc; margin-bottom: 1rem;" id="val-weather-desc">
+                Waiting for coordinate lock...
+            </div>
+            <div class="data-grid">
+                <div class="data-row"><span class="data-label">TEMP (ACTUAL)</span><span class="data-value" id="val-temp">...</span></div>
+                <div class="data-row"><span class="data-label">BIO-METRIC FEEL</span><span class="data-value" id="val-realfeel">...</span></div>
+                
+                <div class="data-row"><span class="data-label">WIND VELOCITY</span><span class="data-value" id="val-wind">...</span></div>
+                <div class="data-row"><span class="data-label">BAROMETRIC PRESS.</span><span class="data-value" id="val-pressure">...</span></div>
+                
+                <div class="data-row"><span class="data-label">SKY OPACITY</span><span class="data-value" id="val-cloud">...</span></div>
+                <div class="data-row"><span class="data-label">ATMOS. MOISTURE</span><span class="data-value" id="val-humid">...</span></div>
+                
+                <div class="data-row"><span class="data-label">ELEVATION</span><span class="data-value" id="val-elev">...</span></div>
+            </div>
+        </div>
+
+        <div id="system-log"></div>
+
+        <footer>
+            NO PERSISTENT DATA STORAGE DETECTED. ANALYSIS PERFORMED IN VOLATILE MEMORY.<br>
+            ONLY PUBLIC IDENTIFIERS ACCESSED. SESSION IS EPHEMERAL.
+        </footer>
+    </div>
+
+    <script>
+        /* --- UTILITIES --- */
+        const logWindow = document.getElementById('system-log');
+        
+        function log(msg, type = 'INFO') {
+            const date = new Date();
+            const ts = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}:${date.getSeconds().toString().padStart(2,'0')}.${date.getMilliseconds().toString().padStart(3,'0')}`;
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerHTML = `<span class="log-timestamp">[${ts}]</span> <span style="color:${type === 'WARN' || type === 'ERROR' ? 'var(--neon-alert)' : 'inherit'}">[${type}] ${msg}</span>`;
+            logWindow.appendChild(div);
+            logWindow.scrollTop = logWindow.scrollHeight;
+        }
+
+        // Robust Scramble
+        function scramble(elementId, finalText, duration = 1200) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            
+            if (finalText === null || finalText === undefined || finalText === "") {
+                finalText = "N/A";
+            }
+
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&";
+            const steps = 15;
+            const intervalTime = duration / steps;
+            let currentStep = 0;
+
+            if(el.dataset.interval) clearInterval(parseInt(el.dataset.interval));
+
+            const interval = setInterval(() => {
+                let output = "";
+                const str = finalText.toString();
+                for (let i = 0; i < str.length; i++) {
+                    if (i < (currentStep / steps) * str.length) {
+                        output += str[i];
+                    } else {
+                        output += chars[Math.floor(Math.random() * chars.length)];
+                    }
+                }
+                el.innerText = output;
+                currentStep++;
+                
+                if (currentStep > steps) {
+                    clearInterval(interval);
+                    el.innerText = finalText; 
+                }
+            }, intervalTime);
+            
+            el.dataset.interval = interval;
+        }
+
+        /* --- VISUALS: MATRIX RAIN --- */
+        const canvas = document.getElementById('matrix-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
+        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const nums = '0123456789';
+        const alphabet = katakana + latin + nums;
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+        for(let x = 0; x < columns; x++) drops[x] = 1;
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(5, 10, 5, 0.1)'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+            for(let i = 0; i < drops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+            requestAnimationFrame(drawMatrix);
+        }
+        drawMatrix();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        /* --- INTELLIGENCE GATHERING STATE --- */
+        const state = {
+            ip: "UNKNOWN",
+            coords: { lat: 0, long: 0 },
+            timezone: null,
+            domain: null,
+            isp: null,
+            locationFound: false
+        };
+
+        async function initSequence() {
+            log("BOOT SEQUENCE INITIATED...");
+            
+            // 1. System Fingerprint
+            gatherSystemInfo();
+
+            // 2. Connection Info
+            await gatherConnectionInfo(); 
+
+            // 3. Dependent Systems
+            await Promise.all([
+                gatherDNS(),
+                gatherTime(),
+                gatherWeather()
+            ]);
+
+            // Final State
+            document.getElementById('main-status-text').innerText = "TARGET PROFILE COMPILED.";
+            const indicator = document.getElementById('main-status-indicator');
+            indicator.classList.remove('scanning');
+            indicator.style.backgroundColor = 'var(--neon-green)';
+            indicator.style.boxShadow = '0 0 10px var(--neon-green)';
+            
+            log("ANALYSIS COMPLETE. SYSTEM READY.", "SUCCESS");
+        }
+
+        /* --- 1. ROBUST IP & LOCATION FETCH --- */
+        async function gatherConnectionInfo() {
+            log("INITIATING TRACE ROUTINE...");
+            let success = false;
+
+            // STRATEGY A: ipwho.is
+            try {
+                log("ATTEMPTING VECTOR 1: IPWHO.IS...");
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 3000); 
+                
+                const resp = await fetch('https://ipwho.is/', { signal: controller.signal });
+                clearTimeout(timeoutId);
+                const data = await resp.json();
+
+                if (data.success) {
+                    parseIpWhoIs(data);
+                    success = true;
+                    log("VECTOR 1 SUCCESSFUL.");
+                } else {
+                    throw new Error("API returned failure status");
+                }
+            } catch (e) {
+                log(`VECTOR 1 FAILED: ${e.message}`, "WARN");
+                
+                // STRATEGY B: api.ipapi.is
+                try {
+                    log("ATTEMPTING VECTOR 2: IPAPI.IS...");
+                    const resp = await fetch('https://api.ipapi.is');
+                    const data = await resp.json();
+                    
+                    if(data.error) throw new Error(data.error);
+                    
+                    parseIpApiIs(data);
+                    success = true;
+                    log("VECTOR 2 SUCCESSFUL.");
+                } catch (err) {
+                    log(`VECTOR 2 FAILED: ${err.message}`, "ERROR");
+                    handleIpFailure();
+                }
+            }
+        }
+
+        function parseIpWhoIs(data) {
+            const lat = Number(data.latitude);
+            const lon = Number(data.longitude);
+
+            state.ip = data.ip;
+            if (Number.isFinite(lat) && Number.isFinite(lon)) {
+                state.coords = { lat, long: lon };
+                state.locationFound = true;
+            } else {
+                state.locationFound = false;
+            }
+            state.timezone = data.timezone && data.timezone.id ? data.timezone.id : null;
+            state.domain = data.connection && data.connection.domain ? data.connection.domain : 'unknown-node';
+            state.isp = data.connection && data.connection.isp ? data.connection.isp : null;
+
+            scramble('val-ip', data.ip);
+            scramble('val-coords', state.locationFound ? `${lat}, ${lon}` : "TRIANGULATION FAILED");
+            scramble('val-loc', `${data.city}, ${data.region_code}, ${data.country_code}`);
+            scramble('val-tz', state.timezone ? `${state.timezone} (UTC${data.timezone.utc})` : "UNKNOWN");
+
+            scramble('val-isp', state.isp || "UNKNOWN ENTITY");
+            scramble('val-asn', data.connection ? `${data.connection.asn} (${data.connection.org})` : "N/A");
+            scramble('val-conn', "BROADBAND / CELLULAR");
+
+            const sec = data.security || {};
+            const flags = [];
+            if(sec.vpn) flags.push("VPN");
+            if(sec.proxy) flags.push("PROXY");
+            if(sec.tor) flags.push("TOR");
+            updateSecurityFlags(flags);
+        }
+
+        function parseIpApiIs(data) {
+            const loc = data.location || {};
+            const asn = data.asn || {};
+            const company = data.company || {};
+
+            const lat = Number(loc.latitude);
+            const lon = Number(loc.longitude);
+
+            state.ip = data.ip;
+            // Explicit check for valid coordinates
+            if (Number.isFinite(lat) && Number.isFinite(lon)) {
+                state.coords = { lat, long: lon };
+                state.locationFound = true;
+            } else {
+                state.locationFound = false;
+            }
+            
+            state.timezone = loc.timezone || null;
+            state.domain = company.domain || 'unknown-node';
+            state.isp = company.name || asn.org || null;
+
+            scramble('val-ip', data.ip);
+            scramble('val-coords', state.locationFound ? `${lat}, ${lon}` : "TRIANGULATION FAILED");
+            scramble('val-loc', `${loc.city || 'UNKNOWN'}, ${loc.country || 'TERRITORY'}`);
+            scramble('val-tz', loc.timezone || "UTC");
+            
+            scramble('val-isp', state.isp || "UNKNOWN");
+            scramble('val-asn', asn.asn ? `AS${asn.asn}` : "N/A");
+            scramble('val-conn', "STANDARD TUNNEL");
+
+            const flags = [];
+            if(data.is_vpn) flags.push("VPN");
+            if(data.is_proxy) flags.push("PROXY");
+            if(data.is_tor) flags.push("TOR");
+            updateSecurityFlags(flags);
+        }
+
+        function updateSecurityFlags(flags) {
+            const secEl = document.getElementById('val-sec');
+            if(flags.length > 0) {
+                secEl.innerText = `MASKED: ${flags.join('+')}`;
+                secEl.className = "data-value alert-text";
+                log(`SECURITY ALERT: ${flags.join(' ')} DETECTED`, "WARN");
+            } else {
+                scramble('val-sec', "CLEAR / RESIDENTIAL");
+            }
+        }
+
+        function handleIpFailure() {
+            scramble('val-ip', "TRACE BLOCKED");
+            scramble('val-coords', "N/A");
+            scramble('val-loc', "UNKNOWN ORIGIN");
+            scramble('val-isp', "HIDDEN");
+            log("CRITICAL: ALL CONNECTION TRACES BLOCKED.", "ERROR");
+        }
+
+        /* --- 2. SYSTEM FINGERPRINT --- */
+        function gatherSystemInfo() {
+            log("ANALYZING LOCAL KERNEL...");
+            const ua = navigator.userAgent;
+            let browser = "NET-NAVIGATOR";
+            if(ua.indexOf("Chrome") > -1) browser = "CHROME ENGINE";
+            else if(ua.indexOf("Firefox") > -1) browser = "GECKO ENGINE";
+            else if(ua.indexOf("Safari") > -1) browser = "WEBKIT ENGINE";
+
+            let os = "UNKNOWN OS";
+            if (ua.indexOf("Win") !== -1) os = "WINDOWS NT";
+            if (ua.indexOf("Mac") !== -1) os = "DARWIN / MACOS";
+            if (ua.indexOf("Linux") !== -1) os = "LINUX KERNEL";
+            if (ua.indexOf("Android") !== -1) os = "ANDROID";
+
+            scramble('val-browser', browser);
+            scramble('val-os', os);
+            scramble('val-res', `${window.screen.width}x${window.screen.height}`);
+            scramble('val-lang', (navigator.language || "EN").toUpperCase());
+            scramble('val-cpu', (navigator.hardwareConcurrency || "?") + " CORES");
+            scramble('val-mem', (navigator.deviceMemory ? `~${navigator.deviceMemory}GB` : "MASKED"));
+        }
+
+        /* --- 3. DNS INTELLIGENCE --- */
+        async function gatherDNS() {
+            log("SPOOLING DNS SNIFFER...");
+            const tbody = document.getElementById('dns-tbody');
+            const targetDomain = (state.domain && state.domain !== 'unknown-node') ? state.domain : 'google.com';
+            
+            const queries = [
+                { name: targetDomain, type: 'A' },
+                { name: 'cloudflare.com', type: 'A' }
+            ];
+
+            let found = false;
+            for (let q of queries) {
+                try {
+                    const res = await fetch(`https://dns.google/resolve?name=${q.name}&type=${q.type}`);
+                    const json = await res.json();
+                    
+                    if (json.Answer) {
+                        found = true;
+                        json.Answer.forEach(ans => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td><span style="color:var(--neon-cyan)">${q.type}</span></td>
+                                <td>${ans.name.substring(0,20)}</td>
+                                <td style="color:#fff">${ans.data.substring(0,25)}</td>
+                                <td>${ans.TTL}</td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                    }
+                } catch (e) {
+                    console.log("DNS Fetch Error", e);
+                }
+            }
+            if(found) {
+                document.getElementById('dns-status').innerText = "Query interception successful.";
+                log("DNS TRAFFIC DECODED.");
+            } else {
+                document.getElementById('dns-status').innerText = "Traffic encrypted. No records found.";
+            }
+        }
+
+        /* --- 4. TIME INTELLIGENCE --- */
+        async function gatherTime() {
+            const localDate = new Date();
+            const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+            scramble('val-day', `${days[localDate.getDay()]} / DOY:${Math.floor((localDate - new Date(localDate.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24)}`);
+
+            setInterval(() => {
+                document.getElementById('val-local-time').innerText = new Date().toLocaleTimeString();
+            }, 1000);
+
+            try {
+                if(!state.timezone) throw new Error("No TZ");
+                const res = await fetch(`https://worldtimeapi.org/api/timezone/${state.timezone}`);
+                const data = await res.json();
+                const netTime = new Date(data.datetime);
+                
+                scramble('val-net-time', netTime.toLocaleTimeString());
+                const drift = Math.abs(netTime - new Date());
+                
+                const syncEl = document.getElementById('val-sync-status');
+                if (drift > 60000) {
+                    syncEl.innerText = `DRIFT: ${Math.round(drift/1000)}s`;
+                    syncEl.className = "data-value alert-text";
+                } else {
+                    syncEl.innerText = "ALIGNED";
+                    syncEl.style.color = "var(--neon-green)";
+                }
+            } catch (e) {
+                try {
+                    const fallbackTime = new Date().toLocaleTimeString("en-US", {timeZone: state.timezone || "UTC"});
+                    scramble('val-net-time', fallbackTime + " (EST)");
+                    document.getElementById('val-sync-status').innerText = "ESTIMATED";
+                } catch(err) {
+                    document.getElementById('val-net-time').innerText = "OFFLINE";
+                }
+            }
+        }
+
+        /* --- 5. WEATHER INTELLIGENCE (ENHANCED v3) --- */
+        async function gatherWeather() {
+            log("CONNECTING TO ATMOSPHERIC SENSORS...");
+            
+            if (!state.locationFound || 
+                typeof state.coords.lat !== 'number' || 
+                typeof state.coords.long !== 'number') {
+                
+                log("WEATHER ABORTED: INVALID COORDS", "WARN");
+                useSimulatedWeather("SIGNAL LOST");
+                return;
+            }
+
+            try {
+                // Extended API call: Getting current metrics including humidity, apparent temp, pressure, and cloud cover
+                const params = [
+                    'temperature_2m',
+                    'relative_humidity_2m',
+                    'apparent_temperature',
+                    'weather_code',
+                    'surface_pressure',
+                    'wind_speed_10m',
+                    'wind_direction_10m',
+                    'cloud_cover'
+                ].join(',');
+
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.coords.lat}&longitude=${state.coords.long}&current=${params}&timezone=auto`;
+                const res = await fetch(url);
+                
+                if(!res.ok) throw new Error(`HTTP ${res.status}`);
+                
+                const data = await res.json();
+                
+                if(!data.current) throw new Error("Empty Weather Data");
+
+                const w = data.current; // Changed from current_weather to current
+                
+                // Weather Code Parsing
+                let cond = "UNKNOWN";
+                const c = w.weather_code;
+                if(c === 0) cond = "CLEAR";
+                else if(c < 3) cond = "CLOUDY";
+                else if(c < 50) cond = "FOG";
+                else if(c < 80) cond = "RAIN";
+                else if(c < 95) cond = "SNOW";
+                else cond = "STORM";
+
+                document.getElementById('val-weather-desc').innerText = `LOCAL CONDITIONS: ${cond}. VISIBILITY VARIES.`;
+                
+                // New Fields Mapping
+                scramble('val-temp', `${w.temperature_2m}°C`);
+                scramble('val-realfeel', `${w.apparent_temperature}°C`);
+                scramble('val-wind', `${w.wind_speed_10m} km/h`);
+                scramble('val-pressure', `${w.surface_pressure} hPa`);
+                scramble('val-cloud', `${w.cloud_cover}%`);
+                scramble('val-humid', `${w.relative_humidity_2m}%`);
+                scramble('val-elev', `${data.elevation || 0}m`);
+                
+                log("WEATHER TELEMETRY LINKED.", "SUCCESS");
+
+            } catch (e) {
+                log(`WEATHER LINK DEAD: ${e.message}`, "ERROR");
+                useSimulatedWeather("ESTIMATED (LINK ERR)");
+            }
+        }
+
+        // Fallback simulation (Enhanced to fake all fields)
+        function useSimulatedWeather(reason) {
+            const hours = new Date().getHours();
+            const temp = (20 - Math.abs(12 - hours) * 0.5 + Math.random() * 2).toFixed(1);
+            
+            document.getElementById('val-weather-desc').innerText = `SENSORS OFFLINE. GENERATING PREDICTIVE MODEL...`;
+            document.getElementById('val-weather-desc').style.color = "var(--neon-alert)";
+            
+            setTimeout(() => {
+                scramble('val-temp', `${temp}°C (${reason})`);
+                scramble('val-realfeel', `${(temp-2).toFixed(1)}°C`);
+                scramble('val-wind', `~${Math.floor(Math.random()*15)+5} km/h`);
+                scramble('val-pressure', `1013 hPa`);
+                scramble('val-cloud', `45%`);
+                scramble('val-humid', `60%`);
+                scramble('val-elev', `N/A`);
+                log("PREDICTIVE WEATHER MODEL ACTIVE", "WARN");
+            }, 1000);
+        }
+
+        // START
+        window.onload = initSequence;
+
+    </script>
+</body>
+</html>
