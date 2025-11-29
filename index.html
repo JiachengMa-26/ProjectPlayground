@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus | Monolith</title>
+    
+    <!-- Include Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Configure Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#000000', // pure black
+                        surface: '#0a0a0a',    // very dark gray
+                        subtle: '#171717',     // border gray
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Fonts: use Inter for high readability and a modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Noise texture - add film grain feel */
+        .noise-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Minimal grid */
+        .grid-bg {
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), 
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+            -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+        }
+
+        /* Spotlight logic */
+        .spotlight-card {
+            --mouse-x: 0px;
+            --mouse-y: 0px;
+            position: relative;
+            background: #050505;
+        }
+
+        /* Border highlight */
+        .spotlight-card::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            border-radius: inherit;
+            background: radial-gradient(
+                600px circle at var(--mouse-x) var(--mouse-y), 
+                rgba(255, 255, 255, 0.4), 
+                transparent 40%
+            );
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+            z-index: 0;
+            /* Mask technique: show only the border */
+            mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
+            -webkit-mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
+            mask-composite: exclude;
+            -webkit-mask-composite: xor;
+        }
+
+        /* Inner glow */
+        .spotlight-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: radial-gradient(
+                800px circle at var(--mouse-x) var(--mouse-y), 
+                rgba(255, 255, 255, 0.03), 
+                transparent 40%
+            );
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .spotlight-card:hover::before,
+        .spotlight-card:hover::after {
+            opacity: 1;
+        }
+        
+        /* Text glow animation */
+        .group:hover .glow-text {
+            text-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-6 sm:p-12">
+
+    <!-- Noise layer -->
+    <div class="noise-bg"></div>
+
+    <!-- Background layers -->
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <div class="absolute inset-0 bg-background"></div>
+        <div class="absolute inset-0 grid-bg"></div>
+    </div>
+
+    <!-- Main content -->
+    <main class="w-full max-w-6xl z-10 relative flex flex-col items-center">
+        
+        <!-- Header -->
+        <header class="text-center mb-20 animate-fade-in">
+            <div class="inline-flex items-center gap-3 px-3 py-1 mb-6 border border-white/10 rounded-full bg-white/5 backdrop-blur-sm">
+                <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                <span class="text-[10px] font-mono tracking-widest text-gray-400 uppercase">System Ready</span>
+            </div>
+            
+            <h1 class="text-6xl md:text-8xl font-bold tracking-tighter text-white mb-4">
+                NEXUS
+            </h1>
+            <p class="text-gray-500 font-light text-lg tracking-wide max-w-lg mx-auto">
+                Directory Index <span class="mx-2 text-white/20">/</span> Local Environment
+            </p>
+        </header>
+
+        <!-- Card container -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+
+            <!-- Card 01: About Me (Moved to First & Renamed) -->
+            <a href="PersonalWeb.html" class="spotlight-card group relative h-80 rounded-3xl border border-white/10 p-8 flex flex-col items-center justify-center text-center transition-transform duration-500 hover:scale-[1.01] animate-fade-in delay-100">
+                
+                <!-- Icon -->
+                <div class="mb-8 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 group-hover:bg-white/10 transition-colors duration-300">
+                    <svg class="text-white w-10 h-10 stroke-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" x2="9" y1="1" y2="4"/><line x1="15" x2="15" y1="1" y2="4"/><line x1="9" x2="9" y1="20" y2="23"/><line x1="15" x2="15" y1="20" y2="23"/><line x1="20" x2="23" y1="9" y2="9"/><line x1="20" x2="23" y1="15" y2="15"/><line x1="1" x2="4" y1="9" y2="9"/><line x1="1" x2="4" y1="15" y2="15"/>
+                    </svg>
+                </div>
+
+                <!-- Text -->
+                <div class="relative z-10">
+                    <h2 class="text-3xl font-bold text-white mb-3 tracking-tight glow-text transition-all duration-300">
+                        About Me
+                    </h2>
+                    <p class="text-sm text-gray-500 font-mono group-hover:text-gray-400 transition-colors">
+                        Personal Portfolio Core
+                    </p>
+                </div>
+            </a>
+
+            <!-- Card 02: FakeFishing (Moved to Second) -->
+            <a href="FakeFishing.html" class="spotlight-card group relative h-80 rounded-3xl border border-white/10 p-8 flex flex-col items-center justify-center text-center transition-transform duration-500 hover:scale-[1.01] animate-fade-in delay-200">
+                
+                <!-- Icon -->
+                <div class="mb-8 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 group-hover:bg-white/10 transition-colors duration-300">
+                    <svg class="text-white w-10 h-10 stroke-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="5" r="3"/><line x1="12" x2="12" y1="22" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/>
+                    </svg>
+                </div>
+
+                <!-- Text -->
+                <div class="relative z-10">
+                    <h2 class="text-3xl font-bold text-white mb-3 tracking-tight glow-text transition-all duration-300">
+                        Phishing Sim
+                    </h2>
+                    <p class="text-sm text-gray-500 font-mono group-hover:text-gray-400 transition-colors">
+                        Security Awareness Module
+                    </p>
+                </div>
+            </a>
+
+            <!-- Card 03: GetYourIP (Moved to Third) -->
+            <a href="GetYourIP.html" class="spotlight-card group relative h-80 rounded-3xl border border-white/10 p-8 flex flex-col items-center justify-center text-center transition-transform duration-500 hover:scale-[1.01] animate-fade-in delay-300">
+                
+                <!-- Icon -->
+                <div class="mb-8 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 group-hover:bg-white/10 transition-colors duration-300">
+                    <svg class="text-white w-10 h-10 stroke-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                    </svg>
+                </div>
+
+                <!-- Text -->
+                <div class="relative z-10">
+                    <h2 class="text-3xl font-bold text-white mb-3 tracking-tight glow-text transition-all duration-300">
+                        Diagnostics
+                    </h2>
+                    <p class="text-sm text-gray-500 font-mono group-hover:text-gray-400 transition-colors">
+                        Network Analysis Tool
+                    </p>
+                </div>
+            </a>
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-24 text-center animate-fade-in delay-300 opacity-0" style="animation-fill-mode: forwards;">
+            <p class="text-[10px] font-mono text-gray-700 uppercase tracking-[0.2em] hover:text-gray-500 transition-colors cursor-default">
+                Restricted Access // Auth Req
+            </p>
+        </footer>
+
+    </main>
+
+    <script>
+        // Minimal spotlight logic
+        const cards = document.querySelectorAll('.spotlight-card');
+        
+        cards.forEach(card => {
+            card.onmousemove = e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            }
+        });
+    </script>
+</body>
+</html>

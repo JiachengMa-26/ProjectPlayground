@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jiacheng Ma | Tech Management & Cybersecurity</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Orbitron & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Three.js & Post-processing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    
+    <!-- GSAP for Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+        :root {
+            --neon-green: #00ff41;
+            --neon-cyan: #0ff;
+            --dark-bg: #030303;
+            --glass-bg: rgba(5, 5, 5, 0.85);
+            --border-color: rgba(0, 255, 65, 0.3);
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+            overflow-x: hidden;
+            margin: 0;
+        }
+
+        h1, h2, h3, .cyber-font {
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--neon-green);
+            border-radius: 4px;
+        }
+
+        /* Glitch Effect Class */
+        .glitch-text {
+            position: relative;
+        }
+        
+        .cyber-border {
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
+            position: relative;
+            background: var(--glass-bg);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .cyber-border:hover {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .cyber-border::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 10px;
+            height: 10px;
+            border-top: 2px solid var(--neon-green);
+            border-left: 2px solid var(--neon-green);
+        }
+
+        .cyber-border::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            border-bottom: 2px solid var(--neon-green);
+            border-right: 2px solid var(--neon-green);
+        }
+
+        /* Loader */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .scanline {
+            width: 100%;
+            height: 100px;
+            z-index: 10;
+            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0, 255, 65, 0.2) 50%, rgba(0,0,0,0) 100%);
+            opacity: 0.1;
+            position: absolute;
+            bottom: 100%;
+            animation: scanline 10s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scanline {
+            0% { bottom: 100%; }
+            100% { bottom: -100%; }
+        }
+
+        .matrix-rain {
+            color: #0F0;
+            font-size: 14px;
+            line-height: 1;
+            opacity: 0.3;
+        }
+
+        /* Floating UI Elements */
+        .hud-element {
+            position: fixed;
+            z-index: 50;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-green-900 selection:text-green-100">
+
+    <!-- Loading Screen -->
+    <div id="loader">
+        <div class="text-green-500 font-bold text-2xl mb-4 cyber-font glitch-target">INITIALIZING SYSTEM...</div>
+        <div class="w-64 h-1 bg-gray-900 rounded overflow-hidden">
+            <div id="progress-bar" class="h-full bg-green-500 w-0 transition-all duration-300"></div>
+        </div>
+        <div class="mt-2 text-xs text-green-700 font-mono">LOADING ASSETS // DECRYPTING DATA</div>
+    </div>
+
+    <!-- 3D Background Canvas -->
+    <canvas id="bg-canvas" class="fixed top-0 left-0 w-full h-full -z-10"></canvas>
+    
+    <!-- Scanline Overlay -->
+    <div class="fixed top-0 left-0 w-full h-full pointer-events-none z-0" style="background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 255, 65, 0.03) 3px);"></div>
+
+    <!-- HUD Elements -->
+    <div class="hud-element top-4 left-4 text-green-600 text-xs">
+        SYSTEM: ONLINE<br>
+        LOC: NY, USA<br>
+        USER: GUEST
+    </div>
+    <div class="hud-element top-4 right-4 text-green-600 text-xs text-right">
+        SECURE CONNECTION<br>
+        ENCRYPTION: AES-256<br>
+        PING: 12ms
+    </div>
+
+    <!-- Main Content -->
+    <main class="relative z-10 container mx-auto px-6 py-12">
+        
+        <!-- Hero Section -->
+        <section class="min-h-screen flex flex-col justify-center items-start pt-20">
+            <div class="border-l-4 border-green-500 pl-6 mb-8 transform hover:translate-x-2 transition-transform duration-300">
+                <p class="text-cyan-400 font-bold tracking-widest mb-2">IDENTITY VERIFIED</p>
+                <h1 class="text-6xl md:text-8xl font-black text-white mb-4 cyber-font glitch-target" data-text="JIACHENG MA">JIACHENG MA</h1>
+                <h2 class="text-xl md:text-2xl text-green-400 font-bold mb-6">Master of Science Candidate, Technology Management</h2>
+                <p class="max-w-xl text-gray-400 leading-relaxed text-sm md:text-base">
+                    Operating at the intersection of <span class="text-white">Cybersecurity</span>, <span class="text-white">AI Governance</span>, and <span class="text-white">Business Strategy</span>. 
+                    Converting complex technical problems into secure, strategic business solutions.
+                </p>
+            </div>
+            
+            <div class="flex flex-wrap gap-4 mt-8">
+                <a href="#contact" class="px-8 py-3 bg-green-600/20 border border-green-500 text-green-400 font-bold hover:bg-green-500 hover:text-black transition-all duration-300 uppercase tracking-widest text-sm clip-path-polygon">
+                    Initialize Contact
+                </a>
+                <a href="#projects" class="px-8 py-3 border border-gray-600 text-gray-400 hover:border-cyan-400 hover:text-cyan-400 transition-all duration-300 uppercase tracking-widest text-sm">
+                    View Modules
+                </a>
+            </div>
+        </section>
+
+        <!-- About / Profile -->
+        <section id="about" class="py-24 grid md:grid-cols-2 gap-12 items-center">
+            <div class="cyber-border p-8 rounded-sm">
+                <h3 class="text-2xl text-cyan-400 mb-6 border-b border-gray-800 pb-2 flex items-center">
+                    <span class="mr-2">></span> SYSTEM_IDENTITY
+                </h3>
+                <div class="space-y-4 text-gray-300 text-sm">
+                    <p>
+                        I see myself as a technology-fluent bridge. I don't just write code; I analyze how that code impacts the bottom line, regulatory compliance, and user trust.
+                    </p>
+                    <p>
+                        Currently pursuing a <span class="text-green-400">M.S. in Technology Management at Columbia University</span>, I focus on:
+                    </p>
+                    <ul class="list-none space-y-2 pl-4 border-l border-gray-800">
+                        <li class="flex items-center"><span class="w-2 h-2 bg-green-500 mr-3"></span>Human-centered cybersecurity</li>
+                        <li class="flex items-center"><span class="w-2 h-2 bg-green-500 mr-3"></span>AI Governance & Policy</li>
+                        <li class="flex items-center"><span class="w-2 h-2 bg-green-500 mr-3"></span>Data-driven Strategy</li>
+                    </ul>
+                    <p class="mt-4 pt-4 border-t border-gray-800 italic text-gray-500">
+                        "How secure is this solution? What real business problem are we solving?"
+                    </p>
+                </div>
+            </div>
+            <div class="relative hidden md:block" id="profile-viz">
+                <!-- Placeholder for 3D interaction or just layout balance -->
+                <div class="absolute inset-0 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-full blur-3xl -z-10"></div>
+                <div class="text-right space-y-6">
+                    <div class="p-4 bg-black/50 border-r-2 border-green-500">
+                        <h4 class="text-xs text-gray-500 uppercase">Current Status</h4>
+                        <p class="text-lg text-white">Graduate Student @ Columbia</p>
+                    </div>
+                    <div class="p-4 bg-black/50 border-r-2 border-cyan-500">
+                        <h4 class="text-xs text-gray-500 uppercase">Focus</h4>
+                        <p class="text-lg text-white">Tech Strategy & Risk</p>
+                    </div>
+                    <div class="p-4 bg-black/50 border-r-2 border-purple-500">
+                        <h4 class="text-xs text-gray-500 uppercase">Location</h4>
+                        <p class="text-lg text-white">New York, NY</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Education (Timeline Style) -->
+        <section id="education" class="py-24">
+            <h3 class="text-3xl text-white mb-12 cyber-font text-center">ACADEMIC_DATABASE</h3>
+            <div class="relative border-l border-gray-800 ml-4 md:ml-0 md:pl-0 space-y-12">
+                
+                <!-- Columbia -->
+                <div class="relative md:w-full md:flex md:flex-row-reverse items-center timeline-item">
+                    <div class="absolute -left-[5px] md:left-1/2 md:-ml-[5px] w-3 h-3 bg-green-500 rounded-full shadow-[0_0_10px_#0f0]"></div>
+                    <div class="md:w-1/2 md:pl-12 pl-8">
+                        <div class="cyber-border p-6 bg-black/80">
+                            <span class="text-xs text-green-400 font-mono mb-2 block">Sept 2025 - Dec 2026 (Est.)</span>
+                            <h4 class="text-xl text-white font-bold">Columbia University</h4>
+                            <p class="text-sm text-gray-400 mb-4">M.S. Technology Management</p>
+                            <div class="text-xs text-gray-500 grid grid-cols-2 gap-2">
+                                <div>• Tech Strategy & Gov</div>
+                                <div>• Digital Risk</div>
+                                <div>• Finance for Leaders</div>
+                                <div>• Innovation Design</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stony Brook -->
+                <div class="relative md:w-full md:flex items-center timeline-item">
+                    <div class="absolute -left-[5px] md:left-1/2 md:-ml-[5px] w-3 h-3 bg-cyan-500 rounded-full shadow-[0_0_10px_#0ff]"></div>
+                    <div class="md:w-1/2 md:pr-12 pl-8 md:pl-0 text-left md:text-right">
+                        <div class="cyber-border p-6 bg-black/80">
+                            <span class="text-xs text-cyan-400 font-mono mb-2 block">2022 - May 2025</span>
+                            <h4 class="text-xl text-white font-bold">Stony Brook University</h4>
+                            <p class="text-sm text-gray-400 mb-4">Dual B.S. Info Systems & Tech Systems Mgmt</p>
+                            <p class="text-xs text-gray-300 italic">Magna Cum Laude (GPA 3.7+)</p>
+                            <div class="text-xs text-gray-500 mt-2">
+                                Focus: System Architecture, Cloud Platforms
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cornell -->
+                <div class="relative md:w-full md:flex md:flex-row-reverse items-center timeline-item">
+                    <div class="absolute -left-[5px] md:left-1/2 md:-ml-[5px] w-3 h-3 bg-purple-500 rounded-full"></div>
+                    <div class="md:w-1/2 md:pl-12 pl-8">
+                        <div class="cyber-border p-6 bg-black/80">
+                            <span class="text-xs text-purple-400 font-mono mb-2 block">2022</span>
+                            <h4 class="text-xl text-white font-bold">Cornell University (CHESS)</h4>
+                            <p class="text-sm text-gray-400">Research Internship</p>
+                            <p class="text-xs text-gray-500 mt-2">Data Analysis & Scientific Computing</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Work Experience (Terminal Style) -->
+        <section id="experience" class="py-24">
+            <h3 class="text-3xl text-white mb-12 cyber-font">OPERATIONAL_LOGS</h3>
+            
+            <div class="bg-[#0a0a0a] border border-gray-800 rounded-lg overflow-hidden font-mono text-sm shadow-2xl">
+                <div class="bg-[#1a1a1a] px-4 py-2 flex items-center gap-2 border-b border-gray-800">
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span class="ml-2 text-xs text-gray-500">user@jiacheng-mainframe:~/work-history</span>
+                </div>
+                <div class="p-6 space-y-8 text-gray-300">
+                    
+                    <!-- Job 1 -->
+                    <div class="group">
+                        <div class="text-green-400 mb-1 flex items-center">
+                            <span class="mr-2">$</span> exec view_role --id=Campus_Education
+                        </div>
+                        <div class="pl-4 border-l border-gray-700 ml-1">
+                            <div class="flex justify-between text-white font-bold">
+                                <span>Admissions Representative</span>
+                                <span class="text-gray-500 text-xs">May 2025 - June 2025</span>
+                            </div>
+                            <p class="text-gray-500 text-xs mb-2">New York, US</p>
+                            <ul class="list-disc pl-4 text-xs md:text-sm text-gray-400 space-y-1">
+                                <li>Managed inquiries & consultations; optimized CRM data records.</li>
+                                <li>Coordinated international student documents (I-20) for compliance.</li>
+                                <li>Provided bilingual support (English/Mandarin).</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Job 2 -->
+                    <div class="group">
+                        <div class="text-green-400 mb-1 flex items-center">
+                            <span class="mr-2">$</span> exec view_role --id=SBU_Server_Tech
+                        </div>
+                        <div class="pl-4 border-l border-gray-700 ml-1">
+                            <div class="flex justify-between text-white font-bold">
+                                <span>Computer Server Maintenance Technician</span>
+                                <span class="text-gray-500 text-xs">Aug 2024 - Mar 2025</span>
+                            </div>
+                            <p class="text-gray-500 text-xs mb-2">Stony Brook, NY</p>
+                            <ul class="list-disc pl-4 text-xs md:text-sm text-gray-400 space-y-1">
+                                <li>Configured/repaired server nodes for OpenStack environment.</li>
+                                <li>Utilized Linux for debugging to streamline workflows.</li>
+                                <li>Led weekly meetings to organize cloud computing tasks.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Job 3 -->
+                    <div class="group">
+                        <div class="text-green-400 mb-1 flex items-center">
+                            <span class="mr-2">$</span> exec view_role --id=IT_Logistics
+                        </div>
+                        <div class="pl-4 border-l border-gray-700 ml-1">
+                            <div class="flex justify-between text-white font-bold">
+                                <span>IT Logistics Assistant @ IT Supplier Inc</span>
+                                <span class="text-gray-500 text-xs">June 2024 - Sept 2024</span>
+                            </div>
+                            <ul class="list-disc pl-4 text-xs md:text-sm text-gray-400 space-y-1 mt-2">
+                                <li>Managed full lifecycle of enterprise devices (intake to redeployment).</li>
+                                <li>Performed diagnostic testing and hardware/software repair.</li>
+                                <li>Maintained asset tracking for secure production use.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                     <!-- Job 4 -->
+                     <div class="group">
+                        <div class="text-green-400 mb-1 flex items-center">
+                            <span class="mr-2">$</span> exec view_role --id=CHESS_Intern
+                        </div>
+                        <div class="pl-4 border-l border-gray-700 ml-1">
+                            <div class="flex justify-between text-white font-bold">
+                                <span>Data Analysis Intern @ Cornell CHESS</span>
+                                <span class="text-gray-500 text-xs">May 2022 - Sept 2022</span>
+                            </div>
+                            <ul class="list-disc pl-4 text-xs md:text-sm text-gray-400 space-y-1 mt-2">
+                                <li>Built Python/C interface for real-time acoustic emission analysis.</li>
+                                <li>Processed high-volume data (10GB/s) efficiently.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="text-green-400 animate-pulse">
+                        <span class="mr-2">$</span> _
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Innovation Projects -->
+        <section id="projects" class="py-24">
+            <h3 class="text-3xl text-white mb-12 cyber-font text-right">ACTIVE_PROTOCOLS</h3>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- Card 1 -->
+                <div class="cyber-border bg-black/40 p-6 group hover:bg-black/60">
+                    <div class="h-10 w-10 bg-red-500/20 rounded-full flex items-center justify-center mb-4 text-red-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2 group-hover:text-red-400 transition-colors">Medical IoT</h4>
+                    <p class="text-xs text-gray-400 mb-4">Equitable wearables combining edge computing with cloud analytics. Privacy as a first-class requirement.</p>
+                    <div class="flex flex-wrap gap-2 text-[10px] text-gray-500 uppercase">
+                        <span class="border border-gray-700 px-1">Edge Comp</span>
+                        <span class="border border-gray-700 px-1">Privacy</span>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="cyber-border bg-black/40 p-6 group hover:bg-black/60">
+                    <div class="h-10 w-10 bg-cyan-500/20 rounded-full flex items-center justify-center mb-4 text-cyan-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2 group-hover:text-cyan-400 transition-colors">SaaS E-Signature</h4>
+                    <p class="text-xs text-gray-400 mb-4">Horizontal platform with tiered pricing. Automating contract work via AI while maintaining compliance.</p>
+                    <div class="flex flex-wrap gap-2 text-[10px] text-gray-500 uppercase">
+                        <span class="border border-gray-700 px-1">AI</span>
+                        <span class="border border-gray-700 px-1">Legal Tech</span>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="cyber-border bg-black/40 p-6 group hover:bg-black/60">
+                    <div class="h-10 w-10 bg-green-500/20 rounded-full flex items-center justify-center mb-4 text-green-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2 group-hover:text-green-400 transition-colors">AI Dev Tools</h4>
+                    <p class="text-xs text-gray-400 mb-4">Assisting coding/debugging without creating opaque systems. Focus on auditability.</p>
+                    <div class="flex flex-wrap gap-2 text-[10px] text-gray-500 uppercase">
+                        <span class="border border-gray-700 px-1">DevExp</span>
+                        <span class="border border-gray-700 px-1">Governance</span>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="cyber-border bg-black/40 p-6 group hover:bg-black/60">
+                    <div class="h-10 w-10 bg-yellow-500/20 rounded-full flex items-center justify-center mb-4 text-yellow-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2 group-hover:text-yellow-400 transition-colors">PropTech</h4>
+                    <p class="text-xs text-gray-400 mb-4">Transparent management tools for landlords and tenants integrating with CRM systems.</p>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="cyber-border bg-black/40 p-6 group hover:bg-black/60">
+                    <div class="h-10 w-10 bg-purple-500/20 rounded-full flex items-center justify-center mb-4 text-purple-400">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2 group-hover:text-purple-400 transition-colors">Elder Care Tech</h4>
+                    <p class="text-xs text-gray-400 mb-4">Community-focused digital services for older adults. Simple interfaces, connecting families securely.</p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Skills (Data Viz Style) -->
+        <section id="skills" class="py-24">
+            <h3 class="text-3xl text-white mb-12 cyber-font">CAPABILITIES_MATRIX</h3>
+            <div class="grid md:grid-cols-2 gap-12">
+                
+                <!-- Tech Stack -->
+                <div>
+                    <h4 class="text-cyan-400 mb-6 font-bold uppercase tracking-widest text-sm">/// Technical Core</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Python / C</span>
+                                <span>90%</span>
+                            </div>
+                            <div class="h-1 bg-gray-800"><div class="h-full bg-cyan-500 w-[90%] shadow-[0_0_10px_#0ff]"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Linux / OpenStack</span>
+                                <span>85%</span>
+                            </div>
+                            <div class="h-1 bg-gray-800"><div class="h-full bg-cyan-500 w-[85%]"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Web (Node/HTML/CSS)</span>
+                                <span>80%</span>
+                            </div>
+                            <div class="h-1 bg-gray-800"><div class="h-full bg-cyan-500 w-[80%]"></div></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-gray-400 mb-1">
+                                <span>Cybersecurity Concepts</span>
+                                <span>85%</span>
+                            </div>
+                            <div class="h-1 bg-gray-800"><div class="h-full bg-cyan-500 w-[85%]"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Business Stack -->
+                <div>
+                    <h4 class="text-green-400 mb-6 font-bold uppercase tracking-widest text-sm">/// Strategy & Ops</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-900/50 border border-gray-700 p-4">
+                            <div class="text-xs text-gray-500">Language</div>
+                            <div class="text-white font-bold">English / Chinese</div>
+                            <div class="text-[10px] text-green-500">Native/Bilingual</div>
+                        </div>
+                        <div class="bg-gray-900/50 border border-gray-700 p-4">
+                            <div class="text-xs text-gray-500">Analysis</div>
+                            <div class="text-white font-bold">Data Driven</div>
+                            <div class="text-[10px] text-green-500">Metrics -> Impact</div>
+                        </div>
+                        <div class="bg-gray-900/50 border border-gray-700 p-4 col-span-2">
+                            <div class="text-xs text-gray-500">Certifications</div>
+                            <div class="text-white text-xs mt-1">• J.P. Morgan SWE Simulation</div>
+                            <div class="text-white text-xs">• Mastercard Cybersecurity</div>
+                            <div class="text-white text-xs">• Goldman Sachs Excel for Business</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer id="contact" class="pt-24 pb-12 border-t border-gray-800">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-8 md:mb-0">
+                    <h2 class="text-2xl text-white cyber-font mb-2">JIAC.MA</h2>
+                    <p class="text-gray-500 text-sm">Bridging Technology & Business Strategy</p>
+                </div>
+                
+                <div class="flex space-x-6">
+                    <a href="mailto:jm6080@columbia.edu" class="text-gray-400 hover:text-green-400 transition-colors uppercase text-sm tracking-widest">[EMAIL]</a>
+                    <a href="https://www.linkedin.com/in/jiacma026" target="_blank" class="text-gray-400 hover:text-cyan-400 transition-colors uppercase text-sm tracking-widest">[LINKEDIN]</a>
+                    <a href="https://github.com/JiachengMa-26" target="_blank" class="text-gray-400 hover:text-purple-400 transition-colors uppercase text-sm tracking-widest">[GITHUB]</a>
+                </div>
+            </div>
+            <div class="text-center mt-12 text-xs text-gray-700 font-mono">
+                SYSTEM STATUS: OPTIMAL // END OF LINE
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- Three.js + Animation Logic -->
+    <script>
+        // --- 1. LOADER LOGIC ---
+        window.addEventListener('load', () => {
+            const bar = document.getElementById('progress-bar');
+            const loader = document.getElementById('loader');
+            
+            // Animate progress bar
+            setTimeout(() => bar.style.width = '100%', 100);
+            
+            // Fade out loader
+            setTimeout(() => {
+                gsap.to(loader, {
+                    opacity: 0,
+                    duration: 0.8,
+                    onComplete: () => loader.style.display = 'none'
+                });
+                
+                // Trigger Text Glitch Animations
+                initGlitchEffects();
+            }, 1500);
+        });
+
+        // --- 2. THREE.JS SCENE SETUP ---
+        const canvas = document.getElementById('bg-canvas');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.02); 
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        // Initial Camera Position: Looking somewhat UP at the hand
+        camera.position.set(0, -6, 12);
+        camera.lookAt(0, 3, 0);
+
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        
+        // Improve tone mapping for better neon glow
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+
+        // --- POST-PROCESSING (BLOOM) ---
+        const renderScene = new THREE.RenderPass(scene, camera);
+        const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+        bloomPass.threshold = 0.15; // Higher threshold to only bloom bright parts
+        bloomPass.strength = 1.5;   // Intense bloom
+        bloomPass.radius = 0.4;
+
+        const composer = new THREE.EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
+
+        // --- LIGHTING ---
+        const ambientLight = new THREE.AmbientLight(0x111111);
+        scene.add(ambientLight);
+
+        // Cyberpunk colored lights
+        const pointLightGreen = new THREE.PointLight(0x00ff41, 1.5, 30);
+        pointLightGreen.position.set(5, 5, 5);
+        scene.add(pointLightGreen);
+
+        const pointLightCyan = new THREE.PointLight(0x00ffff, 1.5, 30);
+        pointLightCyan.position.set(-5, 0, 8);
+        scene.add(pointLightCyan);
+        
+        const rimLight = new THREE.SpotLight(0xffffff, 2);
+        rimLight.position.set(0, 10, -5); // Backlight
+        rimLight.lookAt(0, 0, 0);
+        scene.add(rimLight);
+
+
+        // --- 3. OBJECTS ---
+
+        // A. GEOMETRIC SPLICED CYBER HAND (Procedural & Articulated)
+        const handGroup = new THREE.Group();
+        handGroup.position.set(0, 5, 0); // High up
+        
+        // Materials
+        // 1. Dark Metal Core
+        const coreMat = new THREE.MeshStandardMaterial({
+            color: 0x1a1a1a,
+            metalness: 0.9,
+            roughness: 0.2,
+            flatShading: true 
+        });
+
+        // 2. Neon Wireframe Overlay
+        const wireMat = new THREE.MeshBasicMaterial({
+            color: 0x00ff41,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.15
+        });
+        
+        // 3. Glowing Joints
+        const jointMat = new THREE.MeshBasicMaterial({
+            color: 0x00ffff,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.4
+        });
+
+        // --- PALM CONSTRUCTION ---
+        // Main Palm Hub (Hexagonal Cylinder)
+        const palmGeo = new THREE.CylinderGeometry(2.5, 2.2, 0.8, 6);
+        const palmMesh = new THREE.Mesh(palmGeo, coreMat);
+        palmMesh.rotation.x = Math.PI / 2; // Flat facing down
+        palmMesh.scale.z = 0.6; // Flatten slightly
+        
+        const palmWire = new THREE.Mesh(palmGeo, wireMat);
+        palmWire.rotation.x = Math.PI / 2;
+        palmWire.scale.set(1.05, 1.05, 0.65); // Slightly larger
+        
+        handGroup.add(palmMesh);
+        handGroup.add(palmWire);
+
+        // Palm Details (Decorative Geometric Bits)
+        const palmDetailGeo = new THREE.OctahedronGeometry(1, 0);
+        const palmDetail = new THREE.Mesh(palmDetailGeo, jointMat);
+        palmDetail.scale.y = 0.5;
+        palmDetail.position.z = 0.5; // Pop out
+        handGroup.add(palmDetail);
+
+
+        // --- FINGER FACTORY (UPDATED FOR ANIMATION CONTROL) ---
+        // Create an articulated finger with segments and joints
+        const fingerTips = []; // Store tip meshes to attach rain later
+
+        // Now returns an Object containing the root mesh and arrays of joints for animation
+        function createCyberFinger(lengthScale, widthScale, xOffset, zOffset, rotationY, rotationZ, isThumb = false) {
+            const fingerRoot = new THREE.Group();
+            fingerRoot.position.set(xOffset, 0, zOffset); // Attach to palm edge
+            fingerRoot.rotation.y = rotationY; // Splay out
+            fingerRoot.rotation.z = rotationZ; // Curve down/in
+
+            // Configuration
+            const segments = isThumb ? 2 : 3;
+            // Base length and radius calculations adapted by scales
+            const segmentLen = 1.4 * lengthScale;
+            const radius = 0.35 * widthScale;
+            
+            let currentParent = fingerRoot;
+            const joints = []; // Array to store joint groups for animation
+
+            for (let i = 0; i < segments; i++) {
+                // 1. Joint (Knuckle) - Icosahedron
+                const jointGeo = new THREE.IcosahedronGeometry(radius * 1.2, 0);
+                const joint = new THREE.Mesh(jointGeo, coreMat);
+                const jointWire = new THREE.Mesh(jointGeo, jointMat);
+                jointWire.scale.set(1.1, 1.1, 1.1);
+                joint.add(jointWire);
+                
+                currentParent.add(joint);
+
+                // 2. Bone (Phalanx) - Hexagonal Cylinder
+                const boneGeo = new THREE.CylinderGeometry(radius * 0.8, radius * 0.6, segmentLen, 6);
+                boneGeo.translate(0, segmentLen / 2, 0); // Pivot at base
+                
+                const bone = new THREE.Mesh(boneGeo, coreMat);
+                const boneWire = new THREE.Mesh(boneGeo, wireMat);
+                boneWire.scale.set(1.05, 1, 1.05);
+                bone.add(boneWire);
+
+                // Articulation Group for the bone (This is what we rotate to curl the finger)
+                const boneGroup = new THREE.Group();
+                // Initial natural curl
+                const curlAngle = isThumb ? 0.3 : 0.15; 
+                boneGroup.rotation.x = i === 0 ? 0 : curlAngle; 
+                
+                joint.add(boneGroup);
+                boneGroup.add(bone);
+                
+                // Store this joint for GSAP animation
+                joints.push(boneGroup);
+
+                // Prepare next parent (the tip of this bone)
+                const nextJointLoc = new THREE.Group();
+                nextJointLoc.position.y = segmentLen;
+                boneGroup.add(nextJointLoc);
+                currentParent = nextJointLoc;
+
+                // If last segment, add Tip
+                if (i === segments - 1) {
+                    const tipGeo = new THREE.ConeGeometry(radius * 0.6, 1.0 * lengthScale, 6);
+                    tipGeo.translate(0, 0.5 * lengthScale, 0);
+                    const tip = new THREE.Mesh(tipGeo, coreMat);
+                    const tipWire = new THREE.Mesh(tipGeo, wireMat);
+                    tipWire.scale.set(1.1, 1.1, 1.1);
+                    tip.add(tipWire);
+                    
+                    // Add glowing emitter at tip
+                    const emitterGeo = new THREE.SphereGeometry(radius * 0.4, 8, 8); // Slightly larger emitter
+                    const emitter = new THREE.Mesh(emitterGeo, new THREE.MeshBasicMaterial({ color: 0x00ff41 }));
+                    emitter.position.y = 1.0 * lengthScale;
+                    tip.add(emitter);
+
+                    currentParent.add(tip);
+                    
+                    // Store reference for rain
+                    fingerTips.push({ mesh: tip, isThumb: isThumb });
+                }
+            }
+            
+            return { root: fingerRoot, joints: joints };
+        }
+
+        // --- ASSEMBLE HAND (UPDATED PROPORTIONS) ---
+        // Parameters: LengthScale, WidthScale, xOffset, zOffset, rotY, rotZ, isThumb
+        
+        // Store fingers for animation
+        const fingers = {};
+
+        // 1. Pinky (Rightmost)
+        fingers.pinky = createCyberFinger(0.75, 0.85, 2.0, 0, 0.35, -0.15);
+        handGroup.add(fingers.pinky.root);
+
+        // 2. Ring
+        fingers.ring = createCyberFinger(1.05, 0.95, 0.8, 0.2, 0.15, -0.1);
+        handGroup.add(fingers.ring.root);
+
+        // 3. Middle
+        fingers.middle = createCyberFinger(1.25, 1.05, -0.6, 0.25, -0.05, -0.1);
+        handGroup.add(fingers.middle.root);
+
+        // 4. Index (The Pointer)
+        fingers.index = createCyberFinger(1.0, 1.0, -2.0, 0, -0.25, -0.15);
+        handGroup.add(fingers.index.root);
+
+        // 5. Thumb
+        fingers.thumb = createCyberFinger(0.85, 1.4, -2.6, -0.8, -0.8, 0.5, true);
+        fingers.thumb.root.rotation.x = 0.6; 
+        handGroup.add(fingers.thumb.root);
+
+        // Final Hand Orientation
+        // Initial state: Palm facing somewhat down/forward
+        handGroup.rotation.x = Math.PI / 2.5; 
+        handGroup.rotation.z = 0;
+
+        scene.add(handGroup);
+
+
+        // B. MATRIX RAIN SYSTEM (Dynamic Lines)
+        // Texture Generator
+        function createMatrixRainTexture(text) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 64;
+            canvas.height = 512;
+            
+            ctx.fillStyle = '#00000000'; 
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = 'bold 24px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+
+            const fontSize = 24;
+            const drops = [Math.random() * -200]; 
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const chars = text.split('');
+                const dropY = drops[0];
+                const charIndex = Math.floor(dropY / fontSize);
+                
+                for (let k = 0; k < 8; k++) {
+                    const idx = charIndex - k;
+                    if (idx >= 0 && idx < chars.length) {
+                         const alpha = 1 - (k / 8);
+                         if (k === 0) ctx.fillStyle = '#ffffff'; // Head
+                         else ctx.fillStyle = `rgba(0, 255, 65, ${alpha})`; // Tail
+                         ctx.fillText(chars[idx], 32, idx * fontSize);
+                    }
+                }
+
+                drops[0] += fontSize * 0.5;
+                if (drops[0] > canvas.height + 100) drops[0] = Math.random() * -200;
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.userData = { update: draw };
+            return texture;
+        }
+
+        const rainMeshes = [];
+        
+        fingerTips.forEach((tipData, index) => {
+            const text = Array(30).fill(0).map(() => Math.random() > 0.5 ? '1' : '0').join('');
+            const texture = createMatrixRainTexture(text);
+            
+            const material = new THREE.MeshBasicMaterial({
+                map: texture,
+                transparent: true,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending,
+                color: 0xffffff
+            });
+
+            const geometry = new THREE.PlaneGeometry(0.5, 10);
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            scene.add(mesh);
+            
+            rainMeshes.push({
+                mesh: mesh,
+                target: tipData.mesh,
+                texture: texture
+            });
+        });
+
+
+        // C. SURROUNDING PARTICLES
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 1500;
+        const posArray = new Float32Array(particlesCount * 3);
+        for(let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 40;
+        }
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.04,
+            color: 0x00ffff,
+            transparent: true,
+            opacity: 0.4,
+            blending: THREE.AdditiveBlending
+        });
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+
+        // D. GRID
+        const gridHelper = new THREE.GridHelper(60, 60, 0x00ff41, 0x050505);
+        gridHelper.position.y = -8;
+        scene.add(gridHelper);
+
+
+        // --- 4. ANIMATION & INTERACTION ---
+        let mouseX = 0;
+        let mouseY = 0;
+        const targetHandRot = new THREE.Vector2(0, 0);
+
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        // GSAP Scroll Interaction
+        gsap.registerPlugin(ScrollTrigger);
+
+        // --- AWARD-WINNING GESTURE ANIMATION ---
+        // Create a master timeline synced to scroll
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: "body",
+                start: "top top",
+                end: "bottom bottom",
+                scrub: 1.5 // Smooth scrubbing
+            }
+        });
+
+        // 1. Hand Position & Orientation (Palm rotates to face user)
+        tl.to(handGroup.position, { y: 0, z: -2 }, 0)
+          .to(handGroup.rotation, { x: Math.PI / 1.8, z: 0 }, 0); // Rotate up
+
+        // 2. Index Finger: STRAIGHTEN (Point at user)
+        // Rotate joints to 0 to straighten, or slightly negative to point up relative to palm
+        fingers.index.joints.forEach(joint => {
+            tl.to(joint.rotation, { x: 0.0 }, 0); 
+        });
+        // Adjust index root to ensure it points forward
+        tl.to(fingers.index.root.rotation, { z: 0, y: -0.1 }, 0);
+
+        // 3. Other Fingers: CURL (Make a fist)
+        // Loop through Pinky, Ring, Middle
+        [fingers.pinky, fingers.ring, fingers.middle].forEach(finger => {
+            finger.joints.forEach((joint, i) => {
+                // First joint (knuckle) curls most, others follow
+                const targetRot = i === 0 ? 1.5 : 1.2; 
+                tl.to(joint.rotation, { x: targetRot }, 0);
+            });
+        });
+
+        // 4. Thumb: TUCK IN
+        fingers.thumb.joints.forEach(joint => {
+            tl.to(joint.rotation, { x: 0.8 }, 0);
+        });
+        // Rotate thumb root to fold across palm
+        tl.to(fingers.thumb.root.rotation, { y: -1.5, z: 0.5 }, 0);
+
+
+        const clock = new THREE.Clock();
+        const tempVec = new THREE.Vector3();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = clock.getDelta();
+            const time = clock.getElapsedTime();
+
+            // 1. Animate Hand Floating (Idle) - amplitude reduces as we scroll (handled implicitly by scroll hijacking?)
+            // We keep a little bit of life even when pointing
+            handGroup.position.y += Math.sin(time * 0.8) * 0.002;
+            
+            // 2. Hand Mouse Look (Subtle)
+            // reduce mouse influence as we scroll down (optional, but keeps the point steady)
+            targetHandRot.x = mouseY * 0.1;
+            targetHandRot.y = mouseX * 0.1;
+            
+            // Only apply minimal mouse rotation on top of the GSAP rotation
+            handGroup.rotation.z += (targetHandRot.y - handGroup.rotation.z * 0.05) * dt;
+
+            // 3. Update Rain Positions
+            rainMeshes.forEach(item => {
+                // Get world position of the finger tip
+                item.target.getWorldPosition(tempVec);
+                
+                // Position rain mesh exactly at tip X/Z
+                item.mesh.position.set(tempVec.x, tempVec.y - 5, tempVec.z); 
+                
+                // Update texture animation
+                item.texture.userData.update();
+                item.texture.needsUpdate = true;
+                
+                // Face camera
+                item.mesh.rotation.y = Math.atan2( (camera.position.x - item.mesh.position.x), (camera.position.z - item.mesh.position.z) );
+            });
+
+            // 4. Move Grid
+            gridHelper.position.z = (time * 2) % 2;
+
+            // 5. Particles Float
+            particlesMesh.rotation.y = time * 0.05;
+
+            // Render
+            composer.render();
+        }
+
+        animate();
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+
+        // --- 5. TEXT GLITCH (Standard) ---
+        function initGlitchEffects() {
+            const targets = document.querySelectorAll('.glitch-target');
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*';
+            targets.forEach(target => {
+                const originalText = target.getAttribute('data-text') || target.innerText;
+                let iterations = 0;
+                const interval = setInterval(() => {
+                    target.innerText = originalText
+                        .split('')
+                        .map((letter, index) => {
+                            if(index < iterations) return originalText[index];
+                            return chars[Math.floor(Math.random() * chars.length)];
+                        })
+                        .join('');
+                    if(iterations >= originalText.length) { 
+                        clearInterval(interval);
+                        target.innerText = originalText;
+                    }
+                    iterations += 1/2;
+                }, 30);
+            });
+        }
+
+        // --- 6. GSAP REVEALS ---
+        gsap.utils.toArray('.cyber-border').forEach(element => {
+            gsap.from(element, {
+                scrollTrigger: {
+                    trigger: element,
+                    start: "top 85%",
+                    toggleActions: "play none none reverse"
+                },
+                y: 50,
+                opacity: 0,
+                duration: 0.8,
+                ease: "power3.out"
+            });
+        });
+        gsap.utils.toArray('.timeline-item').forEach(element => {
+             gsap.from(element, {
+                scrollTrigger: {
+                    trigger: element,
+                    start: "top 80%",
+                },
+                x: -50,
+                opacity: 0,
+                duration: 0.6,
+                stagger: 0.2
+            });
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SYSTEM // CONNECTION_OVERRIDE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Import Cyberpunk Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-color: #000500;
+      --terminal-black: #050a05;
+      --matrix-green: #0aff0a;
+      --matrix-dark: #008f11;
+      --cyan-accent: #00f0ff;
+      --alert-red: #ff2a2a;
+      
+      --font-display: 'Orbitron', sans-serif;
+      --font-code: 'Share Tech Mono', monospace;
+      
+      --glow-text: 0 0 5px var(--matrix-green), 0 0 10px var(--matrix-green);
+      --glow-box: 0 0 10px rgba(10, 255, 10, 0.3), inset 0 0 20px rgba(10, 255, 10, 0.1);
+      --scan-line-color: rgba(0, 255, 0, 0.05);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background-color: var(--bg-color);
+      color: var(--matrix-green);
+      font-family: var(--font-code);
+      overflow: hidden; /* Hide scrollbars for the immersive feel */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* --- Background Canvas for Matrix Rain --- */
+    #matrix-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* --- CRT Scanline Overlay --- */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 100;
+      pointer-events: none;
+      background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0,0,0,0.2) 50%,
+        rgba(0,0,0,0.2)
+      );
+      background-size: 100% 4px;
+      animation: scanlineScroll 0.2s linear infinite;
+    }
+
+    /* Optional: Slight vignette */
+    .vignette {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* --- Main Container (The HUD) --- */
+    .cyber-card {
+      position: relative;
+      z-index: 10;
+      width: 90%;
+      max-width: 800px;
+      background: rgba(5, 12, 8, 0.85);
+      border: 1px solid var(--matrix-dark);
+      box-shadow: var(--glow-box);
+      backdrop-filter: blur(10px);
+      /* Cyberpunk Shape - Clipped Corners */
+      clip-path: polygon(
+        0 20px, 
+        20px 0, 
+        100% 0, 
+        100% calc(100% - 20px), 
+        calc(100% - 20px) 100%, 
+        0 100%
+      );
+      padding: 2px; /* For the border effect */
+      transition: transform 0.3s ease;
+    }
+
+    /* The inner content wrapper to avoid clipping text */
+    .card-content {
+      background: var(--terminal-black);
+      padding: 2.5rem;
+      clip-path: polygon(
+        0 20px, 
+        20px 0, 
+        100% 0, 
+        100% calc(100% - 20px), 
+        calc(100% - 20px) 100%, 
+        0 100%
+      );
+      height: 100%;
+      position: relative;
+    }
+
+    /* Decorative corner lines */
+    .card-content::before, .card-content::after {
+      content: '';
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--matrix-green);
+      transition: all 0.5s ease;
+    }
+    .card-content::before {
+      top: 0;
+      left: 0;
+      border-right: none;
+      border-bottom: none;
+    }
+    .card-content::after {
+      bottom: 0;
+      right: 0;
+      border-left: none;
+      border-top: none;
+    }
+
+    /* --- Typography & Header --- */
+    h1 {
+      font-family: var(--font-display);
+      text-transform: uppercase;
+      font-size: 2rem;
+      letter-spacing: 4px;
+      margin: 0;
+      color: var(--matrix-green);
+      text-shadow: var(--glow-text);
+      border-bottom: 1px solid var(--matrix-dark);
+      padding-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    h1 span.id-tag {
+      font-size: 0.8rem;
+      background: var(--matrix-green);
+      color: #000;
+      padding: 2px 8px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      color: var(--matrix-dark);
+      font-size: 0.9rem;
+      margin-top: 10px;
+      margin-bottom: 2rem;
+      text-transform: uppercase;
+      display: flex;
+      gap: 10px;
+    }
+    .subtitle::before {
+      content: '>>';
+      color: var(--matrix-green);
+      animation: blink 1s infinite;
+    }
+
+    /* --- Status Bar --- */
+    .status-bar {
+      margin-bottom: 1.5rem;
+      font-family: var(--font-code);
+      font-size: 0.85rem;
+      border: 1px dashed var(--matrix-dark);
+      padding: 10px;
+      background: rgba(0, 20, 0, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      background: var(--matrix-green);
+      box-shadow: 0 0 10px var(--matrix-green);
+    }
+    .status-indicator.processing { animation: blink 0.2s infinite alternate; }
+    .status-indicator.error { background: var(--alert-red); box-shadow: 0 0 10px var(--alert-red); }
+
+    /* --- Data Grid --- */
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .data-module {
+      position: relative;
+      background: rgba(10, 30, 15, 0.4);
+      border-left: 2px solid var(--matrix-dark);
+      padding: 10px 15px;
+      transition: all 0.3s;
+    }
+    .data-module:hover {
+      background: rgba(10, 255, 10, 0.05);
+      border-left: 2px solid var(--matrix-green);
+      box-shadow: inset 10px 0 20px -10px rgba(10, 255, 10, 0.2);
+    }
+
+    .data-label {
+      display: block;
+      font-size: 0.7rem;
+      color: #588f58;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 5px;
+    }
+
+    .data-value {
+      font-size: 1.1rem;
+      color: #e0ffe0;
+      font-weight: bold;
+      text-shadow: 0 0 2px rgba(224, 255, 224, 0.5);
+      min-height: 1.5rem; /* prevent jump */
+      word-break: break-word;
+    }
+    
+    .data-value.highlight {
+      color: var(--cyan-accent);
+      text-shadow: 0 0 5px var(--cyan-accent);
+    }
+
+    /* --- Footer --- */
+    .terminal-footer {
+      font-size: 0.7rem;
+      color: #355c35;
+      text-align: center;
+      border-top: 1px solid #111;
+      padding-top: 1rem;
+    }
+
+    /* --- Animations --- */
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    @keyframes scanlineScroll {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 4px; }
+    }
+
+    /* Glitch effect utility class */
+    .glitch-effect {
+      animation: glitch-anim 0.3s infinite;
+    }
+
+    @keyframes glitch-anim {
+      0% { transform: translate(0) }
+      20% { transform: translate(-2px, 2px) }
+      40% { transform: translate(-2px, -2px) }
+      60% { transform: translate(2px, 2px) }
+      80% { transform: translate(2px, -2px) }
+      100% { transform: translate(0) }
+    }
+
+    /* Mobile Tweaks */
+    @media (max-width: 600px) {
+      .cyber-card { width: 95%; margin: 10px; }
+      .card-content { padding: 1.5rem; }
+      h1 { font-size: 1.4rem; }
+      .data-grid { grid-template-columns: 1fr; gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Effects -->
+  <canvas id="matrix-canvas"></canvas>
+  <div class="vignette"></div>
+  <div class="scanlines"></div>
+
+  <!-- Main HUD Interface -->
+  <main class="cyber-card">
+    <div class="card-content">
+      
+      <h1>
+        IDENTITY_LINK
+        <span class="id-tag">V.2.0.77</span>
+      </h1>
+      <div class="subtitle">Secure connection established... decrypting metadata</div>
+
+      <div id="status-display" class="status-bar">
+        <div id="status-light" class="status-indicator processing"></div>
+        <span id="status-text">INITIALIZING NETWORK HANDSHAKE...</span>
+      </div>
+
+      <div class="data-grid">
+        
+        <div class="data-module">
+          <span class="data-label">:: PUBLIC_IP_ADDRESS</span>
+          <div class="data-value highlight" id="ipValue" data-final="">_</div>
+        </div>
+
+        <div class="data-module">
+          <span class="data-label">:: GEO_COORDINATES</span>
+          <div class="data-value" id="cityValue" data-final="">_</div>
+        </div>
+
+        <div class="data-module">
+          <span class="data-label">:: TERRITORY_ID</span>
+          <div class="data-value" id="countryValue" data-final="">_</div>
+        </div>
+
+        <div class="data-module">
+          <span class="data-label">:: NETWORK_PROVIDER</span>
+          <div class="data-value" id="ispValue" data-final="">_</div>
+        </div>
+
+        <div class="data-module">
+          <span class="data-label">:: PROXY_DETECTION</span>
+          <div class="data-value" id="vpnValue" data-final="">_</div>
+        </div>
+
+        <div class="data-module">
+          <span class="data-label">:: ASN_PROTOCOL</span>
+          <div class="data-value" id="asnValue" data-final="">_</div>
+        </div>
+
+        <div class="data-module">
+          <span class="data-label">:: USER_AGENT_CORE</span>
+          <div class="data-value" id="browserValue" data-final="">_</div>
+        </div>
+
+        <div class="data-module">
+          <span class="data-label">:: SYSTEM_KERNEL</span>
+          <div class="data-value" id="osValue" data-final="">_</div>
+        </div>
+
+        <div class="data-module">
+          <span class="data-label">:: LOCAL_TEMPORAL_OFFSET</span>
+          <div class="data-value" id="localTimeValue" data-final="">_</div>
+        </div>
+
+      </div>
+
+      <div class="terminal-footer">
+        NO PERSONAL DATA LOGGED // CLIENT-SIDE EXECUTION ONLY // END OF LINE
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    "use strict";
+
+    /* 1. MATRIX RAIN EFFECT 
+      ---------------------
+    */
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    const cols = Math.floor(width / 20);
+    const ypos = Array(cols).fill(0);
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, width, height);
+
+    function matrixLoop() {
+      // Semi-transparent black to create fade trail
+      ctx.fillStyle = '#0001';
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.fillStyle = '#0f0';
+      ctx.font = '15px monospace';
+
+      ypos.forEach((y, index) => {
+        // Random Matrix characters (Katakana + Latin)
+        const text = String.fromCharCode(Math.random() * 128); 
+        const x = index * 20;
+        ctx.fillText(text, x, y);
+
+        // Reset drop randomly to create rain effect
+        if (y > height && Math.random() > 0.975) ypos[index] = 0;
+        else ypos[index] = y + 20;
+      });
+      requestAnimationFrame(matrixLoop);
+    }
+    
+    // Handle Resize
+    window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    });
+    
+    // Start Matrix Rain
+    matrixLoop();
+
+
+    /* 2. DECODING TEXT ANIMATION 
+      --------------------------
+      This visualizes the text "unscrambling" from random chars to the final value.
+    */
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()";
+    
+    function scrambleText(element, finalValue) {
+      if(!finalValue) finalValue = "UNKNOWN";
+      
+      let iteration = 0;
+      const maxIterations = 15; // How many shuffles before locking
+      
+      // Clear previous interval if any (for safety)
+      if(element.dataset.interval) clearInterval(element.dataset.interval);
+
+      const interval = setInterval(() => {
+        element.innerText = finalValue
+          .split("")
+          .map((letter, index) => {
+            if (index < iteration) {
+              return finalValue[index];
+            }
+            return chars[Math.floor(Math.random() * chars.length)];
+          })
+          .join("");
+
+        if (iteration >= finalValue.length) {
+          clearInterval(interval);
+        }
+
+        // Speed of revealing characters
+        iteration += 1/3; 
+      }, 30);
+      
+      element.dataset.interval = interval;
+    }
+
+
+    /* 3. DATA LOGIC (Modified from original)
+      --------------------------------------
+    */
+    const statusText = document.getElementById("status-text");
+    const statusLight = document.getElementById("status-light");
+    
+    const elements = {
+      ip: document.getElementById("ipValue"),
+      city: document.getElementById("cityValue"),
+      country: document.getElementById("countryValue"),
+      isp: document.getElementById("ispValue"),
+      vpn: document.getElementById("vpnValue"),
+      asn: document.getElementById("asnValue"),
+      browser: document.getElementById("browserValue"),
+      os: document.getElementById("osValue"),
+      time: document.getElementById("localTimeValue")
+    };
+
+    function updateStatus(msg, type) {
+      statusText.textContent = msg;
+      statusLight.className = "status-indicator"; // reset
+      if(type === 'processing') statusLight.classList.add('processing');
+      if(type === 'error') statusLight.classList.add('error');
+    }
+
+    // --- User Agent Parsing ---
+    function getSystemInfo() {
+      const ua = navigator.userAgent;
+      let browser = "Unknown Net-Nav";
+      let os = "Unknown Kernel";
+
+      // Simple regex checks for display
+      if(ua.match(/Edg/i)) browser = "Edge Chromium";
+      else if(ua.match(/Chrome/i)) browser = "Google Chrome";
+      else if(ua.match(/Firefox/i)) browser = "Mozilla Firefox";
+      else if(ua.match(/Safari/i)) browser = "Apple Safari";
+
+      if(ua.match(/Win/i)) os = "Windows NT";
+      else if(ua.match(/Mac/i)) os = "macOS UNIX";
+      else if(ua.match(/Linux/i)) os = "Linux Kernel";
+      else if(ua.match(/Android/i)) os = "Android System";
+      else if(ua.match(/iPhone|iPad/i)) os = "iOS";
+
+      return { browser, os };
+    }
+
+    // --- Time ---
+    function getCyberTime() {
+      const now = new Date();
+      return now.toISOString().replace("T", " ").substring(0, 19);
+    }
+
+    // --- IP Fetch ---
+    const IP_API_URL = "https://api.ipapi.is";
+
+    async function initSystem() {
+      // 1. Set static local info immediately
+      const sysInfo = getSystemInfo();
+      scrambleText(elements.browser, sysInfo.browser);
+      scrambleText(elements.os, sysInfo.os);
+      scrambleText(elements.time, getCyberTime());
+
+      // 2. Fetch Remote Data
+      try {
+        const response = await fetch(IP_API_URL);
+        if (!response.ok) throw new Error("Connection Refused");
+        const data = await response.json();
+
+        if (data.error) throw new Error(data.error);
+
+        // Success - Update UI
+        updateStatus("DATA STREAM SECURE. DECRYPTION COMPLETE.", "success");
+
+        // Parse Data
+        const location = data.location || {};
+        const company = data.company || {};
+        const asn = data.asn || {};
+
+        // Run animations
+        scrambleText(elements.ip, data.ip);
+        scrambleText(elements.city, location.city || "N/A");
+        scrambleText(elements.country, location.country || "N/A");
+        scrambleText(elements.isp, company.name || asn.org || "Unknown Entity");
+        scrambleText(elements.asn, asn.asn ? "AS" + asn.asn : "N/A");
+
+        // Security Flags
+        let securityStatus = "CLEAN CONNECTION";
+        if(data.is_vpn || data.is_proxy || data.is_tor) {
+          securityStatus = "MASKED (PROXY/VPN DETECTED)";
+          elements.vpn.style.color = "var(--alert-red)";
+          elements.vpn.style.textShadow = "0 0 5px red";
+        }
+        scrambleText(elements.vpn, securityStatus);
+
+      } catch (err) {
+        console.error(err);
+        updateStatus("NETWORK ERROR: UPLINK FAILED", "error");
+        
+        // Fill fields with error state
+        Object.values(elements).forEach(el => {
+          if(el.innerText === "_") el.innerText = "ERR_FETCH";
+        });
+      }
+    }
+
+    // Initialize
+    setTimeout(initSystem, 800); // Slight delay for dramatic effect
+
+  </script>
+</body>
+</html>
