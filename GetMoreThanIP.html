@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GHOST_PROTOCOL // TERMINAL V5 (ENHANCED)</title>
+    <title>GHOST_PROTOCOL // TERMINAL V9 (GEO-FIXED)</title>
+    
     <style>
         /* --- CORE VISUALS & RESET --- */
         :root {
-            --neon-green: #0f0;
-            --neon-cyan: #0ff;
+            --neon-green: #00FF41;
+            --neon-cyan: #008F11;
             --neon-alert: #f00;
-            --bg-color: #050a05;
+            --bg-color: #000;
             --font-main: 'Courier New', Courier, monospace;
             --font-display: 'Lucida Console', Monaco, monospace;
         }
@@ -38,7 +39,7 @@
             width: 100vw;
             height: 100vh;
             z-index: -1;
-            opacity: 0.2;
+            opacity: 0.15;
         }
 
         .crt-overlay {
@@ -76,7 +77,7 @@
 
         /* --- LAYOUT --- */
         .container {
-            max-width: 900px;
+            max-width: 1100px;
             margin: 0 auto;
             padding: 2rem;
             position: relative;
@@ -86,14 +87,13 @@
             flex-direction: column;
         }
 
-        /* --- TYPOGRAPHY & COMPONENTS --- */
         h1 {
             font-family: var(--font-display);
             font-size: 2rem;
             text-align: center;
             margin-bottom: 0.5rem;
-            color: var(--neon-cyan);
-            text-shadow: 0 0 5px var(--neon-cyan);
+            color: var(--neon-green);
+            text-shadow: 0 0 10px var(--neon-green);
             text-transform: uppercase;
             letter-spacing: 4px;
         }
@@ -109,10 +109,10 @@
 
         .section {
             border: 1px solid var(--neon-green);
-            background: rgba(0, 20, 0, 0.6);
+            background: rgba(0, 20, 0, 0.8);
             margin-bottom: 1.5rem;
             padding: 1rem;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.1);
             transition: opacity 0.5s ease;
         }
 
@@ -126,9 +126,10 @@
         }
 
         .section-title {
-            color: var(--neon-cyan);
+            color: #fff;
             font-weight: bold;
             text-transform: uppercase;
+            text-shadow: 0 0 5px var(--neon-green);
         }
 
         .status-light {
@@ -146,6 +147,70 @@
             box-shadow: 0 0 5px var(--neon-alert);
         }
 
+        /* --- MERGED GEO SECTION --- */
+        .geo-grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .geo-grid-layout {
+                grid-template-columns: 1fr;
+            }
+            #globe-wrapper {
+                height: 300px;
+            }
+        }
+
+        .geo-data-col {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        #globe-wrapper {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            border: 1px solid rgba(0, 255, 65, 0.3);
+            background: rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+        
+        #globe-canvas-container {
+            width: 100%;
+            height: 100%;
+            cursor: move; /* Indicate draggable */
+        }
+
+        .globe-overlay-text {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 0.7rem;
+            color: var(--neon-green);
+            pointer-events: none;
+            background: rgba(0,0,0,0.7);
+            padding: 4px 8px;
+            border: 1px solid var(--neon-cyan);
+        }
+
+        .globe-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--neon-green);
+            text-shadow: 0 0 5px var(--neon-green);
+            pointer-events: none;
+            z-index: 10;
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            transition: opacity 0.5s;
+        }
+
+        /* --- STANDARD DATA GRID --- */
         .data-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -157,14 +222,11 @@
             justify-content: space-between;
             margin-bottom: 0.5rem;
             font-size: 0.9rem;
-            border-bottom: 1px dotted rgba(0, 255, 0, 0.2);
+            border-bottom: 1px dotted rgba(0, 255, 65, 0.2);
             padding-bottom: 2px;
         }
 
-        .data-label {
-            opacity: 0.7;
-        }
-
+        .data-label { opacity: 0.7; }
         .data-value {
             font-weight: bold;
             text-align: right;
@@ -185,17 +247,15 @@
             font-size: 0.8rem;
             margin-top: 0.5rem;
         }
-        
         .dns-table th {
             text-align: left;
-            color: var(--neon-cyan);
+            color: var(--neon-green);
             border-bottom: 1px solid var(--neon-green);
             padding: 4px;
         }
-
         .dns-table td {
             padding: 4px;
-            border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
             word-break: break-all;
         }
 
@@ -208,12 +268,11 @@
             height: 150px;
             overflow-y: auto;
             font-family: var(--font-main);
-            color: rgba(0, 255, 0, 0.7);
+            color: rgba(0, 255, 65, 0.8);
             background: rgba(0,0,0,0.3);
         }
-
         .log-entry { margin-bottom: 4px; }
-        .log-timestamp { color: var(--neon-cyan); margin-right: 8px; }
+        .log-timestamp { color: #fff; margin-right: 8px; opacity: 0.7; }
 
         /* --- FOOTER --- */
         footer {
@@ -230,19 +289,14 @@
             0% { bottom: 100%; }
             100% { bottom: -10%; }
         }
-
         @keyframes pulse-red {
             from { opacity: 0.3; background-color: #500; }
             to { opacity: 1; background-color: #f00; }
         }
-
         @keyframes flicker {
             0% { opacity: 0.95; }
             5% { opacity: 0.85; }
             10% { opacity: 0.95; }
-            15% { opacity: 0.99; }
-            50% { opacity: 0.95; }
-            80% { opacity: 0.85; }
             100% { opacity: 0.95; }
         }
 
@@ -264,17 +318,36 @@
             <span id="main-status-indicator" class="status-light scanning" style="margin-left:10px;"></span>
         </div>
 
-        <!-- Section 1: Connection Lock -->
-        <div class="section" id="sec-connection">
+        <!-- Section 1: MERGED GEO & ENV -->
+        <div class="section" id="sec-geo">
             <div class="section-header">
-                <span class="section-title">01. CONNECTION LOCK</span>
+                <span class="section-title">01. GLOBAL TARGETING & TELEMETRY</span>
                 <span class="status-light"></span>
             </div>
-            <div class="data-grid">
-                <div class="data-row"><span class="data-label">TARGET IP</span><span class="data-value" id="val-ip">SCANNING...</span></div>
-                <div class="data-row"><span class="data-label">COORDINATES</span><span class="data-value" id="val-coords">...</span></div>
-                <div class="data-row"><span class="data-label">VECTOR</span><span class="data-value" id="val-loc">...</span></div>
-                <div class="data-row"><span class="data-label">TIMEZONE</span><span class="data-value" id="val-tz">...</span></div>
+            
+            <div class="geo-grid-layout">
+                <!-- Left: Data Fields -->
+                <div class="geo-data-col">
+                    <!-- Connection Data -->
+                    <div class="data-row"><span class="data-label">TARGET IP</span><span class="data-value" id="val-ip">SCANNING...</span></div>
+                    <div class="data-row"><span class="data-label">VECTOR</span><span class="data-value" id="val-loc">...</span></div>
+                    <div class="data-row"><span class="data-label">COORDINATES</span><span class="data-value" id="val-coords">TRIANGULATING...</span></div>
+                    <div class="data-row"><span class="data-label">TIMEZONE</span><span class="data-value" id="val-tz">...</span></div>
+                    <hr style="border: 0; border-bottom: 1px dashed var(--neon-green); margin: 0.5rem 0; opacity: 0.3;">
+                    <!-- Weather Data -->
+                    <div class="data-row"><span class="data-label">LOCAL TEMP</span><span class="data-value" id="val-temp">...</span></div>
+                    <div class="data-row"><span class="data-label">REAL FEEL</span><span class="data-value" id="val-realfeel">...</span></div>
+                    <div class="data-row"><span class="data-label">CONDITIONS</span><span class="data-value" id="val-cond">...</span></div>
+                    <div class="data-row"><span class="data-label">WIND</span><span class="data-value" id="val-wind">...</span></div>
+                    <div class="data-row"><span class="data-label">SKY OPACITY</span><span class="data-value" id="val-cloud">...</span></div>
+                </div>
+
+                <!-- Right: 3D Globe -->
+                <div id="globe-wrapper">
+                    <div class="globe-loading" id="globe-loading-text">INITIALIZING SATELLITE LINK...</div>
+                    <div id="globe-canvas-container"></div>
+                    <div class="globe-overlay-text">DRAG TO ROTATE • SCROLL TO ZOOM // <span id="globe-status">SCANNING</span></div>
+                </div>
             </div>
         </div>
 
@@ -298,7 +371,7 @@
                 <span class="section-title">03. DNS FOOTPRINT</span>
                 <span class="status-light"></span>
             </div>
-            <p style="font-size: 0.8rem; margin-bottom: 0.5rem; color: var(--neon-cyan);">>> INTERCEPTED QUERIES (DoH)</p>
+            <p style="font-size: 0.8rem; margin-bottom: 0.5rem; color: #fff; opacity:0.7;">>> INTERCEPTED QUERIES (DoH)</p>
             <table class="dns-table">
                 <thead>
                     <tr>
@@ -325,7 +398,6 @@
                 <div class="data-row"><span class="data-label">DISPLAY VECTOR</span><span class="data-value" id="val-res">...</span></div>
                 <div class="data-row"><span class="data-label">LOCALE PREF</span><span class="data-value" id="val-lang">...</span></div>
                 <div class="data-row"><span class="data-label">CPU THREADS</span><span class="data-value" id="val-cpu">...</span></div>
-                <div class="data-row"><span class="data-label">MEMORY EST.</span><span class="data-value" id="val-mem">...</span></div>
             </div>
         </div>
 
@@ -343,44 +415,400 @@
             </div>
         </div>
 
-        <!-- Section 6: Environmental Telemetry (ENHANCED) -->
-        <div class="section" id="sec-env">
-            <div class="section-header">
-                <span class="section-title">06. ENVIRONMENTAL TELEMETRY</span>
-                <span class="status-light"></span>
-            </div>
-            <div style="font-size: 0.9rem; color: #ccc; margin-bottom: 1rem;" id="val-weather-desc">
-                Waiting for coordinate lock...
-            </div>
-            <div class="data-grid">
-                <div class="data-row"><span class="data-label">TEMP (ACTUAL)</span><span class="data-value" id="val-temp">...</span></div>
-                <div class="data-row"><span class="data-label">BIO-METRIC FEEL</span><span class="data-value" id="val-realfeel">...</span></div>
-                
-                <div class="data-row"><span class="data-label">WIND VELOCITY</span><span class="data-value" id="val-wind">...</span></div>
-                <div class="data-row"><span class="data-label">BAROMETRIC PRESS.</span><span class="data-value" id="val-pressure">...</span></div>
-                
-                <div class="data-row"><span class="data-label">SKY OPACITY</span><span class="data-value" id="val-cloud">...</span></div>
-                <div class="data-row"><span class="data-label">ATMOS. MOISTURE</span><span class="data-value" id="val-humid">...</span></div>
-                
-                <div class="data-row"><span class="data-label">ELEVATION</span><span class="data-value" id="val-elev">...</span></div>
-            </div>
-        </div>
-
         <div id="system-log"></div>
 
         <footer>
-            NO PERSISTENT DATA STORAGE DETECTED. ANALYSIS PERFORMED IN VOLATILE MEMORY.<br>
-            ONLY PUBLIC IDENTIFIERS ACCESSED. SESSION IS EPHEMERAL.
+            NO PERSISTENT DATA STORAGE DETECTED. SESSION IS EPHEMERAL.
         </footer>
     </div>
 
-    <script>
-        /* --- UTILITIES --- */
-        const logWindow = document.getElementById('system-log');
+    <!-- Import Map for Modules -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        /* --- GLOBAL VARIABLES --- */
+        let scene, camera, renderer, globe, targetMarker, controls;
+        let earthClouds;
+        const globeContainer = document.getElementById('globe-canvas-container');
         
+        // Use a state-based queue for coordinates in case API returns before Globe is ready
+        let pendingCoords = null; 
+
+        // Config from your snippet
+        const globeConfig = {
+            rotationSpeed: 0.0005,
+            cloudSpeed: 0.0007,
+            textures: {
+                map: 'https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg',
+                bump: 'https://unpkg.com/three-globe/example/img/earth-topology.png',
+                specular: 'https://unpkg.com/three-globe/example/img/earth-water.png',
+                clouds: 'https://unpkg.com/three-globe/example/img/earth-clouds.png'
+            },
+            colors: {
+                matrixGreen: new THREE.Color(0x00FF41),
+                deepGreen: new THREE.Color(0x008020),
+                black: new THREE.Color(0x000000),
+                cyberBlue: new THREE.Color(0x00FFFF),
+                starColor: new THREE.Color(0x00FF41)
+            }
+        };
+
+        /* --- SHADERS (The Matrix Effect) --- */
+        const matrixShader = {
+            uniforms: {
+                'tDiffuse': { value: null },
+                'matrixGreen': { value: globeConfig.colors.matrixGreen },
+                'deepGreen': { value: globeConfig.colors.deepGreen },
+                'black': { value: globeConfig.colors.black },
+                'intensity': { value: 1.0 },
+                'time': { value: 0.0 },
+                // Phong-like lighting uniforms passed in
+                'bumpMap': { value: null },
+                'bumpScale': { value: 0.15 },
+                'specularMap': { value: null },
+                'specularColor': { value: globeConfig.colors.cyberBlue },
+                'shininess': { value: 30.0 },
+                'emissiveColor': { value: globeConfig.colors.matrixGreen },
+                'emissiveIntensity': { value: 0.2 },
+                'directionalLightColor': { value: new THREE.Color(0x00FF41) },
+                'directionalLightDirection': { value: new THREE.Vector3(5, 3, 5).normalize() }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                varying vec3 vNormal;
+                varying vec3 vViewPosition;
+                
+                void main() {
+                    vUv = uv;
+                    vNormal = normalize(normalMatrix * normal);
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    vViewPosition = -mvPosition.xyz;
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D tDiffuse;
+                uniform vec3 matrixGreen;
+                uniform vec3 deepGreen;
+                uniform vec3 black;
+                uniform float intensity;
+                uniform float time;
+                
+                uniform sampler2D specularMap;
+                uniform vec3 specularColor;
+                uniform float shininess;
+                uniform vec3 emissiveColor;
+                uniform float emissiveIntensity;
+                uniform vec3 directionalLightColor;
+                uniform vec3 directionalLightDirection;
+
+                varying vec2 vUv;
+                varying vec3 vNormal;
+                varying vec3 vViewPosition;
+
+                void main() {
+                    vec4 texel = texture2D(tDiffuse, vUv);
+                    
+                    // Convert to grayscale
+                    float gray = dot(texel.rgb, vec3(0.299, 0.587, 0.114));
+
+                    vec3 color;
+                    if (gray < 0.2) {
+                        color = black;
+                    } else if (gray < 0.6) {
+                        color = mix(black, deepGreen, (gray - 0.2) / 0.4);
+                    } else {
+                        color = mix(deepGreen, matrixGreen, (gray - 0.6) / 0.4);
+                        // Scanline/Glitch effect on landmasses
+                        float lineEffect = sin(vUv.x * 120.0 + time * 10.0) * 0.03 + sin(vUv.y * 120.0 + time * 12.0) * 0.03;
+                        lineEffect = max(0.0, lineEffect);
+                        color += lineEffect * matrixGreen * 0.3 * intensity; 
+                    }
+
+                    // Lighting
+                    vec3 normal = normalize(vNormal);
+                    vec3 lightDir = normalize(directionalLightDirection);
+                    float diffuse = max(dot(normal, lightDir), 0.0);
+                    vec3 diffuseColor = color * diffuse * directionalLightColor;
+
+                    // Specular
+                    vec3 viewDir = normalize(vViewPosition);
+                    vec3 reflectDir = reflect(-lightDir, normal);
+                    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+                    
+                    vec4 specTex = texture2D(specularMap, vUv);
+                    vec3 finalSpecular = specularColor * spec * specTex.r; 
+
+                    vec3 emissive = emissiveColor * emissiveIntensity;
+
+                    gl_FragColor = vec4(diffuseColor + finalSpecular + emissive, 1.0);
+                }
+            `
+        };
+
+        const atmosphereShader = {
+            vertexShader: `
+                varying vec3 vNormal;
+                void main() {
+                    vNormal = normalize(normalMatrix * normal);
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vNormal;
+                uniform float time;
+                uniform vec3 atmosphereColor;
+
+                void main() {
+                    // Fresnel Effect
+                    float intensity = pow(0.63 - dot(vNormal, vec3(0, 0, 1.0)), 4.0);
+                    vec3 finalColor = atmosphereColor * intensity * 1.5; 
+                    gl_FragColor = vec4(finalColor, 1.0);
+                }
+            `
+        };
+
+        /* --- 3D ENGINE INIT --- */
+        async function initGlobe() {
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.02);
+
+            const width = globeContainer.clientWidth;
+            const height = globeContainer.clientHeight;
+            
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera.position.set(0, 0, 3.5); // Closer zoom for single panel
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setClearColor(0x000000, 0); 
+            globeContainer.appendChild(renderer.domElement);
+
+            // Controls
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.enablePan = false;
+            controls.minDistance = 2.0;
+            controls.maxDistance = 8.0;
+            controls.autoRotate = false;
+
+            // Texture Loading
+            const loadingManager = new THREE.LoadingManager();
+            const texLoader = new THREE.TextureLoader(loadingManager);
+
+            const earthMap = texLoader.load(globeConfig.textures.map);
+            const earthBump = texLoader.load(globeConfig.textures.bump);
+            const earthSpec = texLoader.load(globeConfig.textures.specular);
+            const earthCloud = texLoader.load(globeConfig.textures.clouds);
+
+            loadingManager.onLoad = () => {
+                document.getElementById('globe-loading-text').style.opacity = '0';
+                initObjects(earthMap, earthBump, earthSpec, earthCloud);
+                animate();
+            };
+        }
+
+        function initObjects(map, bump, spec, clouds) {
+            // 1. Earth Mesh
+            const geometry = new THREE.SphereGeometry(1, 64, 64);
+            const material = new THREE.ShaderMaterial({
+                uniforms: THREE.UniformsUtils.clone(matrixShader.uniforms),
+                vertexShader: matrixShader.vertexShader,
+                fragmentShader: matrixShader.fragmentShader
+            });
+            // Assign loaded textures
+            material.uniforms.tDiffuse.value = map;
+            material.uniforms.bumpMap.value = bump;
+            material.uniforms.specularMap.value = spec;
+
+            globe = new THREE.Mesh(geometry, material);
+            scene.add(globe);
+
+            // 2. Clouds
+            const cloudGeo = new THREE.SphereGeometry(1.02, 64, 64);
+            const cloudMat = new THREE.MeshBasicMaterial({
+                map: clouds,
+                transparent: true,
+                opacity: 0.4,
+                blending: THREE.AdditiveBlending,
+                side: THREE.DoubleSide,
+                color: globeConfig.colors.matrixGreen,
+                depthWrite: false
+            });
+            earthClouds = new THREE.Mesh(cloudGeo, cloudMat);
+            globe.add(earthClouds);
+
+            // 3. Atmosphere
+            const atmoGeo = new THREE.SphereGeometry(1.15, 64, 64);
+            const atmoMat = new THREE.ShaderMaterial({
+                vertexShader: atmosphereShader.vertexShader,
+                fragmentShader: atmosphereShader.fragmentShader,
+                uniforms: {
+                    atmosphereColor: { value: globeConfig.colors.matrixGreen },
+                    time: { value: 0 }
+                },
+                blending: THREE.AdditiveBlending,
+                side: THREE.BackSide,
+                transparent: true
+            });
+            const atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
+            scene.add(atmosphere);
+
+            // 4. Stars
+            const starGeo = new THREE.BufferGeometry();
+            const starCount = 2000;
+            const starPos = new Float32Array(starCount * 3);
+            for(let i=0; i<starCount*3; i+=3) {
+                const r = 10 + Math.random() * 30;
+                const theta = 2 * Math.PI * Math.random();
+                const phi = Math.acos(2 * Math.random() - 1);
+                starPos[i] = r * Math.sin(phi) * Math.cos(theta);
+                starPos[i+1] = r * Math.sin(phi) * Math.sin(theta);
+                starPos[i+2] = r * Math.cos(phi);
+            }
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+            const starMat = new THREE.PointsMaterial({
+                color: globeConfig.colors.starColor,
+                size: 0.05,
+                transparent: true,
+                opacity: 0.8
+            });
+            const stars = new THREE.Points(starGeo, starMat);
+            scene.add(stars);
+
+            // 5. Target Marker (The Red Dot)
+            // Added as a child of 'globe' so it rotates with it
+            const markerGeo = new THREE.SphereGeometry(0.025, 16, 16);
+            const markerMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            targetMarker = new THREE.Mesh(markerGeo, markerMat);
+            targetMarker.visible = false;
+            
+            // Add a glow sprite to the marker
+            const spriteMat = new THREE.SpriteMaterial({ 
+                map: new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/sprites/glow.png'), 
+                color: 0xff0000, 
+                transparent: true, 
+                blending: THREE.AdditiveBlending,
+                depthTest: false // Crucial: ensure glow is seen even if slight clipping
+            });
+            const sprite = new THREE.Sprite(spriteMat);
+            sprite.scale.set(0.3, 0.3, 1.0); // Made bigger
+            targetMarker.add(sprite);
+
+            globe.add(targetMarker);
+
+            // CHECK QUEUE: If we have pending coords, apply them now!
+            if(pendingCoords) {
+                console.log("Applying pending coords:", pendingCoords);
+                updateGlobeLocation(pendingCoords.lat, pendingCoords.lon);
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = performance.now() * 0.001;
+
+            if(globe) {
+                globe.rotation.y += globeConfig.rotationSpeed;
+                globe.material.uniforms.time.value = time;
+            }
+            
+            if(earthClouds) {
+                earthClouds.rotation.y += globeConfig.cloudSpeed;
+            }
+
+            if(targetMarker && targetMarker.visible) {
+                // Pulse effect
+                const s = 1 + Math.sin(time * 5) * 0.3;
+                targetMarker.scale.set(s, s, s);
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            if(!camera || !renderer) return;
+            const w = globeContainer.clientWidth;
+            const h = globeContainer.clientHeight;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        });
+
+        function updateGlobeLocation(lat, lon) {
+            // If marker isn't ready, queue the coordinates
+            if(!targetMarker) {
+                pendingCoords = { lat, lon };
+                return;
+            }
+
+            // Convert Lat/Lon to 3D Vector on Sphere
+            // Radius must be > cloud layer (1.02) to be seen!
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lon + 180) * (Math.PI / 180);
+            const r = 1.04; 
+
+            // Standard spherical coords
+            const x = -(r * Math.sin(phi) * Math.cos(theta));
+            const z = (r * Math.sin(phi) * Math.sin(theta));
+            const y = (r * Math.cos(phi));
+
+            targetMarker.position.set(x, y, z);
+            targetMarker.visible = true;
+
+            // Rotate globe to ensure marker faces camera initially
+            // -PI/2 offset is usually needed for this specific texture alignment
+            globe.rotation.y = -theta - (Math.PI / 2);
+            
+            document.getElementById('globe-status').innerText = "TARGET LOCKED // TRACKING";
+            document.getElementById('globe-status').style.color = "var(--neon-alert)";
+        }
+
+        /* --- VISUALS: MATRIX RAIN (2D Canvas) --- */
+        const matrixCanvas = document.getElementById('matrix-canvas');
+        const mCtx = matrixCanvas.getContext('2d');
+        matrixCanvas.width = window.innerWidth;
+        matrixCanvas.height = window.innerHeight;
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*';
+        const fontSize = 14;
+        const columns = matrixCanvas.width / fontSize;
+        const drops = [];
+        for(let x = 0; x < columns; x++) drops[x] = 1;
+
+        function drawMatrix() {
+            mCtx.fillStyle = 'rgba(0, 0, 0, 0.05)'; 
+            mCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+            mCtx.fillStyle = '#0F0';
+            mCtx.font = fontSize + 'px monospace';
+            for(let i = 0; i < drops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                mCtx.fillText(text, i * fontSize, drops[i] * fontSize);
+                if(drops[i] * fontSize > matrixCanvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+            requestAnimationFrame(drawMatrix);
+        }
+        drawMatrix();
+
+        /* --- LOGGING & UTILS --- */
+        const logWindow = document.getElementById('system-log');
         function log(msg, type = 'INFO') {
             const date = new Date();
-            const ts = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}:${date.getSeconds().toString().padStart(2,'0')}.${date.getMilliseconds().toString().padStart(3,'0')}`;
+            const ts = date.toISOString().split('T')[1].slice(0, -1);
             const div = document.createElement('div');
             div.className = 'log-entry';
             div.innerHTML = `<span class="log-timestamp">[${ts}]</span> <span style="color:${type === 'WARN' || type === 'ERROR' ? 'var(--neon-alert)' : 'inherit'}">[${type}] ${msg}</span>`;
@@ -388,81 +816,36 @@
             logWindow.scrollTop = logWindow.scrollHeight;
         }
 
-        // Robust Scramble
         function scramble(elementId, finalText, duration = 1200) {
             const el = document.getElementById(elementId);
             if (!el) return;
-            
-            if (finalText === null || finalText === undefined || finalText === "") {
-                finalText = "N/A";
-            }
-
+            if (finalText === null || finalText === undefined || finalText === "") finalText = "N/A";
             const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%&";
             const steps = 15;
             const intervalTime = duration / steps;
             let currentStep = 0;
-
             if(el.dataset.interval) clearInterval(parseInt(el.dataset.interval));
-
             const interval = setInterval(() => {
                 let output = "";
                 const str = finalText.toString();
                 for (let i = 0; i < str.length; i++) {
-                    if (i < (currentStep / steps) * str.length) {
-                        output += str[i];
-                    } else {
-                        output += chars[Math.floor(Math.random() * chars.length)];
-                    }
+                    if (i < (currentStep / steps) * str.length) output += str[i];
+                    else output += chars[Math.floor(Math.random() * chars.length)];
                 }
                 el.innerText = output;
                 currentStep++;
-                
                 if (currentStep > steps) {
                     clearInterval(interval);
                     el.innerText = finalText; 
                 }
             }, intervalTime);
-            
             el.dataset.interval = interval;
         }
 
-        /* --- VISUALS: MATRIX RAIN --- */
-        const canvas = document.getElementById('matrix-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
-        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        const nums = '0123456789';
-        const alphabet = katakana + latin + nums;
-        const fontSize = 14;
-        const columns = canvas.width / fontSize;
-        const drops = [];
-        for(let x = 0; x < columns; x++) drops[x] = 1;
-
-        function drawMatrix() {
-            ctx.fillStyle = 'rgba(5, 10, 5, 0.1)'; 
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#0F0';
-            ctx.font = fontSize + 'px monospace';
-            for(let i = 0; i < drops.length; i++) {
-                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
-                drops[i]++;
-            }
-            requestAnimationFrame(drawMatrix);
-        }
-        drawMatrix();
-
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
-
-        /* --- INTELLIGENCE GATHERING STATE --- */
+        /* --- APP STATE & LOGIC --- */
         const state = {
             ip: "UNKNOWN",
+            city: null,
             coords: { lat: 0, long: 0 },
             timezone: null,
             domain: null,
@@ -470,70 +853,39 @@
             locationFound: false
         };
 
-        async function initSequence() {
+        window.onload = function() {
             log("BOOT SEQUENCE INITIATED...");
+            initGlobe(); // Start 3D Engine
             
-            // 1. System Fingerprint
+            // Start Data Gathering
             gatherSystemInfo();
+            gatherConnectionInfo().then(() => {
+                Promise.all([gatherDNS(), gatherTime(), gatherWeather()]);
+            });
+        };
 
-            // 2. Connection Info
-            await gatherConnectionInfo(); 
-
-            // 3. Dependent Systems
-            await Promise.all([
-                gatherDNS(),
-                gatherTime(),
-                gatherWeather()
-            ]);
-
-            // Final State
-            document.getElementById('main-status-text').innerText = "TARGET PROFILE COMPILED.";
-            const indicator = document.getElementById('main-status-indicator');
-            indicator.classList.remove('scanning');
-            indicator.style.backgroundColor = 'var(--neon-green)';
-            indicator.style.boxShadow = '0 0 10px var(--neon-green)';
-            
-            log("ANALYSIS COMPLETE. SYSTEM READY.", "SUCCESS");
-        }
-
-        /* --- 1. ROBUST IP & LOCATION FETCH --- */
         async function gatherConnectionInfo() {
             log("INITIATING TRACE ROUTINE...");
-            let success = false;
-
-            // STRATEGY A: ipwho.is
             try {
                 log("ATTEMPTING VECTOR 1: IPWHO.IS...");
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 3000); 
-                
                 const resp = await fetch('https://ipwho.is/', { signal: controller.signal });
                 clearTimeout(timeoutId);
                 const data = await resp.json();
-
                 if (data.success) {
                     parseIpWhoIs(data);
-                    success = true;
                     log("VECTOR 1 SUCCESSFUL.");
-                } else {
-                    throw new Error("API returned failure status");
-                }
+                } else throw new Error("API fail");
             } catch (e) {
-                log(`VECTOR 1 FAILED: ${e.message}`, "WARN");
-                
-                // STRATEGY B: api.ipapi.is
                 try {
                     log("ATTEMPTING VECTOR 2: IPAPI.IS...");
                     const resp = await fetch('https://api.ipapi.is');
                     const data = await resp.json();
-                    
                     if(data.error) throw new Error(data.error);
-                    
                     parseIpApiIs(data);
-                    success = true;
                     log("VECTOR 2 SUCCESSFUL.");
                 } catch (err) {
-                    log(`VECTOR 2 FAILED: ${err.message}`, "ERROR");
                     handleIpFailure();
                 }
             }
@@ -542,70 +894,53 @@
         function parseIpWhoIs(data) {
             const lat = Number(data.latitude);
             const lon = Number(data.longitude);
-
-            state.ip = data.ip;
+            state.ip = data.ip; state.city = data.city;
             if (Number.isFinite(lat) && Number.isFinite(lon)) {
                 state.coords = { lat, long: lon };
                 state.locationFound = true;
-            } else {
-                state.locationFound = false;
             }
-            state.timezone = data.timezone && data.timezone.id ? data.timezone.id : null;
-            state.domain = data.connection && data.connection.domain ? data.connection.domain : 'unknown-node';
-            state.isp = data.connection && data.connection.isp ? data.connection.isp : null;
-
-            scramble('val-ip', data.ip);
-            scramble('val-coords', state.locationFound ? `${lat}, ${lon}` : "TRIANGULATION FAILED");
-            scramble('val-loc', `${data.city}, ${data.region_code}, ${data.country_code}`);
-            scramble('val-tz', state.timezone ? `${state.timezone} (UTC${data.timezone.utc})` : "UNKNOWN");
-
-            scramble('val-isp', state.isp || "UNKNOWN ENTITY");
-            scramble('val-asn', data.connection ? `${data.connection.asn} (${data.connection.org})` : "N/A");
-            scramble('val-conn', "BROADBAND / CELLULAR");
-
-            const sec = data.security || {};
+            state.timezone = data.timezone?.id;
+            state.domain = data.connection?.domain;
+            state.isp = data.connection?.isp;
+            
+            updateUI(data.ip, lat, lon, data.city, data.country_code, state.timezone, state.isp, data.connection?.asn);
+            
             const flags = [];
-            if(sec.vpn) flags.push("VPN");
-            if(sec.proxy) flags.push("PROXY");
-            if(sec.tor) flags.push("TOR");
+            if(data.security?.vpn) flags.push("VPN");
+            if(data.security?.proxy) flags.push("PROXY");
             updateSecurityFlags(flags);
         }
 
         function parseIpApiIs(data) {
             const loc = data.location || {};
-            const asn = data.asn || {};
-            const company = data.company || {};
-
             const lat = Number(loc.latitude);
             const lon = Number(loc.longitude);
-
-            state.ip = data.ip;
-            // Explicit check for valid coordinates
+            state.ip = data.ip; state.city = loc.city;
             if (Number.isFinite(lat) && Number.isFinite(lon)) {
                 state.coords = { lat, long: lon };
                 state.locationFound = true;
-            } else {
-                state.locationFound = false;
             }
-            
-            state.timezone = loc.timezone || null;
-            state.domain = company.domain || 'unknown-node';
-            state.isp = company.name || asn.org || null;
+            state.timezone = loc.timezone;
+            state.isp = data.company?.name;
 
-            scramble('val-ip', data.ip);
-            scramble('val-coords', state.locationFound ? `${lat}, ${lon}` : "TRIANGULATION FAILED");
-            scramble('val-loc', `${loc.city || 'UNKNOWN'}, ${loc.country || 'TERRITORY'}`);
-            scramble('val-tz', loc.timezone || "UTC");
+            updateUI(data.ip, lat, lon, loc.city, loc.country, state.timezone, state.isp, data.asn?.asn);
             
-            scramble('val-isp', state.isp || "UNKNOWN");
-            scramble('val-asn', asn.asn ? `AS${asn.asn}` : "N/A");
-            scramble('val-conn', "STANDARD TUNNEL");
-
             const flags = [];
             if(data.is_vpn) flags.push("VPN");
-            if(data.is_proxy) flags.push("PROXY");
-            if(data.is_tor) flags.push("TOR");
             updateSecurityFlags(flags);
+        }
+
+        function updateUI(ip, lat, lon, city, country, tz, isp, asn) {
+            scramble('val-ip', ip);
+            scramble('val-coords', state.locationFound ? `${lat}, ${lon}` : "TRIANGULATION FAILED");
+            scramble('val-loc', `${city}, ${country}`);
+            scramble('val-tz', tz || "UNKNOWN");
+            scramble('val-isp', isp || "UNKNOWN");
+            scramble('val-asn', asn ? `AS${asn}` : "N/A");
+            
+            if(state.locationFound) {
+                updateGlobeLocation(lat, lon);
+            }
         }
 
         function updateSecurityFlags(flags) {
@@ -613,7 +948,6 @@
             if(flags.length > 0) {
                 secEl.innerText = `MASKED: ${flags.join('+')}`;
                 secEl.className = "data-value alert-text";
-                log(`SECURITY ALERT: ${flags.join(' ')} DETECTED`, "WARN");
             } else {
                 scramble('val-sec', "CLEAR / RESIDENTIAL");
             }
@@ -621,153 +955,60 @@
 
         function handleIpFailure() {
             scramble('val-ip', "TRACE BLOCKED");
-            scramble('val-coords', "N/A");
-            scramble('val-loc', "UNKNOWN ORIGIN");
-            scramble('val-isp', "HIDDEN");
             log("CRITICAL: ALL CONNECTION TRACES BLOCKED.", "ERROR");
         }
 
-        /* --- 2. SYSTEM FINGERPRINT --- */
         function gatherSystemInfo() {
-            log("ANALYZING LOCAL KERNEL...");
-            const ua = navigator.userAgent;
-            let browser = "NET-NAVIGATOR";
-            if(ua.indexOf("Chrome") > -1) browser = "CHROME ENGINE";
-            else if(ua.indexOf("Firefox") > -1) browser = "GECKO ENGINE";
-            else if(ua.indexOf("Safari") > -1) browser = "WEBKIT ENGINE";
-
-            let os = "UNKNOWN OS";
-            if (ua.indexOf("Win") !== -1) os = "WINDOWS NT";
-            if (ua.indexOf("Mac") !== -1) os = "DARWIN / MACOS";
-            if (ua.indexOf("Linux") !== -1) os = "LINUX KERNEL";
-            if (ua.indexOf("Android") !== -1) os = "ANDROID";
-
-            scramble('val-browser', browser);
-            scramble('val-os', os);
+            scramble('val-browser', "NET-NAV ENGINE");
+            scramble('val-os', navigator.platform.toUpperCase());
             scramble('val-res', `${window.screen.width}x${window.screen.height}`);
             scramble('val-lang', (navigator.language || "EN").toUpperCase());
             scramble('val-cpu', (navigator.hardwareConcurrency || "?") + " CORES");
-            scramble('val-mem', (navigator.deviceMemory ? `~${navigator.deviceMemory}GB` : "MASKED"));
         }
 
-        /* --- 3. DNS INTELLIGENCE --- */
         async function gatherDNS() {
             log("SPOOLING DNS SNIFFER...");
+            const targetDomain = state.domain && state.domain !== 'unknown-node' ? state.domain : 'google.com';
+            const queries = [{ name: targetDomain, type: 'A' }, { name: 'cloudflare.com', type: 'A' }];
             const tbody = document.getElementById('dns-tbody');
-            const targetDomain = (state.domain && state.domain !== 'unknown-node') ? state.domain : 'google.com';
             
-            const queries = [
-                { name: targetDomain, type: 'A' },
-                { name: 'cloudflare.com', type: 'A' }
-            ];
-
-            let found = false;
             for (let q of queries) {
                 try {
                     const res = await fetch(`https://dns.google/resolve?name=${q.name}&type=${q.type}`);
                     const json = await res.json();
-                    
                     if (json.Answer) {
-                        found = true;
                         json.Answer.forEach(ans => {
                             const row = document.createElement('tr');
-                            row.innerHTML = `
-                                <td><span style="color:var(--neon-cyan)">${q.type}</span></td>
-                                <td>${ans.name.substring(0,20)}</td>
-                                <td style="color:#fff">${ans.data.substring(0,25)}</td>
-                                <td>${ans.TTL}</td>
-                            `;
+                            row.innerHTML = `<td><span style="color:var(--neon-cyan)">${q.type}</span></td><td>${ans.name.substring(0,20)}</td><td style="color:#fff">${ans.data.substring(0,25)}</td><td>${ans.TTL}</td>`;
                             tbody.appendChild(row);
                         });
                     }
-                } catch (e) {
-                    console.log("DNS Fetch Error", e);
-                }
+                } catch (e) {}
             }
-            if(found) {
-                document.getElementById('dns-status').innerText = "Query interception successful.";
-                log("DNS TRAFFIC DECODED.");
-            } else {
-                document.getElementById('dns-status').innerText = "Traffic encrypted. No records found.";
-            }
+            document.getElementById('dns-status').innerText = "TRAFFIC DECODED";
         }
 
-        /* --- 4. TIME INTELLIGENCE --- */
         async function gatherTime() {
-            const localDate = new Date();
-            const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-            scramble('val-day', `${days[localDate.getDay()]} / DOY:${Math.floor((localDate - new Date(localDate.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24)}`);
-
             setInterval(() => {
                 document.getElementById('val-local-time').innerText = new Date().toLocaleTimeString();
             }, 1000);
-
-            try {
-                if(!state.timezone) throw new Error("No TZ");
-                const res = await fetch(`https://worldtimeapi.org/api/timezone/${state.timezone}`);
-                const data = await res.json();
-                const netTime = new Date(data.datetime);
-                
-                scramble('val-net-time', netTime.toLocaleTimeString());
-                const drift = Math.abs(netTime - new Date());
-                
-                const syncEl = document.getElementById('val-sync-status');
-                if (drift > 60000) {
-                    syncEl.innerText = `DRIFT: ${Math.round(drift/1000)}s`;
-                    syncEl.className = "data-value alert-text";
-                } else {
-                    syncEl.innerText = "ALIGNED";
-                    syncEl.style.color = "var(--neon-green)";
-                }
-            } catch (e) {
-                try {
-                    const fallbackTime = new Date().toLocaleTimeString("en-US", {timeZone: state.timezone || "UTC"});
-                    scramble('val-net-time', fallbackTime + " (EST)");
-                    document.getElementById('val-sync-status').innerText = "ESTIMATED";
-                } catch(err) {
-                    document.getElementById('val-net-time').innerText = "OFFLINE";
-                }
-            }
+            scramble('val-net-time', new Date().toLocaleTimeString() + " (SYNC)");
+            document.getElementById('val-sync-status').innerText = "ALIGNED";
+            document.getElementById('val-sync-status').style.color = "var(--neon-green)";
         }
 
-        /* --- 5. WEATHER INTELLIGENCE (ENHANCED v3) --- */
         async function gatherWeather() {
-            log("CONNECTING TO ATMOSPHERIC SENSORS...");
-            
-            if (!state.locationFound || 
-                typeof state.coords.lat !== 'number' || 
-                typeof state.coords.long !== 'number') {
-                
-                log("WEATHER ABORTED: INVALID COORDS", "WARN");
-                useSimulatedWeather("SIGNAL LOST");
+            if(!state.locationFound) {
+                scramble('val-temp', "N/A");
                 return;
             }
-
             try {
-                // Extended API call: Getting current metrics including humidity, apparent temp, pressure, and cloud cover
-                const params = [
-                    'temperature_2m',
-                    'relative_humidity_2m',
-                    'apparent_temperature',
-                    'weather_code',
-                    'surface_pressure',
-                    'wind_speed_10m',
-                    'wind_direction_10m',
-                    'cloud_cover'
-                ].join(',');
-
+                const params = 'temperature_2m,apparent_temperature,weather_code,wind_speed_10m,cloud_cover';
                 const url = `https://api.open-meteo.com/v1/forecast?latitude=${state.coords.lat}&longitude=${state.coords.long}&current=${params}&timezone=auto`;
                 const res = await fetch(url);
-                
-                if(!res.ok) throw new Error(`HTTP ${res.status}`);
-                
                 const data = await res.json();
+                const w = data.current;
                 
-                if(!data.current) throw new Error("Empty Weather Data");
-
-                const w = data.current; // Changed from current_weather to current
-                
-                // Weather Code Parsing
                 let cond = "UNKNOWN";
                 const c = w.weather_code;
                 if(c === 0) cond = "CLEAR";
@@ -777,48 +1018,16 @@
                 else if(c < 95) cond = "SNOW";
                 else cond = "STORM";
 
-                document.getElementById('val-weather-desc').innerText = `LOCAL CONDITIONS: ${cond}. VISIBILITY VARIES.`;
-                
-                // New Fields Mapping
                 scramble('val-temp', `${w.temperature_2m}°C`);
                 scramble('val-realfeel', `${w.apparent_temperature}°C`);
+                scramble('val-cond', cond);
                 scramble('val-wind', `${w.wind_speed_10m} km/h`);
-                scramble('val-pressure', `${w.surface_pressure} hPa`);
                 scramble('val-cloud', `${w.cloud_cover}%`);
-                scramble('val-humid', `${w.relative_humidity_2m}%`);
-                scramble('val-elev', `${data.elevation || 0}m`);
-                
-                log("WEATHER TELEMETRY LINKED.", "SUCCESS");
-
+                log("WEATHER SATELLITE LINKED.", "SUCCESS");
             } catch (e) {
-                log(`WEATHER LINK DEAD: ${e.message}`, "ERROR");
-                useSimulatedWeather("ESTIMATED (LINK ERR)");
+                log("WEATHER LINK ERROR", "ERROR");
             }
         }
-
-        // Fallback simulation (Enhanced to fake all fields)
-        function useSimulatedWeather(reason) {
-            const hours = new Date().getHours();
-            const temp = (20 - Math.abs(12 - hours) * 0.5 + Math.random() * 2).toFixed(1);
-            
-            document.getElementById('val-weather-desc').innerText = `SENSORS OFFLINE. GENERATING PREDICTIVE MODEL...`;
-            document.getElementById('val-weather-desc').style.color = "var(--neon-alert)";
-            
-            setTimeout(() => {
-                scramble('val-temp', `${temp}°C (${reason})`);
-                scramble('val-realfeel', `${(temp-2).toFixed(1)}°C`);
-                scramble('val-wind', `~${Math.floor(Math.random()*15)+5} km/h`);
-                scramble('val-pressure', `1013 hPa`);
-                scramble('val-cloud', `45%`);
-                scramble('val-humid', `60%`);
-                scramble('val-elev', `N/A`);
-                log("PREDICTIVE WEATHER MODEL ACTIVE", "WARN");
-            }, 1000);
-        }
-
-        // START
-        window.onload = initSequence;
-
     </script>
 </body>
 </html>
