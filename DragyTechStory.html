@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DragyTech: Entropy's Arc</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #050505;
+            color: #e5e5e5;
+            overflow-x: hidden;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Keyword Styling */
+        .keyword-interactive {
+            color: #4ade80; /* green-400 */
+            font-weight: 700;
+            background: rgba(74, 222, 128, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-block;
+            border-bottom: 1px dashed rgba(74, 222, 128, 0.5);
+            position: relative;
+            white-space: nowrap;
+        }
+        .keyword-interactive:hover {
+            background: rgba(74, 222, 128, 0.25);
+            color: #86efac; /* green-300 */
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74, 222, 128, 0.1);
+            border-bottom-style: solid;
+        }
+        .keyword-interactive::after {
+            content: '\f05a'; /* FontAwesome info-circle */
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 0.7em;
+            margin-left: 4px;
+            opacity: 0.5;
+            vertical-align: top;
+        }
+        .keyword-interactive:hover::after {
+            opacity: 1;
+        }
+
+        /* Danger/Warning variants */
+        .keyword-danger {
+            color: #f87171; /* red-400 */
+            background: rgba(248, 113, 113, 0.1);
+            padding: 0 4px;
+            border-radius: 4px;
+        }
+        
+        /* Modal Animation */
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 300ms, transform 300ms; }
+        .modal-exit { opacity: 1; transform: scale(1); }
+        .modal-exit-active { opacity: 0; transform: scale(0.95); transition: opacity 200ms, transform 200ms; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Glitch Effect */
+        .glitch-wrapper { position: relative; }
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+        }
+        .glitch-text::before {
+            left: 2px; text-shadow: -1px 0 #ff00c1;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+        .glitch-text::after {
+            left: -2px; text-shadow: -1px 0 #00fff9;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+        @keyframes glitch-anim {
+            0% { clip: rect(30px, 9999px, 10px, 0); }
+            100% { clip: rect(70px, 9999px, 90px, 0); }
+        }
+        @keyframes glitch-anim2 {
+            0% { clip: rect(10px, 9999px, 80px, 0); }
+            100% { clip: rect(90px, 9999px, 10px, 0); }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.8s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .scanline {
+            width: 100%; height: 100px; z-index: 10;
+            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(51, 255, 51, 0.03) 50%, rgba(0,0,0,0) 100%);
+            opacity: 0.1; position: absolute; bottom: 100%;
+            animation: scanline 10s linear infinite; pointer-events: none;
+        }
+        @keyframes scanline {
+            0% { bottom: 100%; }
+            100% { bottom: -100%; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- DEFINITION DATABASE (ENGLISH) ---
+        const definitionDB = {
+            // Module 1
+            "Entropy's Arc": {
+                title: "Entropy's Arc",
+                module: "Module 1: Cybersecurity Foundations",
+                desc: "Borrowed from thermodynamics, this concept describes how randomness, disorder, or unpredictability (entropy) naturally increases in an information system over time. Without active governance and architecture to 'do work' against it, systems tend toward chaos.",
+                icon: "fa-arrow-trend-up"
+            },
+            "The Fifth Domain": {
+                title: "The Fifth Domain",
+                module: "Module 1: Cybersecurity Foundations",
+                desc: "Refers to Cyberspace as the newest theatre of operations and strategy, following Land, Sea, Air, and Space. It suggests that digital networks are no longer just support tools but active battlefields.",
+                icon: "fa-earth-americas"
+            },
+            "CIA Triad": {
+                title: "CIA Triad",
+                module: "Module 1: Cybersecurity Foundations",
+                desc: "The three pillars of information security: Confidentiality (only authorized eyes), Integrity (data is unaltered), and Availability (accessible when needed).",
+                icon: "fa-shield-halved"
+            },
+            "Defense in Depth": {
+                title: "Defense-in-Depth",
+                module: "Module 1: Cybersecurity Foundations",
+                desc: "A layered strategy (like a castle's moat, walls, and guards). It relies on multiple security controls—physical, network, host, and application—so that if one fails, others stand ready.",
+                icon: "fa-layer-group"
+            },
+            "Moore's Law": {
+                title: "Moore's Law",
+                module: "Module 1: Cybersecurity Foundations",
+                desc: "The prediction that computing power doubles roughly every two years. In security, this is a double-edged sword: it empowers defenders but also accelerates attackers' ability to crack codes and scan networks.",
+                icon: "fa-microchip"
+            },
+            "Contagion in Networks": {
+                title: "Contagion in Networks",
+                module: "Module 1: Cybersecurity Foundations",
+                desc: "Describes how cyberattacks (like worms or ransomware) spread like biological viruses through connected systems, exploiting weaknesses to move laterally across a flat network.",
+                icon: "fa-virus"
+            },
+            // Module 2
+            "ORM": {
+                title: "Operational Risk Management (ORM)",
+                module: "Module 2: Operational Risk Management",
+                desc: "Focuses on identifying, assessing, and controlling risks arising from failed internal processes, people, systems, or external events (like vendor failure).",
+                icon: "fa-clipboard-check"
+            },
+            "Marchand's Framework": {
+                title: "Marchand's Framework",
+                module: "Module 2: Operational Risk Management",
+                desc: "A framework emphasizing that true information agility requires synchronizing three areas: IT Practices (technology), Information Management (processes), and Information Behaviors (people's values and usage).",
+                icon: "fa-people-arrows"
+            },
+            "The Four Ts": {
+                title: "The 4 Ts",
+                module: "Module 2: Operational Risk Management",
+                desc: "The four strategies for handling risk: Tolerate (accept it), Treat (mitigate it, e.g., patching), Transfer (insure/outsource), or Terminate (stop the activity causing the risk).",
+                icon: "fa-diamond-turn-right"
+            },
+            "Threat Grid": {
+                title: "Threat Grid",
+                module: "Module 2: Operational Risk Management",
+                desc: "A tool used to map adversaries by analyzing their Motives (e.g., espionage, profit), Tactics, and Targets. It helps defenders understand 'who is attacking and why'.",
+                icon: "fa-crosshairs"
+            },
+            "Risk Observations": {
+                title: "Risk Observations",
+                module: "Module 2: Operational Risk Management",
+                desc: "Signals from audits or red team tests. They aren't necessarily full-blown incidents yet, but they flag potential weaknesses that could mature into serious risks if ignored.",
+                icon: "fa-binoculars"
+            },
+            // Module 3
+            "Social Engineering": {
+                title: "Social Engineering",
+                module: "Module 3: Human Factors",
+                desc: "Manipulating human psychology (trust, fear, urgency) to trick victims into divulging sensitive info or performing actions (like clicking a link or wiring money).",
+                icon: "fa-user-secret"
+            },
+            "Insider Threat": {
+                title: "Insider Threat",
+                module: "Module 3: Human Factors",
+                desc: "A security risk originating from within the organization (employees, contractors). It can be malicious (revenge, profit) or accidental (negligence).",
+                icon: "fa-user-ninja"
+            },
+            "BEC": {
+                title: "Business Email Compromise (BEC)",
+                module: "Module 3: Human Factors",
+                desc: "A sophisticated scam where attackers compromise legitimate business email accounts or spoof executives to authorize fraudulent wire transfers. No malware needed, just persuasion.",
+                icon: "fa-envelope-open-text"
+            },
+            "Vishing & Pretexting": {
+                title: "Vishing & Pretexting",
+                module: "Module 3: Human Factors",
+                desc: "Vishing (Voice Phishing) uses phone calls to deceive. Pretexting involves creating a fabricated scenario (a script) to gain a victim's trust and extract information.",
+                icon: "fa-phone-slash"
+            },
+            "The Three Lines of Defense": {
+                title: "The Three Lines of Defense",
+                module: "Module 3: Governance",
+                desc: "1st Line: Operational Management (owns risk). 2nd Line: Risk & Compliance (oversees risk). 3rd Line: Internal Audit (provides independent assurance).",
+                icon: "fa-gavel"
+            },
+            // Module 4
+            "Supply Chain Risk": {
+                title: "Supply Chain Risk",
+                module: "Module 4: Ecosystems",
+                desc: "Risks introduced by third-party vendors, software providers, or partners. You are only as secure as the weakest link in your supply chain.",
+                icon: "fa-truck-fast"
+            },
+            "Partner Exposure": {
+                title: "Partner Exposure",
+                module: "Module 4: Ecosystems",
+                desc: "The collateral damage an organization suffers when one of its business partners is breached. Your data in their hands becomes your liability.",
+                icon: "fa-handshake-slash"
+            },
+            "Data Hygiene": {
+                title: "Data Hygiene",
+                module: "Module 4: Ecosystems",
+                desc: "The daily, unglamorous practices that maintain system health: patching, configuration management, and cleaning up unused accounts. It's the most effective defense against getting a foothold.",
+                icon: "fa-broom"
+            },
+            "Bathtub Curve": {
+                title: "Bathtub Curve",
+                module: "Module 4: Ecosystems",
+                desc: "A reliability concept describing failure rates: high in early life (teething issues), low in mid-life, and rising again in late life (wear-out). In IT, it highlights the danger of legacy assets.",
+                icon: "fa-bath"
+            },
+            "Public-Private Partnerships": {
+                title: "Public-Private Partnerships",
+                module: "Module 4: Ecosystems",
+                desc: "Collaboration between government agencies (like CISA) and private companies to share threat intelligence and defend critical infrastructure.",
+                icon: "fa-building-columns"
+            },
+            // Module 5
+            "Governance vs Management": {
+                title: "Governance vs. Management",
+                module: "Module 5: Leadership",
+                desc: "Governance determines the 'What' (policy, risk appetite, oversight). Management executes the 'How' (implementation, daily operations). Directors govern; executives manage.",
+                icon: "fa-scale-balanced"
+            },
+            "Fiduciary Duties": {
+                title: "Fiduciary Duties",
+                module: "Module 5: Leadership",
+                desc: "The legal obligation of board members to act in the best interest of the company. In cybersecurity, pleading ignorance ('I'm not techy') is no longer a valid defense.",
+                icon: "fa-file-signature"
+            },
+            "Reporting Lines": {
+                title: "Reporting Lines",
+                module: "Module 5: Leadership",
+                desc: "Where the CISO sits in the org chart. Reporting to the CIO can create a conflict of interest (Security vs Speed). Reporting to the CEO/Board ensures independence.",
+                icon: "fa-sitemap"
+            },
+            // Module 6
+            "Cyber Resilience": {
+                title: "Cyber Resilience",
+                module: "Module 6: Threats & Capabilities",
+                desc: "Resilience = Preparedness + Agility + Recovery. The ability to anticipate, withstand, recover from, and adapt to cyberattacks, ensuring business continuity.",
+                icon: "fa-dumbbell"
+            },
+            "Global Cyber Capabilities": {
+                title: "Global Cyber Capabilities",
+                module: "Module 6: Threats & Capabilities",
+                desc: "The sum of tools, skills, and strategies that nations or groups possess to project power through cyberspace.",
+                icon: "fa-globe"
+            },
+            "Orchestrated Maturity Assessment": {
+                title: "Orchestrated Maturity Assessment",
+                module: "Module 6: Threats & Capabilities",
+                desc: "Not just a checklist. A realistic, simulated test (like Red Teaming) conducted periodically to evaluate how people, processes, and technology actually perform under fire.",
+                icon: "fa-chess-board"
+            },
+            "Forensic Validation": {
+                title: "Forensic Validation",
+                module: "Module 6: Threats & Capabilities",
+                desc: "Using logs and digital evidence to definitively prove the attack vector, scope of data loss, and malware persistence. Critical for legal defense.",
+                icon: "fa-magnifying-glass"
+            },
+            // Module 7
+            "Zero Trust": {
+                title: "Zero Trust",
+                module: "Module 7: Architecture",
+                desc: "The principle of 'Never Trust, Always Verify'. It assumes the network is already breached and requires strict identity verification for every access request, inside or out.",
+                icon: "fa-fingerprint"
+            },
+            "IAM": {
+                title: "IAM (Identity & Access Mgmt)",
+                module: "Module 7: Architecture",
+                desc: "The framework of business processes, policies, and technologies that facilitates the management of electronic or digital identities. AuthN (Who are you?) vs AuthZ (What can you do?).",
+                icon: "fa-id-card"
+            },
+            "SSDLC": {
+                title: "SSDLC",
+                module: "Module 7: Architecture",
+                desc: "Secure Software Development Life Cycle. Integrating security (Shift Left) into every phase of software creation—design, coding, testing—rather than patching it at the end.",
+                icon: "fa-code"
+            },
+            "Windsor Deer Park Analogy": {
+                title: "Windsor Deer Park Analogy",
+                module: "Module 7: Architecture",
+                desc: "A behavioral analytics metaphor: You don't need to see the wolf to know danger is present; you just need to see the deer running. In security, spot the anomaly, not just the malware signature.",
+                icon: "fa-paw"
+            },
+            // Module 8
+            "Disruptive Architectures": {
+                title: "Disruptive Architectures",
+                module: "Module 8: Future Trends",
+                desc: "Decentralized systems like Blockchain, Edge Computing, and Serverless. They drive innovation but introduce new, complex attack surfaces that traditional tools miss.",
+                icon: "fa-cubes"
+            },
+            "Generative AI": {
+                title: "Generative AI",
+                module: "Module 8: Future Trends",
+                desc: "A double-edged sword. Defenders use it for automated threat hunting; attackers use it to craft perfect phishing emails, deepfakes, and polymorphic code.",
+                icon: "fa-robot"
+            },
+            "Polymorphism": {
+                title: "Polymorphism",
+                module: "Module 8: Future Trends",
+                desc: "Malware that changes its code signature or behavior every time it runs to evade detection by traditional antivirus software.",
+                icon: "fa-mask"
+            },
+            "Q Day": {
+                title: "Q-Day",
+                module: "Module 8: Future Trends",
+                desc: "The hypothetical future date when quantum computers become powerful enough to break current public-key encryption (like RSA). Drives the 'Harvest Now, Decrypt Later' threat.",
+                icon: "fa-atom"
+            },
+            // Module 9
+            "Materiality": {
+                title: "Materiality",
+                module: "Module 9: Law & Regulation",
+                desc: "A legal standard (e.g., SEC rules). A cyber incident is 'material' if there is a substantial likelihood that a reasonable investor would consider it important. Requires rapid disclosure.",
+                icon: "fa-scale-unbalanced"
+            },
+            "e-Discovery": {
+                title: "e-Discovery",
+                module: "Module 9: Law & Regulation",
+                desc: "The process of identifying, collecting, and producing electronically stored information (ESI) for legal proceedings. Poor log retention can lose a court case.",
+                icon: "fa-hard-drive"
+            },
+            "SecDevOps": {
+                title: "SecDevOps",
+                module: "Module 9: Law & Regulation",
+                desc: "Integrating Security into DevOps. It breaks down silos between developers, operations, and security teams to deliver software that is both fast and secure.",
+                icon: "fa-infinity"
+            },
+            "Memory Safe Languages": {
+                title: "Memory Safe Languages",
+                module: "Module 9: Law & Regulation",
+                desc: "Languages like Rust, Go, or Java that automatically handle memory management, eliminating entire classes of vulnerabilities (like buffer overflows) common in C/C++.",
+                icon: "fa-memory"
+            },
+            "Regulatory Compliance": {
+                title: "Regulatory Compliance",
+                module: "Module 9: Law & Regulation",
+                desc: "Adhering to laws like GDPR, CCPA, and SEC rules. It's no longer just a legal checkbox but a core function of risk management.",
+                icon: "fa-book-open"
+            },
+            // Module 10
+            "Incident Response Plan": {
+                title: "Incident Response Plan (IRP)",
+                module: "Module 10: Incident Response",
+                desc: "A playbook guiding the organization through a cyber crisis: Preparation, Detection, Containment, Eradication, Recovery, and Lessons Learned.",
+                icon: "fa-kit-medical"
+            },
+            "Tabletop Exercise": {
+                title: "Tabletop Exercise",
+                module: "Module 10: Incident Response",
+                desc: "A discussion-based simulation where teams talk through their roles during a hypothetical incident (e.g., ransomware) to find gaps in the plan.",
+                icon: "fa-table-list"
+            },
+            "Blast Radius": {
+                title: "Blast Radius",
+                module: "Module 10: Incident Response",
+                desc: "The scope of damage or the area accessible to an attacker after a breach. Network segmentation aims to minimize this radius.",
+                icon: "fa-explosion"
+            },
+            "After Action Review": {
+                title: "After Action Review (AAR)",
+                module: "Module 10: Incident Response",
+                desc: "Also known as 'Lessons Learned'. The critical phase after an incident where the team analyzes what happened, what worked, and what didn't to prevent recurrence.",
+                icon: "fa-rotate-right"
+            },
+            "Single Source of Truth": {
+                title: "Single Source of Truth",
+                module: "Module 10: Incident Response",
+                desc: "Designating one authorized channel for information during a crisis to prevent rumors, confusion, and contradictory external statements.",
+                icon: "fa-bullhorn"
+            },
+            // Module 11
+            "Asset Inventory": {
+                title: "Asset Inventory",
+                module: "Module 11: Vulnerability Mgmt",
+                desc: "'You cannot protect what you don't know.' A dynamic, automated list of all hardware, software, and cloud assets. The foundation of security.",
+                icon: "fa-list-ol"
+            },
+            "CVSS": {
+                title: "CVSS",
+                module: "Module 11: Vulnerability Mgmt",
+                desc: "Common Vulnerability Scoring System. An industry standard (0-10) for assessing the technical severity of a vulnerability, though it often lacks business context.",
+                icon: "fa-star-half-stroke"
+            },
+            "Ruthless Prioritization": {
+                title: "Ruthless Prioritization",
+                module: "Module 11: Vulnerability Mgmt",
+                desc: "You can't fix everything. Prioritizing fixes based on asset criticality and active exploitation (Threat Intelligence) rather than just CVSS scores.",
+                icon: "fa-sort-amount-down"
+            },
+            "Patch Management": {
+                title: "Patch Management",
+                module: "Module 11: Vulnerability Mgmt",
+                desc: "The process of acquiring, testing, and installing updates. Failure to patch known vulnerabilities is the root cause of many major breaches.",
+                icon: "fa-band-aid"
+            },
+            "M&A Due Diligence": {
+                title: "M&A Due Diligence",
+                module: "Module 11: Vulnerability Mgmt",
+                desc: "Assessing the cybersecurity posture of a company before acquiring it. Without it, you inherit their breaches, vulnerabilities, and dormant attackers.",
+                icon: "fa-magnifying-glass-dollar"
+            },
+            // Networking Basics
+            "Networking Basics": {
+                title: "Networking Basics",
+                module: "Networking Basics",
+                desc: "The process of connecting nodes (devices) via links to exchange data. It is the digital highway of communication.",
+                icon: "fa-network-wired"
+            },
+            "IP Addressing": {
+                title: "IP Addressing",
+                module: "Networking Basics",
+                desc: "Unique identifiers for devices (e.g., 192.168.1.1). Includes IPv4 (running out), IPv6 (future), Public IPs (internet-facing), and Private IPs (local).",
+                icon: "fa-map-location-dot"
+            },
+            "NAT": {
+                title: "NAT",
+                module: "Networking Basics",
+                desc: "Network Address Translation. Hides multiple private IP addresses behind a single public IP. It provides a basic layer of obscurity but is not a true security control.",
+                icon: "fa-route"
+            },
+            "OSI Model": {
+                title: "OSI Model",
+                module: "Networking Basics",
+                desc: "The 7 layers of networking: Physical, Data Link, Network, Transport, Session, Presentation, Application. Troubleshooting often starts here.",
+                icon: "fa-layer-group"
+            },
+            "TCP vs UDP": {
+                title: "TCP vs UDP",
+                module: "Networking Basics",
+                desc: "TCP is reliable and connection-oriented (like a registered letter). UDP is fast and connectionless (like a postcard or live stream), often used for speed but less secure.",
+                icon: "fa-timeline"
+            },
+            "DNS": {
+                title: "DNS",
+                module: "Networking Basics",
+                desc: "Domain Name System. The phonebook of the internet, translating 'google.com' into IP addresses. Vulnerable to spoofing.",
+                icon: "fa-book"
+            },
+            "DHCP": {
+                title: "DHCP",
+                module: "Networking Basics",
+                desc: "Dynamic Host Configuration Protocol. Automatically assigns IP addresses to devices joining a network.",
+                icon: "fa-wifi"
+            },
+            "Cybersecurity Best Practices": {
+                title: "Cybersecurity Best Practices",
+                module: "Networking Basics",
+                desc: "Foundational rules: Encryption, MFA, Segmentation, Patching, Firewalls, IDS/IPS, and Least Privilege.",
+                icon: "fa-check-double"
+            },
+            "Network Segmentation": {
+                title: "Network Segmentation",
+                module: "Networking Basics",
+                desc: "Dividing a network into smaller subnets (VLANs). If an attacker breaches one segment, they cannot easily access others. Limits the Blast Radius.",
+                icon: "fa-pizza-slice"
+            },
+            "IDS": {
+                title: "IDS (Intrusion Detection)",
+                module: "Networking Basics",
+                desc: "Intrusion Detection System. Passive monitoring that alerts admins to suspicious traffic patterns.",
+                icon: "fa-bell"
+            },
+            "IPS": {
+                title: "IPS (Intrusion Prevention)",
+                module: "Networking Basics",
+                desc: "Intrusion Prevention System. Active protection that detects and automatically blocks malicious traffic.",
+                icon: "fa-hand-paper"
+            },
+            "HTTP": {
+                title: "HTTP",
+                module: "Networking Basics",
+                desc: "HyperText Transfer Protocol. The foundation of data communication on the web. Unencrypted and vulnerable to interception.",
+                icon: "fa-globe"
+            },
+            "HTTPS": {
+                title: "HTTPS",
+                module: "Networking Basics",
+                desc: "Secure HTTP. Encrypts communication using SSL/TLS, ensuring confidentiality and integrity between browser and server.",
+                icon: "fa-lock"
+            },
+            "ARP Spoofing": {
+                title: "ARP Spoofing",
+                module: "Networking Basics",
+                desc: "An attacker sends fake ARP messages to link their MAC address with a legitimate IP, intercepting local traffic.",
+                icon: "fa-mask"
+            },
+            "DNS Spoofing": {
+                title: "DNS Spoofing",
+                module: "Networking Basics",
+                desc: "Corrupting the DNS cache to redirect users from a legitimate site to a malicious clone to steal credentials.",
+                icon: "fa-signs-post"
+            },
+            "MITM": {
+                title: "MITM",
+                module: "Networking Basics",
+                desc: "Man-in-the-Middle attack. The attacker secretly intercepts and possibly alters communications between two parties.",
+                icon: "fa-user-secret"
+            },
+            "DDoS": {
+                title: "DDoS",
+                module: "Networking Basics",
+                desc: "Distributed Denial of Service. Flooding a target with traffic from a botnet to make a service unavailable.",
+                icon: "fa-network-wired"
+            },
+        };
+
+        // --- COMPONENTS ---
+
+        const DefinitionModal = ({ isOpen, onClose, data }) => {
+            if (!isOpen || !data) return null;
+
+            return (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    {/* Backdrop */}
+                    <div 
+                        className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity duration-300"
+                        onClick={onClose}
+                    ></div>
+                    
+                    {/* Modal Content */}
+                    <div className="relative bg-gray-900 border border-green-500/30 rounded-lg shadow-[0_0_50px_rgba(74,222,128,0.2)] max-w-lg w-full transform transition-all duration-300 scale-100 overflow-hidden flex flex-col">
+                        {/* Header */}
+                        <div className="bg-gray-800/50 p-6 border-b border-gray-700 flex justify-between items-start">
+                            <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400">
+                                    <i className={`fa-solid ${data.icon || 'fa-info-circle'} text-xl`}></i>
+                                </div>
+                                <div>
+                                    <h3 className="text-gray-400 text-xs font-mono uppercase tracking-wider mb-1">{data.module}</h3>
+                                    <h2 className="text-xl font-bold text-white">{data.title}</h2>
+                                </div>
+                            </div>
+                            <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors">
+                                <i className="fa-solid fa-xmark text-xl"></i>
+                            </button>
+                        </div>
+                        
+                        {/* Body */}
+                        <div className="p-6 text-gray-300 leading-relaxed text-sm md:text-base">
+                            {data.desc}
+                        </div>
+                        
+                        {/* Footer decorative */}
+                        <div className="h-1 w-full bg-gradient-to-r from-green-900 via-green-500 to-green-900 opacity-50"></div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Keyword = ({ term, dbKey, onClick }) => {
+            const keyToUse = dbKey || term;
+            const entry = definitionDB[keyToUse];
+
+            if (entry) {
+                return (
+                    <span 
+                        className="keyword-interactive group" 
+                        onClick={(e) => { e.stopPropagation(); onClick(entry); }}
+                        title="Click to view definition"
+                    >
+                        {term}
+                    </span>
+                );
+            }
+
+            return <span className="keyword-danger">{term}</span>;
+        };
+
+        // Main Acts Data with Component Integration
+        const getActsContent = (openModal) => [
+            {
+                id: 1,
+                title: "ACT I: Turbulence in a Shiny Shell",
+                subtitle: "The Facade",
+                theme: "blue",
+                icon: "fa-building",
+                content: (
+                    <div className="space-y-6 text-lg leading-relaxed">
+                        <p>
+                            DragyTech looked like the future. The website buzzed with phrases like Cloud Computing and AI, framed by an impressive network topology diagram. Yet if you peeled back that glossy veneer, you would find a digital house of cards waiting to collapse.
+                        </p>
+                        <p>
+                            Inside the server closet, cheap surveillance cameras, smart locks, and access points were crammed into a single rack, all hanging off a router that tried to do everything and ended up doing nothing well. In terms of <Keyword term="Networking Basics" onClick={openModal} />, it was a disaster. There was no <Keyword term="Network Segmentation" onClick={openModal} />, no VLANs, and a complete disregard for <Keyword term="Cybersecurity Best Practices" onClick={openModal} />.
+                        </p>
+                        <p>
+                            The chaos spanned the entire <Keyword term="OSI Model" onClick={openModal} />. Physical cables were a rat&apos;s nest, Data Link MAC tables were flooded, and at the Network layer, <Keyword term="IP Addressing" onClick={openModal} /> was a lawless mix of public and private scopes. Transport layer ports for <Keyword term="TCP vs UDP" onClick={openModal} /> were left wide open. JC, the admin, was the only one who knew how <Keyword term="DHCP" onClick={openModal} /> and <Keyword term="DNS" onClick={openModal} /> were barely holding it all together.
+                        </p>
+                        <p>
+                            The router performed basic <Keyword term="NAT" onClick={openModal} />, hiding the internal mess behind one public IP. It felt safe, but it was only obscurity. There was no <Keyword term="Defense in Depth" onClick={openModal} />, no <Keyword term="IDS" onClick={openModal} />, and certainly no <Keyword term="IPS" onClick={openModal} />.
+                        </p>
+                        <div className="bg-gray-800 p-4 border-l-4 border-blue-500 my-4">
+                            <h4 className="font-bold mb-2">A Failure of Governance</h4>
+                            <p>
+                                CEO Mr. Wang did not understand <Keyword term="Governance vs Management" onClick={openModal} />. He sold the big vision but waved away <Keyword term="ORM" dbKey="ORM" onClick={openModal} /> essentials like access control as &quot;tech details.&quot; <Keyword term="Fiduciary Duties" onClick={openModal} /> were ignored, and <Keyword term="Reporting Lines" onClick={openModal} /> did not really exist.
+                            </p>
+                        </div>
+                        <p>
+                            Only JC saw the cracks. He raised <Keyword term="Risk Observations" onClick={openModal} />, warning that the <Keyword term="CIA Triad" onClick={openModal} /> was already compromised. To leadership, safety was background noise. They did not see that their flat network was the perfect breeding ground for <Keyword term="Contagion in Networks" onClick={openModal} />.
+                        </p>
+                    </div>
+                )
+            },
+            {
+                id: 2,
+                title: "ACT II: The Peeping Eye & Broken Trust",
+                subtitle: "The Breach of Ethics",
+                theme: "yellow",
+                icon: "fa-eye",
+                content: (
+                    <div className="space-y-6 text-lg leading-relaxed">
+                        <p>
+                            One day, while troubleshooting latency, JC noticed camera traffic taking a strange detour, looping through the network to a private server accessible only by Mr. Wang. It was not encrypted <Keyword term="HTTPS" onClick={openModal} />. It was plain <Keyword term="HTTP" onClick={openModal} /> streaming real time video to storage.
+                        </p>
+                        <p>
+                            JC realized this was not just a misconfiguration. It was an ethical collapse. Mr. Wang had turned security cameras into spy tools, violating the Confidentiality and Integrity pillars of the <Keyword term="CIA Triad" onClick={openModal} />. Employee vents in the breakroom, hushed hallway chats, private calls, all recorded without consent.
+                        </p>
+                        <div className="bg-gray-800 p-4 border-l-4 border-yellow-500 my-4">
+                            <h4 className="font-bold mb-2">Culture Rot</h4>
+                            <p>
+                                This was a textbook failure of <Keyword term="Marchand's Framework" onClick={openModal} />: broken IT Practices feeding broken Information Behaviors. JC&apos;s <Keyword term="Risk Observations" onClick={openModal} /> exposed a brutal truth, the largest <Keyword term="Insider Threat" onClick={openModal} /> was the CEO himself.
+                            </p>
+                        </div>
+                        <p>
+                            Mr. Wang used power and fear, a very top down form of <Keyword term="Social Engineering" onClick={openModal} />. When JC warned that this breached <Keyword term="Fiduciary Duties" onClick={openModal} />, Wang laughed it off. In JC&apos;s next review, he was flagged as &quot;not fitting the culture.&quot;
+                        </p>
+                        <p>
+                            <Keyword term="The Three Lines of Defense" onClick={openModal} /> had collapsed. Management, the first line, was the violator. Compliance, the second line, stayed silent. Audit, the third line, never showed up. <Keyword term="Governance vs Management" onClick={openModal} /> was broken, and with no clear <Keyword term="Reporting Lines" onClick={openModal} /> for a CISO, JC was effectively voiceless. He was treated as an outsider who just happened to hold the passwords.
+                        </p>
+                    </div>
+                )
+            },
+            {
+                id: 3,
+                title: "ACT III: The Firing & The Backdoor",
+                subtitle: "The Retaliation",
+                theme: "red",
+                icon: "fa-door-open",
+                content: (
+                    <div className="space-y-6 text-lg leading-relaxed">
+                        <p>
+                            The firing was cold and brief. HR and Wang thought they were removing a problem, but they failed <Keyword term="ORM" onClick={openModal} /> basics. Faced with the risk of a disgruntled admin, they picked the wrong option from <Keyword term="The Four Ts" onClick={openModal} />. They chose to Tolerate the risk instead of truly Terminating it.
+                        </p>
+                        <p>
+                            Angry and underestimated, JC struck back. He leaned into the lack of <Keyword term="Zero Trust" onClick={openModal} />. With strict <Keyword term="IAM" onClick={openModal} />, his privileged accounts would have been closely watched. With a mature <Keyword term="SSDLC" onClick={openModal} />, his changes would have triggered reviews. DragyTech had neither.
+                        </p>
+                        <div className="bg-gray-800 p-4 border-l-4 border-red-500 my-4">
+                            <h4 className="font-bold mb-2">Unwatched Forest</h4>
+                            <p>
+                                As the <Keyword term="Windsor Deer Park Analogy" onClick={openModal} /> suggests, security should notice the running deer, the anomalies. No one was looking. JC deployed a backdoor on a file server, disguising it as ordinary traffic over standard <Keyword term="TCP vs UDP" dbKey="TCP vs UDP" onClick={openModal} /> ports and tunneling through <Keyword term="NAT" onClick={openModal} />.
+                            </p>
+                        </div>
+                        <p>
+                            Because the <Keyword term="Asset Inventory" onClick={openModal} /> was out of date, the server change went unnoticed. Because <Keyword term="Patch Management" onClick={openModal} /> was treated like an endless backlog task, the underlying vulnerability stayed in place. A lack of <Keyword term="Ruthless Prioritization" onClick={openModal} /> left a critical asset exposed.
+                        </p>
+                        <p>
+                            JC shifted from guardian to <Keyword term="Insider Threat" onClick={openModal} />. Using SSH and custom tools, he handed back the keys at the front door while quietly leaving a window unlocked at the back. On the <Keyword term="Threat Grid" onClick={openModal} />, he now sat in the quadrant of high capability and high motive.
+                        </p>
+                    </div>
+                )
+            },
+            {
+                id: 4,
+                title: "ACT IV: The Ransom & The Contagion",
+                subtitle: "The Escalation",
+                theme: "purple",
+                icon: "fa-biohazard",
+                content: (
+                    <div className="space-y-6 text-lg leading-relaxed">
+                        <p>
+                            The extortion began. Using his inside knowledge, JC launched a sharp <Keyword term="Social Engineering" onClick={openModal} /> campaign. The emails looked like vendor invoices, a blend of <Keyword term="BEC" onClick={openModal} /> and <Keyword term="Vishing & Pretexting" onClick={openModal} />, crafted to pin Wang to his own secrets.
+                        </p>
+                        <p>
+                            The company once again mishandled <Keyword term="The Four Ts" onClick={openModal} />, choosing to hush everything up. The <Keyword term="Threat Grid" onClick={openModal} /> was flashing red, yet JC&apos;s plan was already slipping from his control. His backdoor was not only open to him.
+                        </p>
+                        <div className="bg-gray-800 p-4 border-l-4 border-purple-500 my-4">
+                            <h4 className="font-bold mb-2">Chain Reaction</h4>
+                            <p>
+                                Internet scanners picked up the anomaly on that server. An external hacker crew exploited a known vulnerability, turning a single <Keyword term="Insider Threat" onClick={openModal} /> into a full scale breach. Malware moved laterally with <Keyword term="ARP Spoofing" onClick={openModal} /> and <Keyword term="DNS Spoofing" onClick={openModal} />, launching <Keyword term="MITM" onClick={openModal} /> attacks against internal traffic.
+                            </p>
+                        </div>
+                        <p>
+                            Without solid <Keyword term="Data Hygiene" onClick={openModal} />, the attack turned into a true <Keyword term="Contagion in Networks" onClick={openModal} />. <Keyword term="Supply Chain Risk" onClick={openModal} /> became reality as DragyTech&apos;s infection started to threaten its clients, creating massive <Keyword term="Partner Exposure" onClick={openModal} />.
+                        </p>
+                        <p>
+                            Attackers flooded the network with <Keyword term="DDoS" onClick={openModal} /> traffic to hide their data exfiltration. The incident was no longer just technical. It had become a <Keyword term="Materiality" onClick={openModal} /> event. Future <Keyword term="e-Discovery" onClick={openModal} /> would bring every misstep to light. <Keyword term="The Three Lines of Defense" onClick={openModal} /> had completely failed.
+                        </p>
+                    </div>
+                )
+            },
+            {
+                id: 5,
+                title: "ACT V: Chaos & Response",
+                subtitle: "The Fallout",
+                theme: "orange",
+                icon: "fa-fire-extinguisher",
+                content: (
+                    <div className="space-y-6 text-lg leading-relaxed">
+                        <p>
+                            The attack went full scale. DragyTech suddenly faced the hard edge of <Keyword term="Global Cyber Capabilities" onClick={openModal} />. It became a live test of <Keyword term="Cyber Resilience" onClick={openModal} /> and they were failing it. The CIO tried to activate the <Keyword term="Incident Response Plan" onClick={openModal} />, but without prior <Keyword term="Tabletop Exercise" onClick={openModal} /> or <Keyword term="Orchestrated Maturity Assessment" onClick={openModal} />, the team froze.
+                        </p>
+                        <p>
+                            Panic took over. There was no <Keyword term="Single Source of Truth" onClick={openModal} />. Legal, PR, and IT argued over what to say and what to shut down. <Keyword term="Governance vs Management" onClick={openModal} /> conflicts resurfaced, and the Board, kept in the dark by broken <Keyword term="Reporting Lines" onClick={openModal} />, failed their <Keyword term="Fiduciary Duties" onClick={openModal} />.
+                        </p>
+                        <div className="bg-gray-800 p-4 border-l-4 border-orange-500 my-4">
+                            <h4 className="font-bold mb-2">Stopping the Bleeding</h4>
+                            <p>
+                                The technical teams struggled with <Keyword term="Forensic Validation" onClick={openModal} />. Without a reliable <Keyword term="Asset Inventory" onClick={openModal} />, they could not estimate the <Keyword term="Blast Radius" onClick={openModal} />. They were forced into <Keyword term="Ruthless Prioritization" onClick={openModal} />, cutting off core business links just to survive the day.
+                            </p>
+                        </div>
+                        <p>
+                            One small island of segmented infrastructure held firm, proving the value of <Keyword term="Network Segmentation" onClick={openModal} /> and well tuned <Keyword term="IDS" onClick={openModal} /> alerts. Yet weak <Keyword term="Patch Management" onClick={openModal} /> and a heavy reliance on generic <Keyword term="CVSS" onClick={openModal} /> scores dragged recovery out far longer than it should have taken.
+                        </p>
+                        <p>
+                            In the <Keyword term="After Action Review" onClick={openModal} />, Legal worried about <Keyword term="Regulatory Compliance" onClick={openModal} /> fines and future <Keyword term="Materiality" onClick={openModal} /> disclosures. The lesson was blunt. Security cannot sit at the edge of the process. It has to be built in from the start through <Keyword term="SecDevOps" onClick={openModal} />.
+                        </p>
+                    </div>
+                )
+            },
+            {
+                id: 6,
+                title: "ACT VI: Entropy's Arc",
+                subtitle: "The Future",
+                theme: "green",
+                icon: "fa-seedling",
+                content: (
+                    <div className="space-y-6 text-lg leading-relaxed">
+                        <p>
+                            Months later, DragyTech finally accepted that it lived in <Keyword term="The Fifth Domain" onClick={openModal} />. The security team presented <Keyword term="Entropy's Arc" onClick={openModal} /> to the Board. Without constant governance energy, they explained, system chaos is not a risk but a certainty.
+                        </p>
+                        <p>
+                            They acknowledged <Keyword term="Moore's Law" onClick={openModal} /> as a double edged force that empowers both defenders and attackers. <Keyword term="Generative AI" onClick={openModal} /> could automate detection, but it also fueled threats like <Keyword term="Polymorphism" onClick={openModal} />. To survive in a world of <Keyword term="Disruptive Architectures" onClick={openModal} />, DragyTech had to rebuild.
+                        </p>
+                        <div className="bg-gray-800 p-4 border-l-4 border-green-500 my-4">
+                            <h4 className="font-bold mb-2">The New Architecture</h4>
+                            <p>
+                                The company embraced true <Keyword term="Zero Trust" onClick={openModal} /> and strict <Keyword term="IAM" onClick={openModal} />. They enforced <Keyword term="SSDLC" onClick={openModal} /> and <Keyword term="SecDevOps" onClick={openModal} /> across all new projects. Guided by the <Keyword term="Windsor Deer Park Analogy" onClick={openModal} />, they deployed behavioral analytics to watch the whole forest instead of staring at single trees.
+                            </p>
+                        </div>
+                        <p>
+                            Preparing for <Keyword term="Q Day" onClick={openModal} />, they invested in crypto agility and moved critical applications to <Keyword term="Memory Safe Languages" onClick={openModal} />.
+                        </p>
+                        <p>
+                            DragyTech now treats <Keyword term="Cyber Resilience" onClick={openModal} /> as a core objective, reinforced by regular <Keyword term="Orchestrated Maturity Assessment" onClick={openModal} />. They manage <Keyword term="Supply Chain Risk" onClick={openModal} /> and <Keyword term="Partner Exposure" onClick={openModal} /> with strict <Keyword term="M&A Due Diligence" onClick={openModal} />.
+                        </p>
+                        <p>
+                            By joining <Keyword term="Public-Private Partnerships" onClick={openModal} />, they share threat intelligence instead of fighting alone. They keep tight <Keyword term="Data Hygiene" onClick={openModal} /> and monitor the <Keyword term="Bathtub Curve" onClick={openModal} /> of legacy assets. At last, DragyTech fully embraces the <Keyword term="CIA Triad" onClick={openModal} /> and <Keyword term="Defense in Depth" onClick={openModal} />, pressing down the curve of entropy in a chaotic world.
+                        </p>
+                    </div>
+                )
+            },
+        ];
+
+        function App() {
+            const [currentAct, setCurrentAct] = useState(0);
+            const [modalData, setModalData] = useState(null);
+            const [isModalOpen, setIsModalOpen] = useState(false);
+
+            // Modal Handlers
+            const openModal = (data) => {
+                setModalData(data);
+                setIsModalOpen(true);
+            };
+
+            const closeModal = () => {
+                setIsModalOpen(false);
+                setTimeout(() => setModalData(null), 300); // Clear data after animation
+            };
+            
+            const nextAct = () => {
+                if (currentAct < 5) { // acts.length is 6, max index is 5
+                    setCurrentAct(prev => prev + 1);
+                    window.scrollTo(0, 0);
+                }
+            };
+
+            const prevAct = () => {
+                if (currentAct > 0) {
+                    setCurrentAct(prev => prev - 1);
+                    window.scrollTo(0, 0);
+                }
+            };
+
+            // Get content with modal handler passed down
+            const acts = getActsContent(openModal);
+            const act = acts[currentAct];
+
+            // Dynamic Theme Colors
+            const getThemeColor = (theme) => {
+                switch(theme) {
+                    case 'blue': return 'text-blue-400 border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.3)]';
+                    case 'yellow': return 'text-yellow-400 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.3)]';
+                    case 'red': return 'text-red-500 border-red-600 shadow-[0_0_30px_rgba(239,68,68,0.4)]';
+                    case 'purple': return 'text-purple-400 border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.3)]';
+                    case 'orange': return 'text-orange-400 border-orange-500 shadow-[0_0_30px_rgba(249,115,22,0.3)]';
+                    case 'green': return 'text-green-400 border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.3)]';
+                    default: return 'text-white border-white';
+                }
+            };
+
+            const getBgGradient = (theme) => {
+                 switch(theme) {
+                    case 'blue': return 'from-blue-900/20 to-black';
+                    case 'yellow': return 'from-yellow-900/20 to-black';
+                    case 'red': return 'from-red-900/30 to-black';
+                    case 'purple': return 'from-purple-900/30 to-black';
+                    case 'orange': return 'from-orange-900/20 to-black';
+                    case 'green': return 'from-green-900/20 to-black';
+                    default: return 'from-gray-900 to-black';
+                }
+            };
+
+            return (
+                <div className={`min-h-screen bg-gradient-to-b ${getBgGradient(act.theme)} transition-colors duration-1000 flex flex-col`}>
+                    
+                    {/* Definition Modal */}
+                    <DefinitionModal 
+                        isOpen={isModalOpen} 
+                        onClose={closeModal} 
+                        data={modalData} 
+                    />
+
+                    {/* Navigation Bar */}
+                    <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-gray-800 p-4">
+                        <div className="max-w-6xl mx-auto flex justify-between items-center">
+                            <div className="flex items-center space-x-2">
+                                <i className="fa-solid fa-network-wired text-white"></i>
+                                <span className="text-xl font-bold tracking-widest text-white">DRAGY<span className="text-gray-400">TECH</span></span>
+                            </div>
+                            <div className="hidden md:flex space-x-2">
+                                {acts.map((a, idx) => (
+                                    <div 
+                                        key={a.id} 
+                                        className={`h-2 w-8 rounded transition-all duration-300 ${idx === currentAct ? 'bg-white w-12' : 'bg-gray-700'}`}
+                                    />
+                                ))}
+                            </div>
+                            <div className="text-xs text-gray-500 font-mono">
+                                SECURITY_LEVEL: <span className={act.theme === 'red' || act.theme === 'purple' ? 'text-red-500 animate-pulse' : 'text-green-500'}>
+                                    {act.theme === 'red' ? 'CRITICAL' : act.theme === 'purple' ? 'BREACHED' : 'MONITORED'}
+                                </span>
+                            </div>
+                        </div>
+                    </nav>
+
+                    {/* Main Content Area */}
+                    <main className="flex-grow flex items-center justify-center pt-20 pb-20 px-4 relative">
+                        {/* Background Elements */}
+                        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                            <div className="scanline"></div>
+                            {act.theme === 'red' && <div className="absolute inset-0 bg-red-900/10 animate-pulse"></div>}
+                        </div>
+
+                        <div className="max-w-4xl w-full z-10">
+                            {/* Act Header */}
+                            <header className="text-center mb-12 fade-in-up">
+                                <div className={`inline-block p-4 rounded-full border-2 mb-6 ${getThemeColor(act.theme)} transition-all duration-500`}>
+                                    <i className={`fa-solid ${act.icon} text-4xl`}></i>
+                                </div>
+                                <h2 className="text-sm font-mono text-gray-400 mb-2 uppercase tracking-[0.2em]">{act.subtitle}</h2>
+                                <h1 className="text-3xl md:text-5xl font-bold text-white mb-4 glitch-wrapper">
+                                    <span className="glitch-text" data-text={act.title}>{act.title}</span>
+                                </h1>
+                                <div className="h-1 w-24 mx-auto bg-gray-700 rounded overflow-hidden">
+                                    <div className={`h-full ${act.theme === 'red' ? 'bg-red-500' : 'bg-white'} transition-all duration-1000`} style={{width: '100%'}}></div>
+                                </div>
+                            </header>
+
+                            {/* Act Content Card */}
+                            <article className="bg-black/60 backdrop-blur-sm border border-gray-800 rounded-xl p-6 md:p-10 shadow-2xl min-h-[400px] fade-in-up relative overflow-hidden">
+                                {/* Decorative Corner */}
+                                <div className="absolute top-0 right-0 p-2">
+                                    <div className="w-16 h-16 border-t-2 border-r-2 border-gray-700 rounded-tr-xl"></div>
+                                </div>
+                                <div className="absolute bottom-0 left-0 p-2">
+                                    <div className="w-16 h-16 border-b-2 border-l-2 border-gray-700 rounded-bl-xl"></div>
+                                </div>
+
+                                {/* Text Content */}
+                                <div className="font-light text-gray-200">
+                                    {act.content}
+                                </div>
+                            </article>
+
+                            {/* Navigation Controls */}
+                            <div className="flex justify-between mt-8">
+                                <button 
+                                    onClick={prevAct}
+                                    disabled={currentAct === 0}
+                                    className={`px-6 py-3 rounded border border-gray-700 font-mono text-sm transition-all flex items-center
+                                        ${currentAct === 0 ? 'opacity-30 cursor-not-allowed text-gray-500' : 'hover:bg-gray-800 text-white hover:border-gray-500'}
+                                    `}
+                                >
+                                    <i className="fa-solid fa-arrow-left mr-2"></i> PREV ACT
+                                </button>
+
+                                <div className="text-gray-500 font-mono text-sm flex items-center">
+                                    {currentAct + 1} / {acts.length}
+                                </div>
+
+                                <button 
+                                    onClick={nextAct}
+                                    disabled={currentAct === acts.length - 1}
+                                    className={`px-6 py-3 rounded border border-gray-700 font-mono text-sm transition-all flex items-center
+                                        ${currentAct === acts.length - 1 ? 'opacity-30 cursor-not-allowed text-gray-500' : 'hover:bg-white hover:text-black text-white hover:border-white'}
+                                    `}
+                                >
+                                    NEXT ACT <i className="fa-solid fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </main>
+
+                    {/* Footer */}
+                    <footer className="w-full text-center py-6 text-gray-600 font-mono text-xs border-t border-gray-900">
+                        <p>© 2025 DRAGYTECH CASE STUDY | CONFIDENTIAL | ACCESS LOGGED</p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
