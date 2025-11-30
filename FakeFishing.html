@@ -491,7 +491,7 @@
                 <h3>“Act now or lose access. You have no time to think.”</h3>
                 <span class="psych-term">The Mechanism</span>
                 <div class="code-behavior">
-                    <strong>Code Behavior:</strong> A flashing red countdown (ten seconds) is displayed. When the timer reaches zero, the script triggers <code>triggerPenaltyMode()</code>, unleashing rapid fake malware pop-ups and ending with a simulated Blue Screen of Death.
+                    <strong>Code Behavior:</strong> A flashing red countdown (thirty seconds) is displayed. When the timer reaches zero, the script triggers <code>triggerPenaltyMode()</code>, unleashing rapid fake malware pop-ups and ending with a simulated Blue Screen of Death.
                 </div>
                 <div class="trap-explanation">
                     <strong>Psychological Trap:</strong> This engineered sense of urgency forces your brain into <strong>fight-or-flight mode</strong>, suppressing rational thinking (System 2 thinking). Under panic, victims do not analyze the situation—they just want the fear to stop.
@@ -547,8 +547,8 @@
         const chaosScreen = document.getElementById('chaos-screen');
         const bsod = document.getElementById('bsod');
         
-        // 1. Countdown Logic (10 Seconds)
-        let timeLeft = 10 * 100; // 10 seconds in centiseconds
+        // 1. Countdown Logic (30 Seconds)
+        let timeLeft = 30 * 100; // 30 seconds in centiseconds
         let timerInterval;
         let popupInterval; // Store reference to clear it later
         
