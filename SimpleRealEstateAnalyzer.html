@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Analysis | Financial Suite</title>
+    <meta name="description" content="Professional Real Estate ROI, NPV, and Cap Rate Calculator.">
+    
+    <style>
+        /* * DESIGN SYSTEM: Financial Minimalist (Monochrome)
+         * Philosophy: "Data First". High contrast, Swiss typography, print-inspired.
+         */
+        :root {
+            /* Light Mode (Default) */
+            --bg: #ffffff;
+            --fg: #000000;
+            --surface: #fcfcfc;
+            --surface-hover: #f4f4f4;
+            --border: #e5e5e5;
+            --border-medium: #cccccc;
+            --border-strong: #000000;
+            --text-main: #111111;
+            --text-sec: #666666;
+            --text-tertiary: #999999;
+            
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --font-mono: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+            
+            --space-xs: 4px;
+            --space-sm: 8px;
+            --space-md: 16px;
+            --space-lg: 32px;
+            --space-xl: 64px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0a0a0a;
+                --fg: #ffffff;
+                --surface: #121212;
+                --surface-hover: #1e1e1e;
+                --border: #333333;
+                --border-medium: #444444;
+                --border-strong: #ffffff;
+                --text-main: #ededed;
+                --text-sec: #888888;
+                --text-tertiary: #555555;
+            }
+        }
+
+        /* --- THEME OVERRIDES --- */
+        body.light-mode { --bg: #ffffff; --fg: #000000; --surface: #fcfcfc; --surface-hover: #f4f4f4; --border: #e5e5e5; --border-medium: #cccccc; --border-strong: #000000; --text-main: #111111; --text-sec: #666666; --text-tertiary: #999999; }
+        body.dark-mode { --bg: #0a0a0a; --fg: #ffffff; --surface: #121212; --surface-hover: #1e1e1e; --border: #333333; --border-medium: #444444; --border-strong: #ffffff; --text-main: #ededed; --text-sec: #888888; --text-tertiary: #555555; }
+
+        /* --- RESET & BASE --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        a { color: inherit; text-decoration: underline; text-underline-offset: 4px; }
+        
+        /* --- LAYOUT UTILS --- */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 var(--space-md);
+            width: 100%;
+        }
+
+        .grid { display: grid; gap: var(--space-lg); }
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+        @media (max-width: 850px) { .grid-3 { grid-template-columns: 1fr; gap: var(--space-xl); } }
+        @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; gap: var(--space-md); } }
+
+        /* --- TYPOGRAPHY --- */
+        h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.2; }
+        h2 { 
+            font-size: 12px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.1em; 
+            color: var(--text-sec); 
+            margin-bottom: var(--space-md); 
+            border-bottom: 1px solid var(--border); 
+            padding-bottom: var(--space-sm);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-icon { width: 14px; height: 14px; opacity: 0.7; }
+        
+        /* MONO NUMBERS - Crucial for rolling numbers to prevent jitter */
+        .mono-num { 
+            font-family: var(--font-mono); 
+            font-feature-settings: "tnum" on, "zero" on; 
+            font-variant-numeric: tabular-nums;
+        }
+        
+        /* --- COMPONENTS: HEADER --- */
+        header { padding: var(--space-lg) 0; border-bottom: 1px solid var(--border); margin-bottom: var(--space-lg); }
+        .header-inner { display: flex; justify-content: space-between; align-items: flex-start; }
+        .theme-toggle { 
+            cursor: pointer; opacity: 0.6; transition: opacity 0.2s; padding: 8px; 
+            border: 1px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center;
+        }
+        .theme-toggle:hover { opacity: 1; border-color: var(--border-medium); background: var(--surface); }
+
+        /* --- COMPONENTS: INPUTS (Unified) --- */
+        .param-section { display: flex; flex-direction: column; gap: var(--space-lg); }
+        .param-group-title {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            color: var(--text-main); opacity: 0.4; margin-bottom: var(--space-sm); letter-spacing: 0.05em;
+        }
+        .input-group { position: relative; margin-bottom: var(--space-md); }
+        
+        .label {
+            display: block; font-size: 14px; font-weight: 700; color: var(--text-main);
+            margin-bottom: 8px; letter-spacing: -0.01em;
+        }
+
+        input[type="number"] {
+            width: 100%; background: var(--bg); border: 1px solid var(--border-medium);
+            color: var(--text-main); padding: 14px 12px; font-family: var(--font-mono);
+            font-size: 16px; transition: all 0.2s ease; border-radius: 2px; appearance: none;
+        }
+        input[type="number"]:hover { background: var(--surface-hover); }
+        input[type="number"]:focus {
+            border-color: var(--border-strong); background: var(--bg);
+            box-shadow: 0 0 0 1px var(--border-strong); padding: 13px 11px; border-width: 2px; outline: none;
+        }
+        
+        .currency-prefix {
+            position: absolute; left: 12px; top: 42px; transform: translateY(-50%);
+            color: var(--text-sec); font-family: var(--font-mono); pointer-events: none;
+            font-size: 16px; opacity: 0.6;
+        }
+        input.has-prefix { padding-left: 28px; }
+        input.has-prefix:focus { padding-left: 27px; }
+        .group-divider { height: 1px; background: var(--border); width: 100%; margin: 0 0 var(--space-md) 0; }
+
+        /* --- COMPONENTS: KPI CARDS --- */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); }
+        .kpi-card {
+            background: var(--bg); padding: var(--space-md); display: flex; flex-direction: column; justify-content: space-between;
+            position: relative; overflow: hidden;
+        }
+        .kpi-card .label {
+            font-size: 11px; font-weight: 500; color: var(--text-sec); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-xs);
+        }
+        
+        /* Stats Container */
+        .stat-wrapper { display: flex; align-items: baseline; gap: 6px; }
+        .big-stat { font-size: 32px; font-weight: 500; letter-spacing: -0.04em; margin-top: var(--space-xs); white-space: nowrap;}
+        .kpi-note { font-size: 11px; color: var(--text-sec); margin-top: var(--space-sm); }
+
+        /* --- COMPONENTS: TABLE --- */
+        .table-wrapper { overflow-x: auto; border: 1px solid var(--border); margin-top: var(--space-md); }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { 
+            text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; 
+            padding: var(--space-md); border-bottom: 1px solid var(--border); background: var(--surface);
+            position: sticky; top: 0; color: var(--text-main); letter-spacing: 0.05em; z-index: 10;
+        }
+        td { 
+            padding: 10px var(--space-md); border-bottom: 1px solid var(--border); 
+            font-family: var(--font-mono); font-size: 13px; color: var(--text-sec);
+            transition: background-color 0.2s;
+        }
+        tr:last-child td { border-bottom: none; }
+        
+        tr.payback-row { background-color: var(--text-main); }
+        tr.payback-row td { border-color: var(--text-main); color: var(--bg); font-weight: 500; }
+        .is-negative { color: var(--text-sec); opacity: 0.7; }
+        tr.payback-row .is-negative { color: var(--bg); opacity: 0.8; }
+
+        /* --- BUTTONS --- */
+        .btn-group { display: flex; gap: var(--space-md); margin-top: var(--space-lg); }
+        button {
+            background: var(--text-main); color: var(--bg); border: 1px solid var(--text-main);
+            padding: 14px 24px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;
+            cursor: pointer; font-weight: 600; transition: all 0.2s; width: 100%;
+        }
+        button:hover { background: var(--bg); color: var(--text-main); }
+        button.secondary { background: transparent; border: 1px solid var(--border-medium); color: var(--text-sec); }
+        button.secondary:hover { border-color: var(--text-main); color: var(--text-main); }
+
+        /* --- FOOTER --- */
+        footer { margin-top: auto; padding: var(--space-lg) 0; border-top: 1px solid var(--border); color: var(--text-sec); font-size: 12px; }
+        
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 3px;}
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-sec); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container header-inner">
+            <div>
+                <h1>Real Estate Analytics</h1>
+                <div class="label" style="margin-top: 8px; font-size: 12px; opacity: 0.6; font-weight: 400;">Financial Assessment Suite v2.5</div>
+            </div>
+            <div class="theme-toggle" id="themeBtn" aria-label="Toggle Theme" title="Switch Light/Dark Mode">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" stroke-linejoin="miter"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <div class="grid grid-3" style="margin-bottom: var(--space-xl);">
+            <!-- INPUT SECTION -->
+            <section style="grid-column: span 1;" class="param-section">
+                <h2>
+                    <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Parameters
+                </h2>
+                
+                <!-- Capital -->
+                <div>
+                    <div class="param-group-title">Capital Investment</div>
+                    <div class="input-group">
+                        <label class="label" for="inpPrice">Purchase Price</label>
+                        <span class="currency-prefix">$</span>
+                        <input type="number" id="inpPrice" class="has-prefix" value="260000" step="1000">
+                    </div>
+                    <div class="input-group">
+                        <label class="label" for="inpReno">Initial Renovation Cost</label>
+                        <span class="currency-prefix">$</span>
+                        <input type="number" id="inpReno" class="has-prefix" value="17000" step="100">
+                    </div>
+                </div>
+                <div class="group-divider"></div>
+
+                <!-- Operations -->
+                <div>
+                    <div class="param-group-title">Operational Cash Flow</div>
+                    <div class="input-group">
+                        <label class="label" for="inpRent">Monthly Rent Income</label>
+                        <span class="currency-prefix">$</span>
+                        <input type="number" id="inpRent" class="has-prefix" value="1700" step="50">
+                    </div>
+                    <div class="grid grid-2" style="gap: var(--space-md);">
+                        <div class="input-group">
+                            <label class="label" for="inpMgmt">Mgmt/Maint (Yr)</label>
+                            <span class="currency-prefix">$</span>
+                            <input type="number" id="inpMgmt" class="has-prefix" value="2639">
+                        </div>
+                        <div class="input-group">
+                            <label class="label" for="inpTax">Property Tax (Yr)</label>
+                            <span class="currency-prefix">$</span>
+                            <input type="number" id="inpTax" class="has-prefix" value="3022">
+                        </div>
+                    </div>
+                </div>
+                <div class="group-divider"></div>
+
+                <!-- Assumptions -->
+                <div>
+                    <div class="param-group-title">Assumptions</div>
+                    <div class="grid grid-2" style="gap: var(--space-md);">
+                        <div class="input-group">
+                            <label class="label" for="inpDiscount">Discount Rate (%)</label>
+                            <input type="number" id="inpDiscount" value="2.0" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label class="label" for="inpYears">Horizon (Years)</label>
+                            <input type="number" id="inpYears" value="30" max="50">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="secondary" id="resetBtn">Reset</button>
+                    <button id="calcBtn">Calculate</button> 
+                </div>
+            </section>
+
+            <!-- RESULTS SECTION -->
+            <section style="grid-column: span 2;">
+                <h2>
+                    <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    Performance Metrics
+                </h2>
+                
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <span class="label">Total ROI (Simple)</span>
+                        <div class="stat-wrapper">
+                            <!-- animate-target identifies elements to be rolled -->
+                            <span class="big-stat mono-num animate-target" id="outROI" data-format="percent">0.00%</span>
+                        </div>
+                        <span class="kpi-note">Total Return / Investment</span>
+                    </div>
+                    
+                    <div class="kpi-card">
+                        <span class="label">Net Present Value (NPV)</span>
+                        <div class="stat-wrapper">
+                            <span class="big-stat mono-num animate-target" id="outNPV" data-format="currency">$0</span>
+                        </div>
+                        <span class="kpi-note">Discounted future cash flows</span>
+                    </div>
+
+                    <div class="kpi-card">
+                        <span class="label">Payback Period</span>
+                        <div class="stat-wrapper">
+                            <!-- Payback is often text "No Payback" so handled specifically -->
+                            <span class="big-stat mono-num animate-target" id="outPayback" data-format="years">—</span>
+                        </div>
+                        <span class="kpi-note">Years to break even</span>
+                    </div>
+
+                    <div class="kpi-card">
+                        <span class="label">Cap Rate</span>
+                        <div class="stat-wrapper">
+                            <span class="big-stat mono-num animate-target" id="outCapRate" data-format="percent">0.00%</span>
+                        </div>
+                        <span class="kpi-note">NOI / Asset Value</span>
+                    </div>
+
+                    <div class="kpi-card">
+                        <span class="label">Annual Cash Flow</span>
+                        <div class="stat-wrapper">
+                            <span class="big-stat mono-num animate-target" id="outCashFlow" data-format="currency">$0</span>
+                        </div>
+                        <span class="kpi-note">Net Operating Income</span>
+                    </div>
+                    
+                    <div class="kpi-card">
+                        <span class="label">Total Investment</span>
+                        <div class="stat-wrapper">
+                            <span class="big-stat mono-num animate-target" id="outInvestment" data-format="currency">$0</span>
+                        </div>
+                        <span class="kpi-note">Price + Renovation</span>
+                    </div>
+                </div>
+
+                <!-- TABLE PREVIEW -->
+                <div style="margin-top: var(--space-lg);">
+                    <h2>
+                        <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                        Cash Flow Schedule
+                    </h2>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Year</th>
+                                    <th style="text-align:right">Net Cash Flow</th>
+                                    <th style="text-align:right">Discount Factor</th>
+                                    <th style="text-align:right">Present Value</th>
+                                    <th style="text-align:right">Cumulative PV</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <footer>
+        <div class="container">
+            <div style="display: flex; justify-content: space-between; opacity: 0.6;">
+                <span>&copy; Financial Analytics Module. Educational use only.</span>
+                <span>Generated System</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- CONFIG ---
+        const DEFAULTS = {
+            price: 260000, reno: 17000, mgmt: 2639, tax: 3022, rent: 1700, discount: 2, years: 30
+        };
+        const STORAGE_KEY = 'fin_suite_v2_data';
+        const THEME_KEY = 'fin_suite_theme';
+
+        // --- UTILS ---
+        const qs = (sel) => document.querySelector(sel);
+        
+        // Formatters
+        const fmtCurrency = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+        const fmtPercent = (n) => new Intl.NumberFormat('en-US', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n / 100);
+        const fmtFloat = (n, d=2) => n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+        
+        // Helper to unformat strings like "$1,000" -> 1000 for animation start values
+        const parseDisplayValue = (str) => {
+            if (!str || str === '—' || str.includes('No Payback')) return 0;
+            return parseFloat(str.replace(/[^0-9.-]+/g, '')) || 0;
+        };
+
+        // --- ANIMATION ENGINE ---
+        // Handles smooth rolling numbers for KPIs and Table Cells
+        class NumberAnimator {
+            constructor() {
+                this.animations = new Map();
+            }
+
+            // element: DOM Element
+            // endValue: target number
+            // duration: ms
+            // type: 'currency' | 'percent' | 'float' | 'years'
+            animate(element, endValue, duration = 600, type = 'currency') {
+                // Cancel existing animation on this element
+                if (this.animations.has(element)) {
+                    cancelAnimationFrame(this.animations.get(element));
+                    this.animations.delete(element);
+                }
+
+                // Determine start value from current text
+                const startValue = parseDisplayValue(element.textContent);
+                
+                // If change is very small, just set it (prevents jitter on rounding)
+                if (Math.abs(endValue - startValue) < 0.001) {
+                    element.textContent = this.format(endValue, type);
+                    return;
+                }
+
+                const startTime = performance.now();
+
+                const tick = (currentTime) => {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // Ease Out Quart (starts fast, slows down smoothly)
+                    const ease = 1 - Math.pow(1 - progress, 4);
+                    
+                    const current = startValue + (endValue - startValue) * ease;
+                    
+                    element.textContent = this.format(current, type);
+
+                    if (progress < 1) {
+                        this.animations.set(element, requestAnimationFrame(tick));
+                    } else {
+                        this.animations.delete(element);
+                        // Ensure final value is exact
+                        element.textContent = this.format(endValue, type);
+                    }
+                };
+
+                this.animations.set(element, requestAnimationFrame(tick));
+            }
+
+            format(val, type) {
+                switch(type) {
+                    case 'currency': return fmtCurrency(val);
+                    case 'percent': return fmtPercent(val); // fmtPercent expects 5.0 for 5% not 0.05
+                    case 'float': return fmtFloat(val, 4);
+                    case 'years': return val.toFixed(1) + ' Years';
+                    default: return val;
+                }
+            }
+        }
+
+        const animator = new NumberAnimator();
+
+
+        // --- LOGIC ---
+        function getInputs() {
+            return {
+                price: parseFloat(qs('#inpPrice').value) || 0,
+                reno: parseFloat(qs('#inpReno').value) || 0,
+                rentMonthly: parseFloat(qs('#inpRent').value) || 0,
+                mgmtAnnual: parseFloat(qs('#inpMgmt').value) || 0,
+                taxAnnual: parseFloat(qs('#inpTax').value) || 0,
+                discountRate: parseFloat(qs('#inpDiscount').value) || 0,
+                years: parseInt(qs('#inpYears').value) || 0
+            };
+        }
+
+        function calculate() {
+            const inputs = getInputs();
+            const totalInvestment = inputs.price + inputs.reno;
+            const grossAnnualIncome = inputs.rentMonthly * 12;
+            const totalAnnualExpenses = inputs.taxAnnual + inputs.mgmtAnnual;
+            const netAnnualCashFlow = grossAnnualIncome - totalAnnualExpenses;
+            
+            // Metrics
+            const capRate = (inputs.price > 0) ? (netAnnualCashFlow / inputs.price) * 100 : 0;
+            const totalCashGenerated = netAnnualCashFlow * inputs.years;
+            const simpleROI = (totalInvestment > 0) ? ((totalCashGenerated - totalInvestment) / totalInvestment) * 100 : 0;
+
+            let npv = -totalInvestment;
+            let cumulativePV = -totalInvestment;
+            let paybackYear = null;
+            let tableData = [];
+
+            tableData.push({ year: 0, cashFlow: -totalInvestment, discountFactor: 1.0, pv: -totalInvestment, cumulative: -totalInvestment });
+
+            for (let t = 1; t <= inputs.years; t++) {
+                const rateDecimal = inputs.discountRate / 100;
+                const discountFactor = 1 / Math.pow(1 + rateDecimal, t);
+                const pvOfCashFlow = netAnnualCashFlow * discountFactor;
+                
+                npv += pvOfCashFlow;
+                cumulativePV += pvOfCashFlow;
+                if (paybackYear === null && cumulativePV >= 0) paybackYear = t;
+
+                tableData.push({ year: t, cashFlow: netAnnualCashFlow, discountFactor: discountFactor, pv: pvOfCashFlow, cumulative: cumulativePV });
+            }
+
+            return {
+                metrics: {
+                    investment: totalInvestment,
+                    cashFlow: netAnnualCashFlow,
+                    capRate: capRate,
+                    roi: simpleROI,
+                    npv: npv,
+                    payback: paybackYear
+                },
+                table: tableData
+            };
+        }
+
+        function updateUI() {
+            const data = calculate();
+            const m = data.metrics;
+
+            // 1. ANIMATE KPI CARDS
+            // We use the data-format attribute to know how to format the rolling number
+            animator.animate(qs('#outROI'), m.roi, 600, 'percent');
+            animator.animate(qs('#outNPV'), m.npv, 600, 'currency');
+            animator.animate(qs('#outCapRate'), m.capRate, 600, 'percent');
+            animator.animate(qs('#outCashFlow'), m.cashFlow, 600, 'currency');
+            animator.animate(qs('#outInvestment'), m.investment, 600, 'currency');
+
+            // Handle Payback text separately (it can be non-numeric)
+            const pbEl = qs('#outPayback');
+            if (m.payback) {
+                 // If previous was text, just set it, otherwise animate
+                 if (pbEl.textContent.includes('No') || pbEl.textContent === '—') {
+                     pbEl.textContent = m.payback + ' Years';
+                 } else {
+                     animator.animate(pbEl, m.payback, 600, 'years');
+                 }
+            } else {
+                pbEl.textContent = 'No Payback';
+            }
+
+            // 2. SMART TABLE UPDATE (DIFFING)
+            // Instead of wiping innerHTML, we update cells to allow animation
+            const tbody = qs('#tableBody');
+            const rows = tbody.children;
+            
+            // If row count changed (Year input changed), full rebuild needed
+            if (rows.length !== data.table.length) {
+                let html = '';
+                data.table.forEach(row => {
+                    const isPayback = row.year === m.payback;
+                    html += `
+                        <tr class="${isPayback ? 'payback-row' : ''}">
+                            <td>${row.year === 0 ? 'Start' : row.year}</td>
+                            <td class="mono-num val-cf" style="text-align:right">${fmtCurrency(row.cashFlow)}</td>
+                            <td class="mono-num val-df" style="text-align:right">${fmtFloat(row.discountFactor, 4)}</td>
+                            <td class="mono-num val-pv" style="text-align:right">${fmtCurrency(row.pv)}</td>
+                            <td class="mono-num val-cum ${row.cumulative < 0 ? 'is-negative' : ''}" style="text-align:right">${fmtCurrency(row.cumulative)}</td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            } else {
+                // Same number of rows: Update & Animate existing cells
+                // We assume row index matches data index
+                for (let i = 0; i < data.table.length; i++) {
+                    const rowData = data.table[i];
+                    const tr = rows[i];
+                    
+                    // Update Row Class (Payback highlight)
+                    const isPayback = rowData.year === m.payback;
+                    if (isPayback && !tr.classList.contains('payback-row')) tr.classList.add('payback-row');
+                    if (!isPayback && tr.classList.contains('payback-row')) tr.classList.remove('payback-row');
+
+                    // Update Cells with Animation
+                    // We target specific cells by class or index
+                    // Index 1: Cash Flow
+                    animator.animate(tr.cells[1], rowData.cashFlow, 400, 'currency');
+                    
+                    // Index 2: Discount Factor (Float)
+                    animator.animate(tr.cells[2], rowData.discountFactor, 400, 'float');
+                    
+                    // Index 3: PV
+                    animator.animate(tr.cells[3], rowData.pv, 400, 'currency');
+                    
+                    // Index 4: Cumulative
+                    const cellCum = tr.cells[4];
+                    // Update color class based on val
+                    if (rowData.cumulative < 0) cellCum.classList.add('is-negative');
+                    else cellCum.classList.remove('is-negative');
+                    
+                    // Animate Value
+                    animator.animate(cellCum, rowData.cumulative, 400, 'currency');
+                }
+            }
+
+            // Persistence
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(getInputs()));
+        }
+
+        // --- INIT & LISTENERS ---
+        function restoreInputs() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const data = JSON.parse(saved);
+                if(data.price) qs('#inpPrice').value = data.price;
+                if(data.reno) qs('#inpReno').value = data.reno;
+                if(data.rentMonthly) qs('#inpRent').value = data.rentMonthly;
+                if(data.mgmtAnnual) qs('#inpMgmt').value = data.mgmtAnnual;
+                if(data.taxAnnual) qs('#inpTax').value = data.taxAnnual;
+                if(data.discountRate) qs('#inpDiscount').value = data.discountRate;
+                if(data.years) qs('#inpYears').value = data.years;
+            } else {
+                resetToDefaults();
+            }
+        }
+
+        function resetToDefaults() {
+            qs('#inpPrice').value = DEFAULTS.price;
+            qs('#inpReno').value = DEFAULTS.reno;
+            qs('#inpRent').value = DEFAULTS.rent;
+            qs('#inpMgmt').value = DEFAULTS.mgmt;
+            qs('#inpTax').value = DEFAULTS.tax;
+            qs('#inpDiscount').value = DEFAULTS.discount;
+            qs('#inpYears').value = DEFAULTS.years;
+            updateUI();
+        }
+
+        // Debounce: 100ms is a sweet spot for "Real-time" but allowing animation to start
+        function debounce(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        const debouncedUpdate = debounce(updateUI, 100);
+
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', debouncedUpdate);
+        });
+
+        qs('#resetBtn').addEventListener('click', resetToDefaults);
+        qs('#calcBtn').addEventListener('click', updateUI);
+        
+        // Theme Toggle
+        const themeBtn = qs('#themeBtn');
+        function toggleTheme() {
+            const body = document.body;
+            const isSystemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const hasDark = body.classList.contains('dark-mode');
+            const hasLight = body.classList.contains('light-mode');
+            let isCurrentDark = hasDark || (isSystemDark && !hasLight);
+
+            if (isCurrentDark) {
+                body.classList.remove('dark-mode'); body.classList.add('light-mode');
+                localStorage.setItem(THEME_KEY, 'light');
+            } else {
+                body.classList.remove('light-mode'); body.classList.add('dark-mode');
+                localStorage.setItem(THEME_KEY, 'dark');
+            }
+        }
+        themeBtn.addEventListener('click', toggleTheme);
+        const savedTheme = localStorage.getItem(THEME_KEY);
+        if (savedTheme) document.body.classList.add(savedTheme + '-mode');
+
+        restoreInputs();
+        updateUI(); // First run
+    </script>
+</body>
+</html>
