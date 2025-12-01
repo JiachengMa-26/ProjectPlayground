@@ -1,130 +1,76 @@
 <div align="center">
 
-<!-- Header Image -->
-
-<img src="https://capsule-render.vercel.app/api?type=waving&color=00f2ea&height=280&section=header&text=Creative%20Developer%20%26%20Security%20Researcher&fontSize=40&fontAlign=50&fontAlignY=35&desc=Visualizing%20Data%20%7C%20Simulating%20Threats%20%7C%20Building%20Tools&descSize=20&descAlign=50&descAlignY=55&animation=twinkling" alt="Header Background" width="100%"/>
+<h1>Cybersecurity, Storytelling and Frontend Experiments</h1>
 
 <br />
 
-<!-- Intro Text -->
-
 <p align="center">
-I explore the intersection of <b>Cybersecurity</b>, <b>Interactive Storytelling</b>, and <b>Frontend Architecture</b>.
-
-
-
-
-My goal is to demystify how the web tracks us and how data can be visualized in real-time.
+This profile collects small browser based experiments that connect <b>cybersecurity</b>, <b>interactive storytelling</b> and <b>frontend architecture</b>.  
+The focus is on showing how the web observes visitors and how data can be visualized in real time.
 </p>
 
-<!-- Personal Info Highlight -->
-
-<h3 align="center">Hi, I am Jiacheng Ma (JiachengMa 26).</h3>
 <p align="center">
-📫 Contact: <a href="mailto:JM6080@columbia.edu">JM6080@columbia.edu</a>
-</p>
-
-<!-- Navigation Badges -->
-
-<p align="center">
-<a href="#-showcase-experiments">
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Featured_Projects-00f2ea%3Fstyle%3Dfor-the-badge%26logo%3Dgithub%26logoColor%3Dblack" alt="Featured Projects">
+<a href="#showcase-experiments">
+  <img src="https://img.shields.io/badge/Featured%20Projects-00f2ea?style=for-the-badge&logo=github&logoColor=black" alt="Featured Projects" />
 </a>
-<a href="#-technical-philosophy">
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Tech_Philosophy-ff0055%3Fstyle%3Dfor-the-badge%26logo%3Datom%26logoColor%3Dwhite" alt="Philosophy">
+<a href="#technical-philosophy">
+  <img src="https://img.shields.io/badge/Tech%20Philosophy-ff0055?style=for-the-badge&logo=atom&logoColor=white" alt="Philosophy" />
 </a>
 </p>
 </div>
 
 <br />
 
-<!-- 🏆 PRIORITY SHOWCASE SECTION -->
-
-<h2 align="center">🏆 Showcase Experiments</h2>
+<h2 id="showcase-experiments" align="center">🏆 Showcase Experiments</h2>
 
 <p align="center">
-<i>These projects are not just tools; they are educational experiments designed to reveal the hidden mechanics of the web.</i>
+<i>Each project is designed as an experiment that makes hidden web mechanics visible.</i>
 </p>
 
 <table width="100%">
 <tr>
 <td width="50%" valign="top">
-<h3 align="center">🌐 More than IP? 
-
-
-
-<sub>(Highly Recommended)</sub></h3>
+<h3 align="center">🌐 More than IP?</h3>
 <p align="center">
-<b><i>Real-time visualization of digital footprints mapped to physical context.</i></b>
+<b><i>Turns a single request into a picture of the visitor environment.</i></b>
 </p>
 <hr>
 <p>
-<b>🕵️‍♂️ Why I created this:</b>
-
-
-
-
-We often treat IP addresses as abstract numbers. I wanted to break that illusion. "More than IP" exists to show that a simple network connection reveals your <b>physical reality</b>—your local weather, your time of day, and your ISP—turning abstract data into a tangible profile.
+<b>Purpose</b>  
+This project shows that an IP address is not just a number. By combining geolocation data with weather and time information, one ordinary page load can be turned into a simple physical profile of the visitor.
 </p>
 <p>
-<b>⚙️ How it works (The Mechanics):</b>
-
-
-
-
-This tool runs completely on the client side using the <code>ipwho.is</code> API.
-
-
-
-
-
-
-
-It does not need a backend because all calls are <b>browser-initiated requests</b>. When you open the page, your browser calls the API directly. Since the request originates from <i>your</i> machine, the API automatically detects the source IP and returns geolocation JSON. I then chain this coordinate data into a weather API, which builds a snapshot of the user environment without storing any data on my own server.
+<b>How it works</b>  
+The page runs only in the browser and calls the <code>ipwho.is</code> interface.  
+The interface returns address, city, provider and coordinates for the current visitor. The coordinates are then passed to a weather interface to pull conditions for that place. No data is stored on a personal server and all requests are made directly from the visitor browser.
 </p>
 <p align="center">
-<a href="#">
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Live_Demo-00ADD8%3Fstyle%3Dfor-the-badge%26logo%3Dgoogle-earth%26logoColor%3Dwhite" alt="Live Demo" />
+<a href="https://jiachengma-26.github.io/ProjectPlayground/" target="_blank">
+  <img src="https://img.shields.io/badge/Live%20Demo-00ADD8?style=for-the-badge&logo=google-earth&logoColor=white" alt="Live Demo" />
 </a>
 </p>
 </td>
+
 <td width="50%" valign="top">
-<h3 align="center">🎣 FakeFishing 
-
-
-
-<sub>(Recommended)</sub></h3>
+<h3 align="center">🎣 FakeFishing</h3>
 <p align="center">
-<b><i>A scareware simulation that demonstrates fear-driven manipulation.</i></b>
+<b><i>Shows how accurate but public data can be used in scare style pages.</i></b>
 </p>
 <hr>
 <p>
-<b>🕵️‍♂️ Why I created this:</b>
-
-
-
-
-Cybersecurity training is often dry. I built FakeFishing to make the experience of a <b>social engineering attack</b> more visceral. It shows how attackers bypass rational thinking by triggering fear—displaying the user location and ISP on a "system critical" alert screen to force a click.
+<b>Purpose</b>  
+This project is a training aid for social engineering awareness.  
+It demonstrates how a visitor may trust a fake alert page simply because it shows real looking network details such as provider name or city.
 </p>
 <p>
-<b>⚙️ How it works (The Mechanics):</b>
-
-
-
-
-The psychological effect comes from <b>dynamic content injection</b> via <code>ipwho.is</code>.
-
-
-
-
-
-
-
-Instead of a static fake alert, this page fetches visitor metadata in real-time such as City, ISP, and ASN. It injects these accurate details into a generic virus warning template, creating a verification loop in the user's mind: <i>"It shows my ISP so it must be real."</i> This illustrates how public API data can support psychological pressure without any real compromise of the system.
+<b>How it works</b>  
+The page calls <code>ipwho.is</code> for each visitor and takes city, provider and ASN from the returned result.  
+These values are inserted into an alert style layout that imitates a system warning.  
+The goal is to show that the page can look personal and threatening while still using only open interfaces and without touching the visitor device.
 </p>
 <p align="center">
-<a href="#">
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Live_Simulation-FF2A2A%3Fstyle%3Dfor-the-badge%26logo%3Dhack-the-box%26logoColor%3Dwhite" alt="Live Simulation" />
+<a href="https://jiachengma-26.github.io/ProjectPlayground/" target="_blank">
+  <img src="https://img.shields.io/badge/Live%20Simulation-FF2A2A?style=for-the-badge&logo=hack-the-box&logoColor=white" alt="Live Simulation" />
 </a>
 </p>
 </td>
@@ -132,8 +78,6 @@ Instead of a static fake alert, this page fetches visitor metadata in real-time 
 </table>
 
 <br />
-
-<!-- 📂 OTHER PROJECTS -->
 
 <h2 align="center">📂 Other Investigations and Tools</h2>
 
@@ -145,61 +89,48 @@ Core Concept
 
 DragyTech: Entropy's Arc
 
-An interactive sci-fi narrative case study.
+An interactive science fiction case that walks through an incident.
 
-Storytelling with Code: Using React state management to control narrative flow and immersion.
+Uses React state to control scene flow and highlight security concepts step by step.
 
 Simple Real Estate Analyzer
 
-A minimalist financial tool for ROI calculation.
+A browser based calculator for basic return on investment.
 
-Financial Minimalism: Focusing on clear data processing and a clean interface without distraction.
+Shows how to keep financial interfaces focused on data and layout instead of decoration.
 
 Personal Cyber Portfolio
 
-A 3D-enhanced personal website.
+A small personal site with three dimensional effects.
 
-Creative Frontend: Utilizing Three.js for immersive web experiences.
+Experiments with Three js to present security projects in a more visual way.
 
 <br />
-
-<!-- 🛠 TECH STACK -->
 
 <h2 align="center">🛠 Technology and Tools</h2>
 
 <div align="center">
-<!-- Languages -->
 <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript" />
 <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
 <img src="https://img.shields.io/badge/Three.js-000000?style=for-the-badge&logo=three.js&logoColor=white" alt="Three.js" />
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Tailwind_CSS-38B2AC%3Fstyle%3Dfor-the-badge%26logo%3Dtailwind-css%26logoColor%3Dwhite" alt="Tailwind CSS" />
+<img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
 
 <br />
 
-<!-- APIs & Tools -->
-
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/Open_Meteo_API-orange%3Fstyle%3Dfor-the-badge" alt="Open Meteo API" />
-<img src="https://www.google.com/search?q=https://img.shields.io/badge/IPwho.is_API-blue%3Fstyle%3Dfor-the-badge" alt="IPwho.is API" />
+<img src="https://img.shields.io/badge/Open_Meteo_API-orange?style=for-the-badge" alt="Open Meteo API" />
+<img src="https://img.shields.io/badge/IPwho.is_API-blue?style=for-the-badge" alt="IPwho.is API" />
 <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5" />
 </div>
 
 <br />
 
-<!-- 📊 STATS -->
+<h2 id="technical-philosophy" align="center">🧠 Technical Philosophy</h2>
 
-<h2 align="center">📊 Activity Graph</h2>
-
-<div align="center">
-<a href="https://github.com/JiachengMa-26">
-<img src="https://github-readme-stats.vercel.app/api?username=JiachengMa-26&show_icons=true&theme=radical&hide_border=true&bg_color=0d1117&title_color=00f2ea&icon_color=ff0055" height="180" alt="stats graph" />
-</a>
-<a href="https://github.com/JiachengMa-26">
-<img src="https://github-readme-stats.vercel.app/api/top-langs/?username=JiachengMa-26&layout=compact&theme=radical&hide_border=true&bg_color=0d1117&title_color=00f2ea" height="180" alt="languages graph" />
-</a>
-</div>
+<p align="center">
+These projects try to turn abstract network behavior and threat models into concrete visual experiences.  
+The aim is to let visitors see what information a simple web request exposes, and how the same data can either support education or be used in misleading interfaces.
+</p>
 
 <br />
 
-<div align="center">
-<img src="https://raw.githubusercontent.com/gist/c0260216654e80b2a818c57508499934/raw/f656208a38520443cf847596066928e18471c993/github_footer_separator.svg" alt="separator" />
-</div>
+<hr />
