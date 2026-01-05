@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flow Wall</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入连笔字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Sacramento&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            overflow: hidden;
+            background-color: #000000;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            user-select: none;
+        }
+
+        video::-webkit-media-controls { display: none !important; }
+
+        .media-item {
+            position: absolute;
+            overflow: hidden;
+            background: #111;
+            box-sizing: border-box; 
+            will-change: transform;
+            top: 0; left: 0;
+        }
+        
+        .media-item img, .media-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: fill; 
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: high-quality;
+            display: block;
+            pointer-events: none;
+        }
+
+        .media-item:hover {
+            z-index: 50 !important;
+            outline: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8); 
+            transform: scale(1.02); 
+            transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+        }
+
+        .glass-panel {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        
+        .ui-hidden {
+            transform: translateY(-150%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .custom-checkbox {
+            accent-color: #ffffff; 
+            cursor: pointer;
+        }
+
+        .btn-minimal {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #ccc;
+            transition: all 0.2s;
+        }
+        .btn-minimal:hover {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            border-color: rgba(255,255,255,0.3);
+        }
+        .btn-minimal:active {
+            transform: translateY(1px);
+        }
+
+        /* 荧光连笔字样式 */
+        .neon-cursive {
+            font-family: 'Sacramento', cursive;
+            color: #fff;
+            text-shadow: 
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 20px rgba(255, 255, 255, 0.8),
+                0 0 40px rgba(255, 255, 255, 0.6);
+            animation: breathe 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes breathe {
+            from {
+                text-shadow: 
+                    0 0 5px #fff,
+                    0 0 10px #fff,
+                    0 0 20px rgba(255, 255, 255, 0.8),
+                    0 0 40px rgba(255, 255, 255, 0.6);
+                opacity: 1;
+            }
+            to {
+                text-shadow: 
+                    0 0 2px #fff,
+                    0 0 5px #fff,
+                    0 0 10px rgba(255, 255, 255, 0.5),
+                    0 0 20px rgba(255, 255, 255, 0.3);
+                opacity: 0.7;
+            }
+        }
+    </style>
+</head>
+<body class="text-white h-screen w-screen relative">
+
+    <div id="flow-container" class="absolute inset-0 w-full h-full z-0 pointer-events-auto bg-black"></div>
+
+    <!-- UI 控制面板 -->
+    <div id="ui-controls" class="absolute top-6 left-6 z-50 glass-panel rounded-lg p-5 w-72">
+        <h1 class="text-lg font-light mb-6 text-white tracking-widest uppercase flex items-center opacity-80">
+            <i class="fa-solid fa-square-full text-[10px] mr-3"></i> Flow Wall
+        </h1>
+        
+        <div class="space-y-4 text-xs tracking-wide text-gray-400 font-mono">
+            <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                <span>STATUS</span>
+                <span id="status-text" class="text-white">RUNNING</span>
+            </div>
+            <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                <span>DENSITY</span>
+                <span id="rows-display" class="text-white">4</span>
+            </div>
+            <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                <span>SPEED</span>
+                <span id="speed-display" class="text-white">0.5</span>
+            </div>
+            <div class="flex justify-between items-center pb-2">
+                <span>MEDIA</span>
+                <span id="file-count-display" class="text-white">14 (Demo)</span>
+            </div>
+        </div>
+
+        <div class="mt-6 grid grid-cols-2 gap-3">
+            <button id="btn-toggle" class="btn-minimal py-2 px-3 rounded text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+                <i class="fa-solid fa-pause"></i> Pause
+            </button>
+            <button id="btn-fullscreen" class="btn-minimal py-2 px-3 rounded text-xs uppercase tracking-wider flex items-center justify-center gap-2">
+                <i class="fa-solid fa-expand"></i> Full
+            </button>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-white/10">
+             <label for="folder-input" id="folder-label" class="w-full flex items-center justify-center btn-minimal py-3 px-3 rounded text-xs uppercase tracking-wider cursor-pointer mb-3 group">
+                <i class="fa-regular fa-folder-open mr-2 group-hover:scale-110 transition-transform"></i> Load Library
+             </label>
+             <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
+             
+             <div class="flex items-center justify-start space-x-3 px-1">
+                 <!-- 默认选中 checked -->
+                 <input type="checkbox" id="recursive-toggle" class="custom-checkbox w-3 h-3 rounded-sm border-white/30 bg-transparent" checked>
+                 <label for="recursive-toggle" class="text-[10px] text-gray-500 uppercase tracking-widest cursor-pointer select-none hover:text-gray-300 transition-colors">Include Subfolders</label>
+             </div>
+        </div>
+        
+        <div class="mt-6 text-[9px] text-white text-center font-mono opacity-90">
+            [F] FULLSCREEN • [SPACE] PAUSE • [ARROWS] NAVIGATE
+        </div>
+    </div>
+
+    <!-- 极简加载层 -->
+    <div id="loading-overlay" class="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center hidden">
+        <div class="relative w-full max-w-4xl text-center p-8">
+            
+            <!-- 巨大的荧光连笔字 -->
+            <h2 class="neon-cursive text-5xl md:text-7xl lg:text-8xl mb-20 leading-tight transform -rotate-2 select-none">
+                Ready to see your images<br>on the wall?
+            </h2>
+            
+            <div class="max-w-xl mx-auto">
+                <div class="relative w-full h-1 bg-gray-900 mb-6 rounded-full overflow-hidden">
+                    <div id="loading-bar" class="absolute top-0 left-0 h-full bg-white transition-all duration-75 ease-out w-0 shadow-[0_0_10px_rgba(255,255,255,0.8)]"></div>
+                </div>
+                
+                <div class="flex justify-between text-xs text-gray-500 font-mono uppercase tracking-widest">
+                    <span id="loading-count">0 / 0</span>
+                    <span id="loading-percent">0%</span>
+                </div>
+
+                <div id="loading-current-file" class="text-[10px] text-gray-700 truncate mt-4 font-mono h-6">
+                    initializing...
+                </div>
+
+                <button id="start-btn" class="hidden mt-12 w-full py-5 border border-white/20 text-white hover:text-black hover:bg-white transition-all duration-300 uppercase tracking-[0.3em] text-sm font-light">
+                    Enter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox Modal -->
+    <div id="modal" class="fixed inset-0 z-[100] bg-black/98 hidden flex items-center justify-center p-0 backdrop-blur-sm transition-opacity duration-300">
+        <button id="modal-close" class="absolute top-8 right-8 text-white/50 text-2xl hover:text-white transition-colors z-[110]">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div id="modal-content" class="w-full h-full flex justify-center items-center">
+            <!-- Content -->
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            defaultSpeed: 0.5,
+            minSpeed: 0.1,
+            maxSpeed: 10.0,
+            
+            defaultRowCount: 4, 
+            minRowCount: 1,
+            maxRowCount: 16,
+            
+            // Virtual Viewport Settings
+            bufferRatio: 1.5, 
+            defaultAspectRatio: 1.6
+            // Removed maxActiveVideos limit
+        };
+
+        const AR_CACHE = new Map();
+
+        const MediaStore = {
+            items: [
+                { type: 'img', src: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop', name: 'demo1' },
+                { type: 'img', src: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?q=80&w=600&auto=format&fit=crop', name: 'demo2' },
+                { type: 'video', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', name: 'demo3' }, 
+                { type: 'img', src: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600&auto=format&fit=crop', name: 'demo4' },
+                { type: 'img', src: 'https://images.unsplash.com/photo-1535905557558-afc4877a26fc?q=80&w=600&auto=format&fit=crop', name: 'demo5' },
+                { type: 'video', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', name: 'demo6' },
+                { type: 'img', src: 'https://images.unsplash.com/photo-1516117172878-fd2c41f4a759?q=80&w=600&auto=format&fit=crop', name: 'demo7' },
+                { type: 'img', src: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=600&auto=format&fit=crop', name: 'demo8' },
+                { type: 'video', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', name: 'demo9' },
+                { type: 'img', src: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=600&auto=format&fit=crop', name: 'demo10' },
+                { type: 'video', src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4', name: 'demo11' }
+            ],
+            cursor: 0, 
+            
+            next() {
+                if (this.items.length === 0) return null;
+                const item = this.items[this.cursor];
+                this.cursor = (this.cursor + 1) % this.items.length;
+                return item;
+            },
+            
+            shuffle() {
+                let currentIndex = this.items.length, randomIndex;
+                while (currentIndex != 0) {
+                    randomIndex = Math.floor(Math.random() * currentIndex);
+                    currentIndex--;
+                    [this.items[currentIndex], this.items[randomIndex]] = [
+                        this.items[randomIndex], this.items[currentIndex]];
+                }
+            },
+
+            setItems(newItems) {
+                this.items.forEach(i => {
+                    if (i.isLocal && i.src) {
+                        URL.revokeObjectURL(i.src);
+                        i.src = null;
+                    }
+                });
+                this.items = newItems;
+                this.cursor = 0;
+                this.shuffle();
+            },
+            
+            getCount() { return this.items.length; }
+        };
+
+        const State = {
+            isRunning: true,
+            speed: CONFIG.defaultSpeed,
+            rowCount: CONFIG.defaultRowCount,
+            tracks: [], 
+            animationFrameId: null,
+            lastTime: 0
+        };
+
+        const container = document.getElementById('flow-container');
+        const uiControls = document.getElementById('ui-controls');
+        const uiRefs = {
+            rows: document.getElementById('rows-display'),
+            speed: document.getElementById('speed-display'),
+            status: document.getElementById('status-text'),
+            fileCount: document.getElementById('file-count-display'),
+            modal: document.getElementById('modal'),
+            modalContent: document.getElementById('modal-content'),
+            folderLabel: document.getElementById('folder-label'),
+            loadingOverlay: document.getElementById('loading-overlay'),
+            loadingBar: document.getElementById('loading-bar'),
+            loadingCount: document.getElementById('loading-count'),
+            loadingPercent: document.getElementById('loading-percent'),
+            loadingCurrent: document.getElementById('loading-current-file'),
+            startBtn: document.getElementById('start-btn')
+        };
+
+        function initGrid() {
+            container.innerHTML = '';
+            State.tracks = [];
+
+            const screenHeight = window.innerHeight;
+            const rowHeight = screenHeight / State.rowCount;
+            
+            const trackWidth = window.innerWidth * CONFIG.bufferRatio;
+            const itemsPerTrack = Math.ceil(trackWidth / rowHeight) + 3; 
+
+            for (let i = 0; i < State.rowCount; i++) {
+                createTrack(i, i * rowHeight, rowHeight, itemsPerTrack);
+            }
+            updateUI();
+        }
+
+        function createTrack(id, y, height, poolSize) {
+            const track = {
+                id: id,
+                y: y,
+                height: height,
+                pool: [],
+                head: 0 
+            };
+            
+            let currentX = 0;
+            
+            for (let i = 0; i < poolSize; i++) {
+                const data = MediaStore.next();
+                if (!data) break;
+
+                const item = createPooledElement(data, height);
+                item.x = currentX;
+                item.y = y;
+                currentX += item.w;
+
+                container.appendChild(item.el);
+                track.pool.push(item);
+                updateItemTransform(item);
+            }
+            State.tracks.push(track);
+        }
+
+        function createPooledElement(data, h) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'media-item group flex items-center justify-center';
+            wrapper.style.height = `${h}px`;
+            
+            let w = calculateWidth(data.name, h);
+            wrapper.style.width = `${w}px`;
+
+            const item = {
+                el: wrapper,
+                data: null, 
+                x: 0,
+                y: 0,
+                w: w,
+                h: h
+            };
+
+            updateElementContent(item, data);
+            
+            wrapper.onclick = () => {
+                if(item.data) openModal(item.data);
+            };
+
+            return item;
+        }
+
+        function calculateWidth(key, h) {
+            if (AR_CACHE.has(key)) {
+                return h * AR_CACHE.get(key);
+            }
+            return h * CONFIG.defaultAspectRatio;
+        }
+
+        function updateElementContent(item, newData) {
+            if (item.data && item.data.isLocal && item.data.src) {
+                URL.revokeObjectURL(item.data.src);
+                item.data.src = null; 
+            }
+
+            item.data = newData;
+            
+            if (newData.isLocal && !newData.src && newData.file) {
+                newData.src = URL.createObjectURL(newData.file);
+            }
+
+            const wrapper = item.el;
+            wrapper.innerHTML = '';
+
+            if (newData.type === 'img') {
+                const img = new Image();
+                img.src = newData.src;
+                img.onload = () => {
+                    const ar = img.naturalWidth / img.naturalHeight;
+                    if (!AR_CACHE.has(newData.name)) AR_CACHE.set(newData.name, ar);
+                    const correctW = item.h * ar;
+                    if (Math.abs(item.w - correctW) > 2) {
+                        item.w = correctW;
+                        wrapper.style.width = `${correctW}px`;
+                    }
+                };
+                wrapper.appendChild(img);
+
+            } else if (newData.type === 'video') {
+                // MODIFIED: Removed 'muted' attribute, ensuring sound plays
+                wrapper.innerHTML = `
+                    <video src="${newData.src}" loop playsinline></video>
+                    <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                         <i class="fa-solid fa-play text-white/80 text-2xl drop-shadow-md"></i>
+                    </div>
+                `;
+                const vid = wrapper.querySelector('video');
+                vid.onloadedmetadata = () => {
+                    if (vid.videoWidth && vid.videoHeight) {
+                        const ar = vid.videoWidth / vid.videoHeight;
+                        if (!AR_CACHE.has(newData.name)) AR_CACHE.set(newData.name, ar);
+                        const correctW = item.h * ar;
+                        if (Math.abs(item.w - correctW) > 2) {
+                            item.w = correctW;
+                            wrapper.style.width = `${correctW}px`;
+                        }
+                    }
+                };
+            }
+            
+            if (AR_CACHE.has(newData.name)) {
+                const cachedW = item.h * AR_CACHE.get(newData.name);
+                item.w = cachedW;
+                wrapper.style.width = `${cachedW}px`;
+            }
+        }
+
+        function updateItemTransform(item) {
+            item.el.style.transform = `translate3d(${item.x.toFixed(1)}px, ${item.y}px, 0)`;
+        }
+
+        function loop(timestamp) {
+            if (!State.lastTime) State.lastTime = timestamp;
+            const dt = (timestamp - State.lastTime) / 1000;
+            State.lastTime = timestamp;
+
+            if (State.isRunning && State.tracks.length > 0) {
+                const moveDist = State.speed * dt * 60;
+                const bufferZone = -500; 
+
+                State.tracks.forEach(track => {
+                    if (track.pool.length === 0) return;
+
+                    const headIdx = track.head;
+                    const headItem = track.pool[headIdx];
+
+                    headItem.x -= moveDist;
+
+                    let currentX = headItem.x + headItem.w;
+                    const poolLen = track.pool.length;
+
+                    for (let i = 1; i < poolLen; i++) {
+                        const actualIdx = (headIdx + i) % poolLen;
+                        const item = track.pool[actualIdx];
+                        
+                        item.x = currentX;
+                        currentX += item.w;
+                    }
+
+                    for (let i = 0; i < poolLen; i++) {
+                        const item = track.pool[i];
+                        updateItemTransform(item);
+
+                        // MODIFIED: Play ALL videos in pool, unmute them
+                        if (item.data && item.data.type === 'video') {
+                            const vid = item.el.querySelector('video');
+                            if (vid) {
+                                if (vid.paused) {
+                                    vid.play().catch(e => {
+                                        // Auto-play policy might block sound without interaction
+                                        // We try to play muted if unmuted fails, but request was for sound.
+                                        // User must have interacted with "Load" or "Enter" to unlock audio.
+                                        console.warn("Autoplay blocked:", e);
+                                        vid.muted = true;
+                                        vid.play().catch(()=>{});
+                                    });
+                                }
+                                // Ensure sound is ON if permitted
+                                if (!vid.paused && vid.muted) {
+                                    // Attempt to unmute
+                                    vid.muted = false;
+                                }
+                            }
+                        }
+                    }
+
+                    if (headItem.x + headItem.w < bufferZone) {
+                        const newData = MediaStore.next();
+                        if (newData) {
+                            updateElementContent(headItem, newData);
+                        }
+                        track.head = (track.head + 1) % poolLen;
+                    }
+                });
+            }
+            State.animationFrameId = requestAnimationFrame(loop);
+        }
+
+        const folderInput = document.getElementById('folder-input');
+        const recursiveToggle = document.getElementById('recursive-toggle');
+        const SUPPORTED_EXT = {
+            img: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'avif'],
+            video: ['mp4', 'webm', 'ogg', 'mov', 'mkv']
+        };
+
+        folderInput.addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+
+            uiRefs.loadingOverlay.classList.remove('hidden');
+            uiRefs.startBtn.classList.add('hidden');
+            uiRefs.loadingBar.style.width = '0%';
+            
+            const wasRunning = State.isRunning;
+            State.isRunning = false;
+
+            const totalFiles = files.length;
+            const isRecursive = recursiveToggle.checked;
+            const newData = [];
+            let processedCount = 0;
+            
+            const processChunk = () => {
+                const start = performance.now();
+                while (processedCount < totalFiles && (performance.now() - start < 12)) {
+                    const file = files[processedCount];
+                    processedCount++;
+                    
+                    let shouldProcess = true;
+                    if (!isRecursive) {
+                        const pathParts = file.webkitRelativePath.split('/');
+                        if (pathParts.length > 2) shouldProcess = false;
+                    }
+
+                    if (shouldProcess) {
+                        const ext = file.name.split('.').pop().toLowerCase();
+                        if (SUPPORTED_EXT.img.includes(ext)) {
+                            newData.push({ type: 'img', file: file, src: null, name: file.name, isLocal: true });
+                        } else if (SUPPORTED_EXT.video.includes(ext)) {
+                            newData.push({ type: 'video', file: file, src: null, name: file.name, isLocal: true });
+                        }
+                    }
+                }
+
+                const percent = Math.floor((processedCount / totalFiles) * 100);
+                uiRefs.loadingBar.style.width = `${percent}%`;
+                uiRefs.loadingCount.innerText = `${processedCount} / ${totalFiles}`;
+                uiRefs.loadingPercent.innerText = `${percent}%`;
+                if(files[processedCount-1]) {
+                    uiRefs.loadingCurrent.innerText = files[processedCount-1].name;
+                }
+
+                if (processedCount < totalFiles) {
+                    setTimeout(processChunk, 0); 
+                } else {
+                    finishLoading(newData, wasRunning);
+                }
+            };
+
+            setTimeout(processChunk, 100);
+        });
+
+        function finishLoading(newData, wasRunning) {
+            if (newData.length === 0) {
+                alert("No supported media files found.");
+                uiRefs.loadingOverlay.classList.add('hidden');
+                if(wasRunning) State.isRunning = true;
+                return;
+            }
+
+            uiRefs.loadingBar.style.width = '100%';
+            uiRefs.loadingPercent.innerText = '100%';
+            uiRefs.loadingCurrent.innerText = 'READY';
+            
+            uiRefs.startBtn.classList.remove('hidden');
+            
+            uiRefs.startBtn.onclick = () => {
+                MediaStore.setItems(newData); 
+                
+                uiRefs.fileCount.innerText = `${newData.length} Files`;
+                uiRefs.fileCount.classList.remove('text-yellow-400');
+                uiRefs.fileCount.classList.add('text-white');
+                
+                uiRefs.folderLabel.innerHTML = `<i class="fa-solid fa-check mr-2"></i> LOADED ${newData.length}`;
+                uiRefs.folderLabel.classList.add('border-white', 'bg-white/10');
+                
+                initGrid();
+                State.isRunning = true;
+                State.lastTime = 0; 
+
+                uiRefs.loadingOverlay.classList.add('hidden');
+            };
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                uiControls.classList.add('ui-hidden');
+            } else {
+                uiControls.classList.remove('ui-hidden');
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === ' ' && e.repeat) return e.preventDefault();
+            switch(e.key) {
+                case 'f': case 'F': toggleFullscreen(); break;
+                case 'ArrowLeft': 
+                    State.speed = Math.min(State.speed + 0.5, CONFIG.maxSpeed); updateUI(); break;
+                case 'ArrowRight': 
+                    State.speed = Math.max(State.speed - 0.5, CONFIG.minSpeed); updateUI(); break;
+                case 'ArrowUp': 
+                    if (State.rowCount < CONFIG.maxRowCount) { State.rowCount++; initGrid(); } break;
+                case 'ArrowDown': 
+                    if (State.rowCount > CONFIG.minRowCount) { State.rowCount--; initGrid(); } break;
+                case ' ': e.preventDefault(); togglePause(); break;
+            }
+        });
+
+        document.getElementById('btn-toggle').onclick = togglePause;
+        document.getElementById('btn-fullscreen').onclick = toggleFullscreen;
+
+        function togglePause() {
+            State.isRunning = !State.isRunning;
+            const btn = document.getElementById('btn-toggle');
+            if (State.isRunning) {
+                State.lastTime = 0; 
+                btn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
+                uiRefs.status.innerText = "RUNNING";
+                uiRefs.status.classList.remove('text-red-500');
+                uiRefs.status.classList.add('text-white');
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-play"></i> Resume';
+                uiRefs.status.innerText = "PAUSED";
+                uiRefs.status.classList.remove('text-white');
+                uiRefs.status.classList.add('text-red-500');
+            }
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(()=>{});
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+        }
+
+        function updateUI() {
+            uiRefs.speed.innerText = State.speed.toFixed(1);
+            uiRefs.rows.innerText = State.rowCount;
+        }
+
+        function openModal(data) {
+            const wasRunning = State.isRunning;
+            State.isRunning = false;
+            uiRefs.modal.classList.remove('hidden');
+            uiRefs.modalContent.innerHTML = '';
+            
+            if (data.isLocal && !data.src && data.file) {
+                data.src = URL.createObjectURL(data.file);
+            }
+
+            if (data.type === 'img') {
+                uiRefs.modalContent.innerHTML = `<img src="${data.src}" class="max-h-full max-w-full object-contain shadow-2xl">`;
+            } else {
+                uiRefs.modalContent.innerHTML = `<video src="${data.src}" controls autoplay class="max-h-full max-w-full object-contain shadow-2xl"></video>`;
+            }
+
+            const close = () => {
+                uiRefs.modal.classList.add('hidden');
+                uiRefs.modalContent.innerHTML = '';
+                if(wasRunning) {
+                    State.isRunning = true;
+                    State.lastTime = 0;
+                }
+            };
+            document.getElementById('modal-close').onclick = close;
+            uiRefs.modal.onclick = (e) => { if(e.target === uiRefs.modal) close(); };
+        }
+
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(initGrid, 200);
+        });
+
+        initGrid();
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>
