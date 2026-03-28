@@ -3,347 +3,1174 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nexus | Monolith</title>
-
-  <!-- Include Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Configure Tailwind -->
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            background: '#000000', // pure black
-            surface: '#0a0a0a',    // very dark gray
-            subtle: '#171717',     // border gray
-          },
-          fontFamily: {
-            sans: ['Inter', 'system-ui', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          animation: {
-            'fade-in': 'fadeIn 1s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-          },
-          keyframes: {
-            fadeIn: {
-              '0%': { opacity: '0', transform: 'translateY(10px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' },
-            }
-          }
-        }
-      }
-    }
-  </script>
-
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
-
+  <title>JC Projects</title>
   <style>
-    body {
-      background-color: #000000;
-      color: #ffffff;
-      font-family: 'Inter', sans-serif;
-      overflow-x: hidden;
-      -webkit-font-smoothing: antialiased;
+    @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --win-bg: #c0c0c0;
+      --win-dark: #808080;
+      --win-darker: #404040;
+      --win-light: #dfdfdf;
+      --win-white: #ffffff;
+      --win-black: #000000;
+      --win-title: #000080;
+      --win-title-end: #1084d0;
+      --win-title-inactive: #808080;
+      --win-desktop: #008080;
+      --win-highlight: #000080;
+      --win-hl-text: #ffffff;
+      --win-field: #ffffff;
+      --font: 'Segoe UI', Tahoma, 'MS Sans Serif', Arial, sans-serif;
+      --font-size: 11px;
+      --mono: 'VT323', 'Courier New', monospace;
     }
 
-    /* Noise texture */
-    .noise-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
+    html, body {
       height: 100%;
-      pointer-events: none;
-      z-index: 50;
-      opacity: 0.03;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      overflow: hidden;
+      font-family: var(--font);
+      font-size: var(--font-size);
+      color: var(--win-black);
+      background: #000;
     }
 
-    /* Minimal grid */
-    .grid-bg {
-      background-image:
-        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-      background-size: 60px 60px;
-      mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
-      -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+    /* ============================================================
+       BOOT SEQUENCE
+       ============================================================ */
+
+    /* --- BIOS Screen --- */
+    #biosScreen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #000;
+      color: #aaa;
+      font-family: var(--mono);
+      font-size: 16px;
+      padding: 30px 40px;
+      line-height: 1.7;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* Spotlight logic */
-    .spotlight-card {
-      --mouse-x: 0px;
-      --mouse-y: 0px;
+    .bios-line { opacity: 0; animation: biosType 0.05s forwards; white-space: pre; }
+    .bios-highlight { color: #fff; }
+    .bios-ok { color: #55ff55; }
+    .bios-brand { color: #5555ff; font-size: 20px; font-weight: bold; }
+
+    @keyframes biosType { to { opacity: 1; } }
+
+    /* --- Windows 98 Boot Splash --- */
+    #bootSplash {
+      position: fixed; inset: 0; z-index: 9998;
+      background: #000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+    }
+
+    .boot-logo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .boot-flag {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      width: 64px; height: 64px;
+    }
+
+    .boot-flag div:nth-child(1) { background: #ff0000; border-radius: 2px 0 0 0; }
+    .boot-flag div:nth-child(2) { background: #00aa00; border-radius: 0 2px 0 0; }
+    .boot-flag div:nth-child(3) { background: #0000ff; border-radius: 0 0 0 2px; }
+    .boot-flag div:nth-child(4) { background: #ffaa00; border-radius: 0 0 2px 0; }
+
+    .boot-text {
+      color: #ffffff;
+      font-family: var(--font);
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .boot-text span { font-weight: normal; font-size: 16px; color: #aaa; }
+
+    .boot-progress-track {
+      position: absolute;
+      bottom: 60px;
+      width: 260px;
+      height: 22px;
+      background: #000;
+      border: 2px solid #444;
+      padding: 3px;
+    }
+
+    .boot-progress-fill {
+      height: 100%;
+      width: 0;
+      display: flex;
+      gap: 2px;
+    }
+
+    .boot-block {
+      width: 12px;
+      height: 100%;
+      background: linear-gradient(180deg, #5577ff, #2244aa);
+      flex-shrink: 0;
+      opacity: 0;
+    }
+
+    /* ============================================================
+       DESKTOP
+       ============================================================ */
+    #desktop {
+      height: 100vh;
+      display: none;
+      flex-direction: column;
+      background: var(--win-desktop);
+      user-select: none;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+
+    #desktop.show { display: flex; opacity: 1; }
+
+    .desktop-area {
+      flex: 1;
       position: relative;
-      background: #050505;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 6px;
     }
 
-    .spotlight-card::before {
-      content: "";
-      position: absolute;
-      inset: -1px;
-      border-radius: inherit;
-      background: radial-gradient(
-        600px circle at var(--mouse-x) var(--mouse-y),
-        rgba(255, 255, 255, 0.4),
-        transparent 40%
-      );
-      opacity: 0;
-      transition: opacity 0.5s;
+    /* Desktop Icons */
+    .dicon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      width: 70px;
+      padding: 4px;
+      cursor: default;
+      text-decoration: none;
+      border: 1px solid transparent;
+    }
+
+    .dicon.selected {
+      border: 1px dotted #fff;
+    }
+
+    .dicon.selected .dicon-label {
+      background: var(--win-highlight);
+      color: var(--win-hl-text);
+      text-shadow: none;
+    }
+
+    .dicon-img {
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      image-rendering: pixelated;
       pointer-events: none;
-      z-index: 0;
-
-      mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
-      -webkit-mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
-      mask-composite: exclude;
-      -webkit-mask-composite: xor;
     }
 
-    .spotlight-card::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      background: radial-gradient(
-        800px circle at var(--mouse-x) var(--mouse-y),
-        rgba(255, 255, 255, 0.03),
-        transparent 40%
-      );
-      opacity: 0;
-      transition: opacity 0.5s;
+    .dicon-label {
+      text-align: center;
+      color: #ffffff;
+      font-size: 11px;
+      line-height: 1.3;
+      padding: 1px 3px;
+      text-shadow: 1px 1px 1px rgba(0,0,0,0.9);
+      word-break: break-word;
       pointer-events: none;
-      z-index: 1;
     }
 
-    .spotlight-card:hover::before,
-    .spotlight-card:hover::after {
-      opacity: 1;
+    /* ============================================================
+       WINDOWS
+       ============================================================ */
+    .win {
+      position: absolute;
+      display: none;
+      flex-direction: column;
+      background: var(--win-bg);
+      border-top: 2px solid var(--win-white);
+      border-left: 2px solid var(--win-white);
+      border-right: 2px solid var(--win-black);
+      border-bottom: 2px solid var(--win-black);
+      box-shadow: inset 1px 1px 0 var(--win-light), inset -1px -1px 0 var(--win-dark);
+      min-width: 300px;
+      min-height: 200px;
     }
 
-    .group:hover .glow-text {
-      text-shadow: 0 0 20px rgba(255,255,255,0.3);
+    .win.open { display: flex; }
+    .win.maximized {
+      top: 0 !important; left: 0 !important;
+      width: 100% !important; height: calc(100% - 30px) !important;
     }
 
-    /* ✅ 补齐你用到的 delay classes */
-    .delay-100 { animation-delay: 0.1s; }
-    .delay-200 { animation-delay: 0.2s; }
-    .delay-300 { animation-delay: 0.3s; }
-    .delay-400 { animation-delay: 0.4s; }
-    .delay-500 { animation-delay: 0.5s; }
-    .delay-600 { animation-delay: 0.6s; }
-    .delay-700 { animation-delay: 0.7s; }
-    .delay-800 { animation-delay: 0.8s; }
+    /* Title bar */
+    .win-title {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 3px;
+      background: linear-gradient(90deg, var(--win-title), var(--win-title-end));
+      color: white;
+      font-weight: bold;
+      font-size: 11px;
+      min-height: 20px;
+      cursor: default;
+      flex-shrink: 0;
+    }
+
+    .win.inactive .win-title {
+      background: linear-gradient(90deg, var(--win-title-inactive), #b0b0b0);
+    }
+
+    .win-title-icon { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .win-title-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .win-controls { display: flex; gap: 2px; }
+
+    .wbtn {
+      width: 16px; height: 14px;
+      background: var(--win-bg);
+      border-top: 1px solid var(--win-white);
+      border-left: 1px solid var(--win-white);
+      border-right: 1px solid var(--win-black);
+      border-bottom: 1px solid var(--win-black);
+      box-shadow: inset -1px -1px 0 var(--win-dark);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; padding: 0;
+    }
+
+    .wbtn:active {
+      border-top-color: var(--win-black);
+      border-left-color: var(--win-black);
+      border-right-color: var(--win-white);
+      border-bottom-color: var(--win-white);
+      box-shadow: inset 1px 1px 0 var(--win-dark);
+    }
+
+    .wbtn svg { width: 8px; height: 8px; }
+
+    /* Menu bar */
+    .win-menu {
+      display: flex; padding: 2px 0;
+      border-bottom: 1px solid var(--win-dark);
+      background: var(--win-bg); flex-shrink: 0;
+    }
+
+    .win-menu-item {
+      padding: 2px 6px; font-size: 11px; cursor: pointer;
+    }
+
+    .win-menu-item:hover { background: var(--win-highlight); color: var(--win-hl-text); }
+
+    /* Address bar */
+    .win-addr {
+      display: flex; align-items: center; gap: 4px;
+      padding: 3px 4px;
+      border-bottom: 1px solid var(--win-dark);
+      background: var(--win-bg); flex-shrink: 0;
+    }
+
+    .win-addr-label { font-size: 11px; white-space: nowrap; }
+
+    .field-sunken {
+      background: var(--win-field);
+      border-top: 1px solid var(--win-dark);
+      border-left: 1px solid var(--win-dark);
+      border-right: 1px solid var(--win-white);
+      border-bottom: 1px solid var(--win-white);
+      box-shadow: inset 1px 1px 0 var(--win-darker);
+    }
+
+    .win-addr-field {
+      flex: 1; display: flex; align-items: center;
+      height: 20px; padding: 0 4px; font-size: 11px;
+    }
+
+    /* Toolbar */
+    .win-toolbar {
+      display: flex; align-items: center; gap: 2px;
+      padding: 2px 4px;
+      border-bottom: 1px solid var(--win-dark);
+      background: var(--win-bg); flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .tbtn {
+      display: flex; align-items: center; gap: 3px;
+      padding: 2px 6px; height: 22px;
+      background: var(--win-bg);
+      border: 1px solid transparent;
+      font-family: var(--font); font-size: 11px;
+      cursor: pointer; color: var(--win-black);
+    }
+
+    .tbtn:hover {
+      border-top-color: var(--win-white); border-left-color: var(--win-white);
+      border-right-color: var(--win-dark); border-bottom-color: var(--win-dark);
+    }
+
+    .tbtn.active {
+      border-top-color: var(--win-dark); border-left-color: var(--win-dark);
+      border-right-color: var(--win-white); border-bottom-color: var(--win-white);
+      background: #b0b0b0;
+    }
+
+    .tool-sep {
+      width: 1px; height: 18px; margin: 0 3px;
+      border-left: 1px solid var(--win-dark); border-right: 1px solid var(--win-white);
+    }
+
+    .search-field {
+      height: 20px; padding: 0 4px;
+      font-family: var(--font); font-size: 11px;
+      width: 130px; outline: none; border: none;
+    }
+
+    /* Content area */
+    .win-content {
+      flex: 1; overflow-y: auto; overflow-x: hidden;
+      margin: 2px;
+    }
+
+    .list-header {
+      display: grid;
+      grid-template-columns: 28px minmax(150px,1.2fr) minmax(70px,0.5fr) 1fr;
+      position: sticky; top: 0; z-index: 2;
+      background: var(--win-bg);
+      border-bottom: 1px solid var(--win-dark);
+    }
+
+    .col-head {
+      padding: 2px 6px; font-size: 11px; cursor: pointer; white-space: nowrap;
+      border-right: 1px solid var(--win-dark);
+      border-top: 1px solid var(--win-white);
+      border-left: 1px solid var(--win-white);
+      border-bottom: 1px solid var(--win-dark);
+      box-shadow: inset -1px -1px 0 var(--win-darker);
+      background: var(--win-bg); text-align: left;
+    }
+
+    .file-row {
+      display: grid;
+      grid-template-columns: 28px minmax(150px,1.2fr) minmax(70px,0.5fr) 1fr;
+      align-items: center;
+      text-decoration: none; color: var(--win-black); cursor: pointer;
+    }
+
+    .file-row:hover { background: var(--win-highlight); color: var(--win-hl-text); }
+    .file-row:hover .file-type, .file-row:hover .file-desc { color: var(--win-hl-text); }
+
+    .file-icon { display: flex; align-items: center; justify-content: center; padding: 3px 0 3px 6px; font-size: 16px; }
+    .file-name { padding: 3px 6px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-type { padding: 3px 6px; font-size: 11px; white-space: nowrap; color: var(--win-dark); }
+    .file-desc { padding: 3px 6px; font-size: 11px; color: var(--win-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Notepad-style content */
+    .notepad-body {
+      flex: 1; overflow-y: auto;
+      margin: 2px; padding: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px; line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    /* Status bar */
+    .win-status {
+      display: flex; align-items: center; padding: 2px; min-height: 20px; flex-shrink: 0;
+    }
+
+    .status-sec {
+      padding: 1px 6px; font-size: 11px; white-space: nowrap;
+      border-top: 1px solid var(--win-dark); border-left: 1px solid var(--win-dark);
+      border-right: 1px solid var(--win-white); border-bottom: 1px solid var(--win-white);
+    }
+
+    .status-sec:first-child { flex: 1; }
+
+    /* ============================================================
+       TASKBAR
+       ============================================================ */
+    .taskbar {
+      height: 30px; background: var(--win-bg);
+      border-top: 2px solid var(--win-white);
+      display: flex; align-items: center; gap: 3px;
+      padding: 2px 3px; z-index: 200;
+      flex-shrink: 0;
+    }
+
+    .start-btn {
+      display: flex; align-items: center; gap: 3px;
+      padding: 2px 6px; height: 24px;
+      background: var(--win-bg);
+      border-top: 2px solid var(--win-white); border-left: 2px solid var(--win-white);
+      border-right: 2px solid var(--win-black); border-bottom: 2px solid var(--win-black);
+      box-shadow: inset -1px -1px 0 var(--win-dark);
+      font-family: var(--font); font-size: 11px; font-weight: bold;
+      cursor: pointer; flex-shrink: 0; position: relative;
+    }
+
+    .start-btn:active, .start-btn.pressed {
+      border-top-color: var(--win-black); border-left-color: var(--win-black);
+      border-right-color: var(--win-white); border-bottom-color: var(--win-white);
+      box-shadow: inset 1px 1px 0 var(--win-dark);
+    }
+
+    .start-btn .flag { font-size: 14px; }
+
+    .task-sep {
+      width: 2px; height: 22px;
+      border-left: 1px solid var(--win-dark); border-right: 1px solid var(--win-white);
+      margin: 0 1px;
+    }
+
+    .task-items { flex: 1; display: flex; gap: 2px; overflow: hidden; }
+
+    .task-btn {
+      display: flex; align-items: center; gap: 4px;
+      padding: 2px 6px; height: 22px;
+      min-width: 0; max-width: 160px;
+      background: var(--win-bg);
+      border-top: 1px solid var(--win-white); border-left: 1px solid var(--win-white);
+      border-right: 1px solid var(--win-black); border-bottom: 1px solid var(--win-black);
+      font-family: var(--font); font-size: 11px;
+      cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .task-btn.active {
+      border-top-color: var(--win-black); border-left-color: var(--win-black);
+      border-right-color: var(--win-white); border-bottom-color: var(--win-white);
+      box-shadow: inset 1px 1px 0 var(--win-dark);
+      font-weight: bold;
+      background: #b0b0b0;
+    }
+
+    .task-btn .task-icon { font-size: 12px; flex-shrink: 0; }
+
+    .tray {
+      display: flex; align-items: center; gap: 6px;
+      padding: 2px 8px; height: 22px;
+      border-top: 1px solid var(--win-dark); border-left: 1px solid var(--win-dark);
+      border-right: 1px solid var(--win-white); border-bottom: 1px solid var(--win-white);
+      font-size: 11px; flex-shrink: 0;
+    }
+
+    /* ============================================================
+       START MENU
+       ============================================================ */
+    #startMenu {
+      position: absolute;
+      bottom: 30px; left: 3px;
+      width: 200px;
+      background: var(--win-bg);
+      border-top: 2px solid var(--win-white); border-left: 2px solid var(--win-white);
+      border-right: 2px solid var(--win-black); border-bottom: 2px solid var(--win-black);
+      box-shadow: inset 1px 1px 0 var(--win-light), inset -1px -1px 0 var(--win-dark);
+      display: none;
+      z-index: 500;
+    }
+
+    #startMenu.open { display: flex; }
+
+    .start-banner {
+      width: 24px;
+      background: linear-gradient(0deg, #000080, #1084d0);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 6px;
+      flex-shrink: 0;
+    }
+
+    .start-banner span {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      color: #ccc;
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+
+    .start-items {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 2px 0;
+    }
+
+    .start-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 10px;
+      font-size: 11px; cursor: pointer;
+      text-decoration: none; color: var(--win-black);
+    }
+
+    .start-item:hover { background: var(--win-highlight); color: var(--win-hl-text); }
+
+    .start-item-icon { font-size: 18px; width: 24px; text-align: center; }
+
+    .start-sep {
+      height: 1px; margin: 2px 4px;
+      border-top: 1px solid var(--win-dark);
+      border-bottom: 1px solid var(--win-white);
+    }
+
+    /* ============================================================
+       CONTEXT MENU
+       ============================================================ */
+    #ctxMenu {
+      position: absolute;
+      width: 180px;
+      background: var(--win-bg);
+      border-top: 2px solid var(--win-white); border-left: 2px solid var(--win-white);
+      border-right: 2px solid var(--win-black); border-bottom: 2px solid var(--win-black);
+      box-shadow: inset 1px 1px 0 var(--win-light), inset -1px -1px 0 var(--win-dark), 2px 2px 4px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 600;
+      padding: 2px 0;
+    }
+
+    #ctxMenu.open { display: block; }
+
+    .ctx-item {
+      padding: 4px 24px; font-size: 11px; cursor: pointer;
+    }
+
+    .ctx-item:hover { background: var(--win-highlight); color: var(--win-hl-text); }
+
+    .ctx-item.disabled { color: var(--win-dark); pointer-events: none; }
+
+    .ctx-sep {
+      height: 1px; margin: 2px 2px;
+      border-top: 1px solid var(--win-dark); border-bottom: 1px solid var(--win-white);
+    }
+
+    /* ============================================================
+       SCROLLBAR
+       ============================================================ */
+    .win-content::-webkit-scrollbar { width: 16px; }
+    .win-content::-webkit-scrollbar-track {
+      background: repeating-conic-gradient(var(--win-bg) 0% 25%, var(--win-field) 0% 50%) 50%/2px 2px;
+    }
+    .win-content::-webkit-scrollbar-thumb {
+      background: var(--win-bg);
+      border-top: 2px solid var(--win-white); border-left: 2px solid var(--win-white);
+      border-right: 2px solid var(--win-black); border-bottom: 2px solid var(--win-black);
+      box-shadow: inset -1px -1px 0 var(--win-dark);
+    }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 600px) {
+      .list-header, .file-row { grid-template-columns: 26px 1fr 0 0; }
+      .file-type, .file-desc, .col-head:nth-child(3), .col-head:nth-child(4) { display: none; }
+      .win-addr { display: none; }
+    }
   </style>
 </head>
+<body>
 
-<body class="min-h-screen flex flex-col items-center justify-center p-6 sm:p-12">
+  <!-- ===================== BIOS SCREEN ===================== -->
+  <div id="biosScreen"></div>
 
-  <!-- Noise layer -->
-  <div class="noise-bg"></div>
-
-  <!-- Background layers -->
-  <div class="fixed inset-0 z-0 pointer-events-none">
-    <div class="absolute inset-0 bg-background"></div>
-    <div class="absolute inset-0 grid-bg"></div>
+  <!-- ===================== BOOT SPLASH ===================== -->
+  <div id="bootSplash">
+    <div class="boot-logo">
+      <div class="boot-flag"><div></div><div></div><div></div><div></div></div>
+      <div class="boot-text">
+        Microsoft<sup style="font-size:10px">®</sup> Windows 98<br>
+        <span>Starting Windows...</span>
+      </div>
+    </div>
+    <div class="boot-progress-track">
+      <div class="boot-progress-fill" id="bootFill"></div>
+    </div>
   </div>
 
-  <!-- Main content -->
-  <main class="w-full max-w-6xl z-10 relative flex flex-col items-center">
-
-    <!-- Header -->
-    <header class="text-center mb-20 animate-fade-in">
-      <div class="inline-flex items-center gap-3 px-3 py-1 mb-6 border border-white/10 rounded-full bg-white/5 backdrop-blur-sm">
-        <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-        <span class="text-[10px] font-mono tracking-widest text-gray-400 uppercase">System Ready</span>
+  <!-- ===================== DESKTOP ===================== -->
+  <div id="desktop">
+    <div class="desktop-area" id="desktopArea">
+      <!-- Desktop Icons -->
+      <div class="dicon" data-win="aboutWin" ondblclick="openWindow('aboutWin')">
+        <div class="dicon-img">📄</div>
+        <div class="dicon-label">About Me</div>
       </div>
-
-      <h1 class="text-6xl md:text-8xl font-bold tracking-tighter text-white mb-4">NEXUS</h1>
-      <p class="text-gray-500 font-light text-lg tracking-wide max-w-lg mx-auto">
-        Directory Index <span class="mx-2 text-white/20">/</span> Local Environment
-      </p>
-    </header>
-
-    <!-- ✅ Card container（现在 1~8 都在同一个 grid 里） -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-
-      <!-- Card 01 -->
-      <a href="PersonalWeb.html" class="spotlight-card group relative h-80 rounded-3xl border border-white/10 p-8 flex flex-col items-center justify-center text-center transition-transform duration-500 hover:scale-[1.01] animate-fade-in delay-100">
-        <div class="mb-8 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 group-hover:bg-white/10 transition-colors duration-300">
-          <svg class="text-white w-10 h-10 stroke-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/>
-            <line x1="9" x2="9" y1="1" y2="4"/><line x1="15" x2="15" y1="1" y2="4"/>
-            <line x1="9" x2="9" y1="20" y2="23"/><line x1="15" x2="15" y1="20" y2="23"/>
-            <line x1="20" x2="23" y1="9" y2="9"/><line x1="20" x2="23" y1="15" y2="15"/>
-            <line x1="1" x2="4" y1="9" y2="9"/><line x1="1" x2="4" y1="15" y2="15"/>
-          </svg>
-        </div>
-        <div class="relative z-10">
-          <h2 class="text-3xl font-bold text-white mb-3 tracking-tight glow-text transition-all duration-300">About Me</h2>
-          <p class="text-sm text-gray-500 font-mono group-hover:text-gray-400 transition-colors">Personal Portfolio Core</p>
-        </div>
-      </a>
-
-      <!-- Card 02 -->
-      <a href="FakeFishing.html" class="spotlight-card group relative h-80 rounded-3xl border border-white/10 p-8 flex flex-col items-center justify-center text-center transition-transform duration-500 hover:scale-[1.01] animate-fade-in delay-200">
-        <div class="mb-8 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 group-hover:bg-white/10 transition-colors duration-300">
-          <svg class="text-white w-10 h-10 stroke-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="5" r="3"/><line x1="12" x2="12" y1="22" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/>
-          </svg>
-        </div>
-        <div class="relative z-10">
-          <h2 class="text-3xl font-bold text-white mb-3 tracking-tight glow-text transition-all duration-300">Phishing Sim</h2>
-          <p class="text-sm text-gray-500 font-mono group-hover:text-gray-400 transition-colors">Security Awareness Module</p>
-        </div>
-      </a>
-
-      <!-- Card 03 -->
-      <a href="GetMoreThanIP.html" class="spotlight-card group relative h-80 rounded-3xl border border-white/10 p-8 flex flex-col items-center justify-center text-center transition-transform duration-500 hover:scale-[1.01] animate-fade-in delay-300">
-        <div class="mb-8 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 group-hover:bg-white/10 transition-colors duration-300">
-          <svg class="text-white w-10 h-10 stroke-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.9 4.9l2.8 2.8"/><path d="M16.3 16.3l2.8 2.8"/><circle cx="12" cy="12" r="3"/>
-          </svg>
-        </div>
-        <div class="relative z-10">
-          <h2 class="text-3xl font-bold text-white mb-3 tracking-tight glow-text transition-all duration-300">More than IP?</h2>
-          <p class="text-sm text-gray-500 font-mono group-hover:text-gray-400 transition-colors">Extended IP & Geo Diagnostics</p>
-        </div>
-      </a>
-
-      <!-- Card 04 -->
-      <a href="GetYourIP.html" class="spotlight-card group relative h-80 rounded-3xl border border-white/10 p-8 flex flex-col items-center justify-center text-center transition-transform duration-500 hover:scale-[1.01] animate-fade-in delay-400">
-        <div class="mb-8 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 group-hover:bg-white/10 transition-colors duration-300">
-          <svg class="text-white w-10 h-10 stroke-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-          </svg>
-        </div>
-        <div class="relative z-10">
-          <h2 class="text-3xl font-bold text-white mb-3 tracking-tight glow-text transition-all duration-300">IP Getter</h2>
-          <p class="text-sm text-gray-500 font-mono group-hover:text-gray-400 transition-colors">Network Analysis Tool</p>
-        </div>
-      </a>
-
-      <!-- Card 05 -->
-      <a href="DragyTechStory.html" class="spotlight-card group relative h-80 rounded-3xl border border-white/10 p-8 flex flex-col items-center justify-center text-center transition-transform duration-500 hover:scale-[1.01] animate-fade-in delay-500">
-        <div class="mb-8 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 group-hover:bg-white/10 transition-colors duration-300">
-          <svg class="text-white w-10 h-10 stroke-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 7h18" /><path d="M3 12h18" /><path d="M3 17h18" />
-          </svg>
-        </div>
-        <div class="relative z-10">
-          <h2 class="text-3xl font-bold text-white mb-3 tracking-tight glow-text transition-all duration-300">DragyTech Story</h2>
-          <p class="text-sm text-gray-500 font-mono group-hover:text-gray-400 transition-colors">A simple story about cybersecurity</p>
-        </div>
-      </a>
-
-      <!-- Card 06 -->
-      <a href="SimpleRealEstateAnalyzer.html" class="spotlight-card group relative h-80 rounded-3xl border border-white/10 p-8 flex flex-col items-center justify-center text-center transition-transform duration-500 hover:scale-[1.01] animate-fade-in delay-600">
-        <div class="mb-8 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 group-hover:bg-white/10 transition-colors duration-300">
-          <svg class="text-white w-10 h-10 stroke-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 11L12 3l9 8" />
-            <path d="M5 11v8a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-8" />
-          </svg>
-        </div>
-        <div class="relative z-10">
-          <h2 class="text-3xl font-bold text-white mb-3 tracking-tight glow-text transition-all duration-300">Real Estate Analyzer</h2>
-          <p class="text-sm text-gray-500 font-mono group-hover:text-gray-400 transition-colors">Simple property ROI & valuation tool</p>
-        </div>
-      </a>
-
-      <!-- ✅ Card 07（现在在 grid 里了） -->
-      <a href="AlgoTerminal.html" class="spotlight-card group relative h-80 rounded-3xl border border-white/10 p-8 flex flex-col items-center justify-center text-center transition-transform duration-500 hover:scale-[1.01] animate-fade-in delay-700">
-        <div class="mb-8 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 group-hover:bg-white/10 transition-colors duration-300">
-          <svg class="text-white w-10 h-10 stroke-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="4" width="18" height="14" rx="2" ry="2"/>
-            <path d="M8 8h8M8 12h8M8 16h5" />
-          </svg>
-        </div>
-        <div class="relative z-10">
-          <h2 class="text-3xl font-bold text-white mb-3 tracking-tight glow-text transition-all duration-300">Algo Terminal</h2>
-          <p class="text-sm text-gray-500 font-mono group-hover:text-gray-400 transition-colors">Data Structures Visualization</p>
-        </div>
-      </a>
-
-      <!-- ✅ Card 08（现在在 grid 里了） -->
-      <a href="FlowWall.html" class="spotlight-card group relative h-80 rounded-3xl border border-white/10 p-8 flex flex-col items-center justify-center text-center transition-transform duration-500 hover:scale-[1.01] animate-fade-in delay-800">
-        <div class="mb-8 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 group-hover:bg-white/10 transition-colors duration-300">
-          <svg class="text-white w-10 h-10 stroke-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 12h4l3-8 4 16 3-8h4" />
-            <circle cx="12" cy="12" r="2" />
-          </svg>
-        </div>
-        <div class="relative z-10">
-          <h2 class="text-3xl font-bold text-white mb-3 tracking-tight glow-text transition-all duration-300">FlowWall</h2>
-          <p class="text-sm text-gray-500 font-mono group-hover:text-gray-400 transition-colors">Interactive Flow & Network Visuals</p>
-        </div>
-      </a>
-
-      <!-- Card 09 -->
-      <a href="CoinFlip.html" class="spotlight-card group relative h-80 rounded-3xl border border-white/10 p-8 flex flex-col items-center justify-center text-center transition-transform duration-500 hover:scale-[1.01] animate-fade-in delay-900">
-        <div class="mb-8 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 group-hover:bg-white/10 transition-colors duration-300">
-          <svg class="text-white w-10 h-10 stroke-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="8" />
-            <path d="M12 4v16" />
-          </svg>
-        </div>
-        <div class="relative z-10">
-          <h2 class="text-3xl font-bold text-white mb-3 tracking-tight glow-text transition-all duration-300">Coin Flip</h2>
-          <p class="text-sm text-gray-500 font-mono group-hover:text-gray-400 transition-colors">Random Binary Outcome</p>
-        </div>
-      </a>
-
-      <!-- Card 10 -->
-      <a href="catcode-v7-fixed.html" class="spotlight-card group relative h-80 rounded-3xl border border-white/10 p-8 flex flex-col items-center justify-center text-center transition-transform duration-500 hover:scale-[1.01] animate-fade-in delay-1000">
-        <div class="mb-8 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 group-hover:bg-white/10 transition-colors duration-300">
-          <svg class="text-white w-10 h-10 stroke-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 7h16M4 12h16M4 17h16" />
-          </svg>
-        </div>
-        <div class="relative z-10">
-          <h2 class="text-3xl font-bold text-white mb-3 tracking-tight glow-text transition-all duration-300">Catcode v7</h2>
-          <p class="text-sm text-gray-500 font-mono group-hover:text-gray-400 transition-colors">Character Encoding Tool</p>
-        </div>
-      </a>
-
-      <!-- Card 11 -->
-      <a href="JC Holdings Track.html" class="spotlight-card group relative h-80 rounded-3xl border border-white/10 p-8 flex flex-col items-center justify-center text-center transition-transform duration-500 hover:scale-[1.01] animate-fade-in delay-1100">
-        <div class="mb-8 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 group-hover:bg-white/10 transition-colors duration-300">
-          <svg class="text-white w-10 h-10 stroke-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 3v18h18" />
-            <path d="M7 14l4-4 4 6 4-10" />
-          </svg>
-        </div>
-        <div class="relative z-10">
-          <h2 class="text-3xl font-bold text-white mb-3 tracking-tight glow-text transition-all duration-300">JC Holdings Track</h2>
-          <p class="text-sm text-gray-500 font-mono group-hover:text-gray-400 transition-colors">Finance Tracker</p>
-        </div>
-      </a>
-
+      <div class="dicon" data-win="explorerWin" ondblclick="openWindow('explorerWin')">
+        <div class="dicon-img">📂</div>
+        <div class="dicon-label">My Projects</div>
+      </div>
+      <div class="dicon" ondblclick="alert('The Recycle Bin is empty.')">
+        <div class="dicon-img">🗑️</div>
+        <div class="dicon-label">Recycle Bin</div>
+      </div>
+      <div class="dicon" data-win="helpWin" ondblclick="openWindow('helpWin')">
+        <div class="dicon-img">❓</div>
+        <div class="dicon-label">Help</div>
+      </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="mt-24 text-center animate-fade-in delay-300 opacity-0" style="animation-fill-mode: forwards;">
-      <p class="text-[10px] font-mono text-gray-700 uppercase tracking-[0.2em] hover:text-gray-500 transition-colors cursor-default">
-        Restricted Access // Auth Req
-      </p>
-    </footer>
+    <!-- ===== Explorer Window ===== -->
+    <div class="win" id="explorerWin" style="top:30px;left:60px;width:760px;height:480px;">
+      <div class="win-title" onmousedown="startDrag(event,'explorerWin')">
+        <div class="win-title-icon">📂</div>
+        <div class="win-title-text">C:\JC\Projects</div>
+        <div class="win-controls">
+          <button class="wbtn" onclick="minimizeWin('explorerWin')"><svg viewBox="0 0 8 8"><rect x="0" y="6" width="6" height="2" fill="#000"/></svg></button>
+          <button class="wbtn" onclick="maximizeWin('explorerWin')"><svg viewBox="0 0 8 8"><rect x="0" y="0" width="8" height="8" fill="none" stroke="#000" stroke-width="1.5"/><rect x="0" y="0" width="8" height="2" fill="#000"/></svg></button>
+          <button class="wbtn" onclick="closeWin('explorerWin')"><svg viewBox="0 0 8 8"><path d="M1 1L7 7M7 1L1 7" stroke="#000" stroke-width="1.5"/></svg></button>
+        </div>
+      </div>
+      <div class="win-menu">
+        <div class="win-menu-item"><u>F</u>ile</div>
+        <div class="win-menu-item"><u>E</u>dit</div>
+        <div class="win-menu-item"><u>V</u>iew</div>
+        <div class="win-menu-item"><u>H</u>elp</div>
+      </div>
+      <div class="win-addr">
+        <span class="win-addr-label">Address</span>
+        <div class="win-addr-field field-sunken">📂 C:\JC\Projects\</div>
+      </div>
+      <div class="win-toolbar">
+        <button class="tbtn active" data-filter="All" onclick="setFilter('All',this)">📋 All</button>
+        <div class="tool-sep"></div>
+        <button class="tbtn" data-filter="Security" onclick="setFilter('Security',this)">🔒 Security</button>
+        <button class="tbtn" data-filter="Network" onclick="setFilter('Network',this)">🌐 Network</button>
+        <button class="tbtn" data-filter="Finance" onclick="setFilter('Finance',this)">💰 Finance</button>
+        <button class="tbtn" data-filter="Visualization" onclick="setFilter('Visualization',this)">📊 Visual</button>
+        <button class="tbtn" data-filter="other" onclick="setFilter('other',this)">📦 Other</button>
+        <div class="tool-sep"></div>
+        <input class="search-field field-sunken" id="searchInput" type="text" placeholder="Search..." oninput="renderFiles()" />
+      </div>
+      <div class="win-content field-sunken" id="explorerContent">
+        <div class="list-header">
+          <div class="col-head"></div>
+          <div class="col-head">Name</div>
+          <div class="col-head">Type</div>
+          <div class="col-head">Description</div>
+        </div>
+        <div id="fileList"></div>
+      </div>
+      <div class="win-status">
+        <div class="status-sec" id="statusText">11 object(s)</div>
+        <div class="status-sec">📁 C:\JC\Projects</div>
+      </div>
+    </div>
 
-  </main>
+    <!-- ===== About Me Window (Notepad) ===== -->
+    <div class="win" id="aboutWin" style="top:80px;left:120px;width:480px;height:380px;">
+      <div class="win-title" onmousedown="startDrag(event,'aboutWin')">
+        <div class="win-title-icon">📝</div>
+        <div class="win-title-text">AboutMe.txt - Notepad</div>
+        <div class="win-controls">
+          <button class="wbtn" onclick="minimizeWin('aboutWin')"><svg viewBox="0 0 8 8"><rect x="0" y="6" width="6" height="2" fill="#000"/></svg></button>
+          <button class="wbtn" onclick="maximizeWin('aboutWin')"><svg viewBox="0 0 8 8"><rect x="0" y="0" width="8" height="8" fill="none" stroke="#000" stroke-width="1.5"/><rect x="0" y="0" width="8" height="2" fill="#000"/></svg></button>
+          <button class="wbtn" onclick="closeWin('aboutWin')"><svg viewBox="0 0 8 8"><path d="M1 1L7 7M7 1L1 7" stroke="#000" stroke-width="1.5"/></svg></button>
+        </div>
+      </div>
+      <div class="win-menu">
+        <div class="win-menu-item"><u>F</u>ile</div>
+        <div class="win-menu-item"><u>E</u>dit</div>
+        <div class="win-menu-item"><u>F</u>ormat</div>
+        <div class="win-menu-item"><u>H</u>elp</div>
+      </div>
+      <div class="notepad-body field-sunken">=========================================
+  JC — Project Hub
+=========================================
+
+Hey! I'm JC (Jiacheng).
+
+M.S. candidate in Technology Management
+at Columbia University.
+
+This is my personal project hub — a
+collection of tools, experiments, and
+things I built for fun and learning.
+
+Fields: Data, Security, Finance, Viz
+
+Double-click "My Projects" on the
+desktop to browse everything.
+
+Or click a file to launch it directly.
+
+=========================================
+  Built with care. Powered by curiosity.
+=========================================</div>
+    </div>
+
+    <!-- ===== Help Window ===== -->
+    <div class="win" id="helpWin" style="top:100px;left:180px;width:380px;height:280px;">
+      <div class="win-title" onmousedown="startDrag(event,'helpWin')">
+        <div class="win-title-icon">❓</div>
+        <div class="win-title-text">Help</div>
+        <div class="win-controls">
+          <button class="wbtn" onclick="minimizeWin('helpWin')"><svg viewBox="0 0 8 8"><rect x="0" y="6" width="6" height="2" fill="#000"/></svg></button>
+          <button class="wbtn" onclick="maximizeWin('helpWin')"><svg viewBox="0 0 8 8"><rect x="0" y="0" width="8" height="8" fill="none" stroke="#000" stroke-width="1.5"/><rect x="0" y="0" width="8" height="2" fill="#000"/></svg></button>
+          <button class="wbtn" onclick="closeWin('helpWin')"><svg viewBox="0 0 8 8"><path d="M1 1L7 7M7 1L1 7" stroke="#000" stroke-width="1.5"/></svg></button>
+        </div>
+      </div>
+      <div class="notepad-body field-sunken" style="font-family:var(--font);font-size:12px;">
+<b style="font-size:14px">JC Project Hub — Help</b>
+
+<b>Navigation:</b>
+• Double-click desktop icons to open
+• Drag windows by the title bar
+• Click Start for the menu
+• Right-click desktop for options
+
+<b>Window Controls:</b>
+• ─  Minimize (goes to taskbar)
+• □  Maximize / Restore
+• ✕  Close window
+
+<b>Projects:</b>
+Click any file in My Projects to
+launch it directly.
+
+<b>Tip:</b>
+Use the filter buttons or search bar
+to find projects quickly!
+      </div>
+    </div>
+
+    <!-- ===== Start Menu ===== -->
+    <div id="startMenu">
+      <div class="start-banner"><span>JC.lab 98</span></div>
+      <div class="start-items">
+        <a class="start-item" onclick="openWindow('explorerWin');closeStart()"><div class="start-item-icon">📂</div>My Projects</a>
+        <a class="start-item" onclick="openWindow('aboutWin');closeStart()"><div class="start-item-icon">📄</div>About Me</a>
+        <a class="start-item" onclick="openWindow('helpWin');closeStart()"><div class="start-item-icon">❓</div>Help</a>
+        <div class="start-sep"></div>
+        <a class="start-item" href="PersonalWeb.html"><div class="start-item-icon">🏠</div>Portfolio</a>
+        <div class="start-sep"></div>
+        <a class="start-item" onclick="runShutdown()"><div class="start-item-icon">🔌</div>Shut Down...</a>
+      </div>
+    </div>
+
+    <!-- ===== Context Menu ===== -->
+    <div id="ctxMenu">
+      <div class="ctx-item" onclick="openWindow('explorerWin');closeCtx()">Open My Projects</div>
+      <div class="ctx-item" onclick="openWindow('aboutWin');closeCtx()">Open About Me</div>
+      <div class="ctx-sep"></div>
+      <div class="ctx-item disabled">Arrange Icons</div>
+      <div class="ctx-item disabled">Line up Icons</div>
+      <div class="ctx-sep"></div>
+      <div class="ctx-item" onclick="refreshDesktop()">Refresh</div>
+      <div class="ctx-sep"></div>
+      <div class="ctx-item disabled">Properties</div>
+    </div>
+
+    <!-- ===== Taskbar ===== -->
+    <div class="taskbar">
+      <button class="start-btn" id="startBtn" onclick="toggleStart()">
+        <span class="flag">🪟</span> Start
+      </button>
+      <div class="task-sep"></div>
+      <div class="task-items" id="taskItems"></div>
+      <div class="tray">
+        <span style="font-size:12px">🔊</span>
+        <span id="clock"></span>
+      </div>
+    </div>
+  </div>
 
   <script>
-    // Minimal spotlight logic
-    const cards = document.querySelectorAll('.spotlight-card');
+    /* ==============================================================
+       DATA
+       ============================================================== */
+    const projects = [
+      { href:'PersonalWeb.html', name:'AboutMe.html', type:'Portfolio', desc:'Personal landing page — identity & experience', icon:'👤' },
+      { href:'FakeFishing.html', name:'PhishingSim.exe', type:'Security', desc:'Interactive phishing awareness demo', icon:'🎣' },
+      { href:'GetMoreThanIP.html', name:'IPIntel.exe', type:'Network', desc:'Advanced IP intelligence & diagnostics', icon:'🔍' },
+      { href:'GetYourIP.html', name:'IPLookup.exe', type:'Network', desc:'Quick and clean IP viewer', icon:'🌐' },
+      { href:'DragyTechStory.html', name:'CyberStory.exe', type:'Storytelling', desc:'Story-driven cybersecurity education', icon:'📖' },
+      { href:'SimpleRealEstateAnalyzer.html', name:'PropertyROI.exe', type:'Finance', desc:'Property valuation & ROI calculator', icon:'🏠' },
+      { href:'AlgoTerminal.html', name:'AlgoTerminal.exe', type:'Data Structures', desc:'Visual algorithm & data structure lab', icon:'⚙️' },
+      { href:'FlowWall.html', name:'FlowViz.exe', type:'Visualization', desc:'Animated flow & network playground', icon:'〰️' },
+      { href:'CoinFlip.html', name:'CoinFlip.exe', type:'Mini Tool', desc:'Minimal two-way decision tool', icon:'🪙' },
+      { href:'catcode-v7-fixed.html', name:'CatCode.exe', type:'Text Tool', desc:'AES encryption + cat emoji encoding', icon:'🐱' },
+      { href:'JC Holdings Track.html', name:'Holdings.exe', type:'Finance', desc:'Personal portfolio tracker & dashboard', icon:'📈' },
+    ];
 
-    cards.forEach(card => {
-      card.onmousemove = e => {
-        const rect = card.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+    const primaryCats = ['Security','Network','Finance','Visualization'];
+    let activeFilter = 'All';
 
-        card.style.setProperty('--mouse-x', `${x}px`);
-        card.style.setProperty('--mouse-y', `${y}px`);
+    /* ==============================================================
+       BOOT SEQUENCE
+       ============================================================== */
+    const biosLines = [
+      { text: 'JC BIOS v4.20 — Award Modular BIOS v6.00PG', cls: 'bios-brand', delay: 0 },
+      { text: 'Copyright (C) 2026, JC Technologies Ltd.', cls: '', delay: 100 },
+      { text: '', cls: '', delay: 200 },
+      { text: 'CPU: JC Brain™ @ Maximum Overclock', cls: 'bios-highlight', delay: 300 },
+      { text: 'Memory Test:  640K Base + 262144K Extended    OK', cls: '', delay: 500 },
+      { text: '', cls: '', delay: 600 },
+      { text: 'Detecting IDE drives...', cls: '', delay: 700 },
+      { text: '  Primary Master:   JC Projects HD  [420 GB]', cls: '', delay: 900 },
+      { text: '  Primary Slave:    ATAPI CD-ROM', cls: '', delay: 1050 },
+      { text: '', cls: '', delay: 1200 },
+      { text: 'Initializing Plug and Play cards...', cls: '', delay: 1300 },
+      { text: 'PnP Init Completed.', cls: 'bios-ok', delay: 1600 },
+      { text: '', cls: '', delay: 1700 },
+      { text: 'Press DEL to enter SETUP, ESC to skip memory test', cls: '', delay: 1800 },
+      { text: 'Starting Windows 98...', cls: 'bios-highlight', delay: 2200 },
+    ];
+
+    function runBios() {
+      const bios = document.getElementById('biosScreen');
+      biosLines.forEach(line => {
+        setTimeout(() => {
+          const el = document.createElement('div');
+          el.className = 'bios-line ' + line.cls;
+          el.textContent = line.text || '\u00A0';
+          el.style.animationDelay = '0s';
+          bios.appendChild(el);
+        }, line.delay);
+      });
+
+      setTimeout(() => {
+        bios.style.display = 'none';
+        runBootSplash();
+      }, 3200);
+    }
+
+    function runBootSplash() {
+      const splash = document.getElementById('bootSplash');
+      splash.style.display = 'flex';
+      const fill = document.getElementById('bootFill');
+
+      let blocks = 0;
+      const total = 18;
+      const iv = setInterval(() => {
+        if (blocks >= total) {
+          clearInterval(iv);
+          setTimeout(() => {
+            splash.style.display = 'none';
+            showDesktop();
+          }, 400);
+          return;
+        }
+        const b = document.createElement('div');
+        b.className = 'boot-block';
+        b.style.animation = 'none';
+        b.style.opacity = '1';
+        fill.appendChild(b);
+        blocks++;
+      }, 120);
+    }
+
+    function showDesktop() {
+      const d = document.getElementById('desktop');
+      d.style.display = 'flex';
+      requestAnimationFrame(() => { d.style.opacity = '1'; });
+      openWindow('explorerWin');
+    }
+
+    // Allow skip by clicking
+    document.addEventListener('click', function skipBoot() {
+      const bios = document.getElementById('biosScreen');
+      const splash = document.getElementById('bootSplash');
+      if (bios.style.display !== 'none' && bios.parentNode) {
+        bios.style.display = 'none';
+        splash.style.display = 'none';
+        showDesktop();
+        document.removeEventListener('click', skipBoot);
+      } else if (splash.style.display !== 'none') {
+        splash.style.display = 'none';
+        showDesktop();
+        document.removeEventListener('click', skipBoot);
       }
     });
+
+    /* ==============================================================
+       WINDOW MANAGEMENT
+       ============================================================== */
+    const winMeta = {
+      explorerWin: { icon: '📂', label: 'My Projects' },
+      aboutWin:    { icon: '📝', label: 'About Me' },
+      helpWin:     { icon: '❓', label: 'Help' },
+    };
+
+    let topZ = 10;
+    let openWindows = new Set();
+
+    function focusWin(id) {
+      topZ++;
+      const el = document.getElementById(id);
+      el.style.zIndex = topZ;
+      document.querySelectorAll('.win').forEach(w => w.classList.add('inactive'));
+      el.classList.remove('inactive');
+      updateTaskbar();
+    }
+
+    function openWindow(id) {
+      const el = document.getElementById(id);
+      el.classList.add('open');
+      el.classList.remove('inactive');
+      openWindows.add(id);
+      focusWin(id);
+      // Restore if minimized
+      el.style.display = 'flex';
+      updateTaskbar();
+    }
+
+    function closeWin(id) {
+      const el = document.getElementById(id);
+      el.classList.remove('open', 'maximized');
+      el.style.display = 'none';
+      openWindows.delete(id);
+      updateTaskbar();
+    }
+
+    function minimizeWin(id) {
+      const el = document.getElementById(id);
+      el.style.display = 'none';
+      updateTaskbar();
+    }
+
+    function maximizeWin(id) {
+      const el = document.getElementById(id);
+      el.classList.toggle('maximized');
+      focusWin(id);
+    }
+
+    // Click inside window to focus
+    document.addEventListener('mousedown', (e) => {
+      const win = e.target.closest('.win');
+      if (win && win.id) focusWin(win.id);
+    });
+
+    /* ==============================================================
+       DRAGGING
+       ============================================================== */
+    let dragState = null;
+
+    function startDrag(e, id) {
+      const el = document.getElementById(id);
+      if (el.classList.contains('maximized')) return;
+      focusWin(id);
+      const rect = el.getBoundingClientRect();
+      dragState = {
+        id,
+        offsetX: e.clientX - rect.left,
+        offsetY: e.clientY - rect.top,
+      };
+      e.preventDefault();
+    }
+
+    document.addEventListener('mousemove', (e) => {
+      if (!dragState) return;
+      const el = document.getElementById(dragState.id);
+      const x = e.clientX - dragState.offsetX;
+      const y = e.clientY - dragState.offsetY;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+    });
+
+    document.addEventListener('mouseup', () => { dragState = null; });
+
+    // Touch support
+    document.addEventListener('touchmove', (e) => {
+      if (!dragState) return;
+      const t = e.touches[0];
+      const el = document.getElementById(dragState.id);
+      el.style.left = (t.clientX - dragState.offsetX) + 'px';
+      el.style.top = (t.clientY - dragState.offsetY) + 'px';
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => { dragState = null; });
+
+    // Make title bars touch-draggable
+    document.querySelectorAll('.win-title').forEach(tb => {
+      tb.addEventListener('touchstart', (e) => {
+        const win = tb.closest('.win');
+        if (!win || win.classList.contains('maximized')) return;
+        const t = e.touches[0];
+        const rect = win.getBoundingClientRect();
+        dragState = { id: win.id, offsetX: t.clientX - rect.left, offsetY: t.clientY - rect.top };
+      });
+    });
+
+    /* ==============================================================
+       TASKBAR
+       ============================================================== */
+    function updateTaskbar() {
+      const container = document.getElementById('taskItems');
+      container.innerHTML = '';
+      openWindows.forEach(id => {
+        const meta = winMeta[id];
+        if (!meta) return;
+        const el = document.getElementById(id);
+        const isVisible = el.style.display !== 'none';
+        const btn = document.createElement('button');
+        btn.className = 'task-btn' + (isVisible ? ' active' : '');
+        btn.innerHTML = `<span class="task-icon">${meta.icon}</span>${meta.label}`;
+        btn.onclick = () => {
+          if (el.style.display === 'none') {
+            el.style.display = 'flex';
+            focusWin(id);
+          } else {
+            // If already focused, minimize; else focus
+            const isFocused = !el.classList.contains('inactive');
+            if (isFocused) {
+              minimizeWin(id);
+            } else {
+              focusWin(id);
+            }
+          }
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    /* ==============================================================
+       START MENU
+       ============================================================== */
+    function toggleStart() {
+      const m = document.getElementById('startMenu');
+      const b = document.getElementById('startBtn');
+      m.classList.toggle('open');
+      b.classList.toggle('pressed');
+    }
+
+    function closeStart() {
+      document.getElementById('startMenu').classList.remove('open');
+      document.getElementById('startBtn').classList.remove('pressed');
+    }
+
+    /* ==============================================================
+       CONTEXT MENU
+       ============================================================== */
+    document.getElementById('desktopArea').addEventListener('contextmenu', (e) => {
+      if (e.target.closest('.win') || e.target.closest('.dicon')) return;
+      e.preventDefault();
+      const ctx = document.getElementById('ctxMenu');
+      ctx.style.left = e.clientX + 'px';
+      ctx.style.top = e.clientY + 'px';
+      ctx.classList.add('open');
+    });
+
+    function closeCtx() { document.getElementById('ctxMenu').classList.remove('open'); }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#ctxMenu')) closeCtx();
+      if (!e.target.closest('#startMenu') && !e.target.closest('#startBtn')) closeStart();
+    });
+
+    /* ==============================================================
+       DESKTOP ICON SELECTION
+       ============================================================== */
+    document.querySelectorAll('.dicon').forEach(icon => {
+      icon.addEventListener('click', (e) => {
+        document.querySelectorAll('.dicon').forEach(i => i.classList.remove('selected'));
+        icon.classList.add('selected');
+        e.stopPropagation();
+      });
+    });
+
+    document.getElementById('desktopArea').addEventListener('click', (e) => {
+      if (!e.target.closest('.dicon')) {
+        document.querySelectorAll('.dicon').forEach(i => i.classList.remove('selected'));
+      }
+    });
+
+    /* ==============================================================
+       EXPLORER FILE LIST
+       ============================================================== */
+    function setFilter(cat, btn) {
+      activeFilter = cat;
+      document.querySelectorAll('.tbtn[data-filter]').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderFiles();
+    }
+
+    function renderFiles() {
+      const term = document.getElementById('searchInput').value.trim().toLowerCase();
+      const filtered = projects.filter(p => {
+        const hay = `${p.name} ${p.type} ${p.desc}`.toLowerCase();
+        const matchSearch = hay.includes(term);
+        if (activeFilter === 'All') return matchSearch;
+        if (activeFilter === 'other') return matchSearch && !primaryCats.includes(p.type);
+        return matchSearch && p.type === activeFilter;
+      });
+
+      const list = document.getElementById('fileList');
+      list.innerHTML = '';
+
+      if (!filtered.length) {
+        list.innerHTML = '<div style="padding:20px;text-align:center;color:#808080;font-size:11px">No files match your search.</div>';
+        document.getElementById('statusText').textContent = '0 object(s)';
+        return;
+      }
+
+      filtered.forEach(p => {
+        const a = document.createElement('a');
+        a.href = p.href;
+        a.className = 'file-row';
+        a.innerHTML = `
+          <div class="file-icon">${p.icon}</div>
+          <div class="file-name">${p.name}</div>
+          <div class="file-type">${p.type}</div>
+          <div class="file-desc">${p.desc}</div>`;
+        list.appendChild(a);
+      });
+
+      document.getElementById('statusText').textContent = `${filtered.length} object(s)`;
+    }
+
+    /* ==============================================================
+       SHUTDOWN
+       ============================================================== */
+    function runShutdown() {
+      closeStart();
+      const d = document.getElementById('desktop');
+      d.style.transition = 'opacity 1s';
+      d.style.opacity = '0';
+      setTimeout(() => {
+        d.style.display = 'none';
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#000;color:#f90;font-family:\'VT323\',monospace;font-size:28px;">It\'s now safe to turn off your computer.</div>';
+      }, 1200);
+    }
+
+    function refreshDesktop() {
+      closeCtx();
+      const area = document.getElementById('desktopArea');
+      area.style.opacity = '0';
+      setTimeout(() => { area.style.opacity = '1'; }, 200);
+    }
+
+    /* ==============================================================
+       CLOCK
+       ============================================================== */
+    function tickClock() {
+      const now = new Date();
+      const h = now.getHours() % 12 || 12;
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const ap = now.getHours() >= 12 ? 'PM' : 'AM';
+      document.getElementById('clock').textContent = `${h}:${m} ${ap}`;
+    }
+    tickClock();
+    setInterval(tickClock, 10000);
+
+    /* ==============================================================
+       INIT
+       ============================================================== */
+    renderFiles();
+    runBios();
   </script>
 </body>
 </html>

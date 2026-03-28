@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CatCode — Meow Encoder & File Locker</title>
+  <meta name="description" content="CatCode: Cute cat-themed text encoder, AES-GCM cipher, and file encryption. Encode text into cat emojis or lock files with cat passwords!" />
+  <meta property="og:title" content="CatCode — Meow Encoder & File Locker" />
+  <meta property="og:description" content="Turn text into cat language, encrypt files with cat passwords, and hear your messages as cat melodies!" />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#D876A8" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐱</text></svg>" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=VT323&family=Silkscreen:wght@400;700&display=swap');
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}
+    body{background:linear-gradient(180deg,#7EC8D9 0%,#A8D8EA 40%,#D4A5D0 100%);font-family:'Segoe UI',Tahoma,sans-serif;font-size:12px;user-select:auto}
+    button,input,textarea{font:inherit}.hidden{display:none!important}
+    .desktop{position:fixed;inset:0;overflow:hidden}
+    .paw{position:absolute;font-size:20px;opacity:.08;pointer-events:none}
+    .desktop-icons{position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:8px;z-index:1}
+    .di{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:4px 6px;border:1px solid transparent;border-radius:2px;width:70px;text-align:center;transition:background .15s,border-color .15s}
+    .di:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3)}
+    .di .label{font-family:'Silkscreen',monospace;font-size:9px;color:#fff;text-shadow:1px 1px 2px rgba(0,0,0,.5);line-height:1.2}
+    .boot{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Courier New',monospace;color:#aaa;z-index:9999;transition:opacity .3s}
+    .boot.fade-out{opacity:0;pointer-events:none}
+    .boot-box{font-size:14px;line-height:1.8;text-align:left;width:min(500px,calc(100vw - 32px))}
+    .main-window-wrap{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);width:min(720px,calc(100vw - 40px));z-index:10;animation:fadeIn .4s ease-out}
+    .main-window{background:#FFE8F0;border:2px solid;border-color:#FFF #B07A90 #B07A90 #FFF;box-shadow:2px 2px 12px rgba(80,20,50,.25),inset 0 0 0 1px #FFEEF4}
+    .titlebar{height:28px;background:linear-gradient(90deg,#D876A8,#E8A0C8 30%,#F0BCD8 60%,#E8A0C8 80%,#D876A8);display:flex;align-items:center;justify-content:space-between;padding:0 3px;cursor:grab;touch-action:none}
+    .titlebar.dragging{cursor:grabbing}
+    .wb{height:21px;min-width:21px;border:none;outline:none;background:linear-gradient(180deg,#FFF5F9,#FFD6E8 50%,#FFC0D9);box-shadow:inset -1px -1px 0 #C48BA0,inset 1px 1px 0 #FFF;font-family:'Silkscreen',monospace;font-size:10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0 8px;color:#6B3A5A;transition:background .1s}
+    .wb:active{box-shadow:inset 1px 1px 0 #C48BA0,inset -1px -1px 0 #FFF}
+    .wb:hover{background:linear-gradient(180deg,#FFF,#FFE0EC 50%,#FFD0E3)}
+    .menu-bar{height:24px;background:#FFF0F5;border-bottom:1px solid #E0B0C8;display:flex;align-items:center;padding:0 2px}
+    .menu-item{padding:2px 8px;font-family:'Silkscreen',monospace;font-size:10px;color:#6B3A5A;cursor:pointer;transition:background .1s}
+    .menu-item:hover{background:#FFD8E8}
+    .toolbar{padding:4px 6px;background:#FFF5F8;border-bottom:1px solid #E8C0D0;display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+    .toolbar-group{display:flex;align-items:center;gap:4px;flex-wrap:wrap;min-width:0}
+    .toolbar-actions{flex:1 1 auto}
+    .toolbar-spacer{flex:1 1 auto;min-width:12px}
+    .ab{height:28px;border:none;outline:none;background:linear-gradient(180deg,#FFF5F9,#FFDDE8 50%,#FFC8DB);box-shadow:inset -1px -1px 0 #B07A90,inset 1px 1px 0 #FFF,0 1px 3px rgba(0,0,0,.1);font-family:'Silkscreen',monospace;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;padding:0 12px;color:#5A2D48;border-radius:2px;transition:all .1s;white-space:nowrap}
+    .ab:active{box-shadow:inset 1px 1px 0 #B07A90,inset -1px -1px 0 #FFF;transform:translateY(1px)}
+    .ab:hover{background:linear-gradient(180deg,#FFF,#FFE8F0 50%,#FFD8E8)}
+    .ab:disabled{opacity:.5;pointer-events:none}
+    .abp{background:linear-gradient(180deg,#FFE0F0,#FFB8D4 50%,#FF9EC0)!important;color:#4A1A38;box-shadow:inset -1px -1px 0 #A0607A,inset 1px 1px 0 #FFE8F3,0 2px 4px rgba(180,80,120,.2)}
+    .abp:hover{background:linear-gradient(180deg,#FFE8F4,#FFC8DE 50%,#FFAAD0)!important}
+    .vt{display:flex;border-radius:2px;overflow:hidden;border:1px solid #D0A0B8}
+    .vt button{border:none;outline:none;padding:2px 10px;font-family:'Silkscreen',monospace;font-size:9px;cursor:pointer;transition:all .15s}
+    .vt button.on{background:#D876A8;color:#FFF;text-shadow:0 1px 0 rgba(0,0,0,.2)}
+    .vt button:not(.on){background:#FFF5F8;color:#8A5A70}
+    .vt button:not(.on):hover{background:#FFE8F0}
+    .snk{border:2px solid;border-color:#B88AA0 #FFF #FFF #B88AA0;background:#FFF}
+    .tf{width:100%;height:100%;border:none;outline:none;resize:none;font-family:'VT323',monospace;font-size:16px;color:#4A2040;background:transparent;padding:8px;line-height:1.5}
+    .tf::placeholder{color:#C8A0B8}.tf:focus{background:#FFFBFD}
+    .eb{border:1px solid #E0C0D0;background:#FFF5F8;border-radius:8px;padding:2px 8px;font-family:'Silkscreen',monospace;font-size:9px;color:#8A5A70;cursor:pointer;transition:all .15s}
+    .eb:hover{background:#FFE8F0;border-color:#D0A0B8}
+    .statusbar{height:22px;background:#FFE8F0;border-top:2px solid #B88AA0;display:flex;align-items:center;padding:0 4px;gap:4px;min-width:0}
+    .statuscell{padding:0 6px;height:16px;border:1px solid;border-color:#B88AA0 #FFF #FFF #B88AA0;display:flex;align-items:center;font-family:'Silkscreen',monospace;font-size:9px;color:#6B3A5A;overflow:hidden;white-space:nowrap;transition:color .2s}
+    .password-row{padding:5px 8px;background:#FFF0F4;border-bottom:1px solid #E8C0D0;display:flex;align-items:center;gap:6px;flex-wrap:wrap;animation:fadeIn .2s ease-out}
+    .app-body{display:flex;flex-direction:column;background:#FFF8FA}
+    .taskbar{position:fixed;bottom:0;left:0;right:0;height:32px;background:linear-gradient(180deg,#FFE0EC,#FFCADB 50%,#FFB8CC);border-top:2px solid #FFF;display:flex;align-items:center;justify-content:space-between;padding:0 4px;box-shadow:0 -1px 4px rgba(0,0,0,.1);z-index:50}
+    .taskbox{padding:2px 8px;height:22px;border:1px solid;border-color:#B88AA0 #FFF #FFF #B88AA0;display:flex;align-items:center;gap:4px;font-family:'Silkscreen',monospace;font-size:9px;color:#6B3A5A;background:linear-gradient(180deg,#FFE8F0,#FFD8E8)}
+    .start-menu{position:absolute;bottom:34px;left:4px;width:220px;background:#FFE8F0;border:2px solid;border-color:#FFF #B07A90 #B07A90 #FFF;box-shadow:2px 2px 8px rgba(0,0,0,.2);animation:fadeIn .15s ease-out;z-index:70}
+    .start-header{background:linear-gradient(180deg,#D876A8,#B05888);padding:12px 8px;display:flex;align-items:center;gap:8px}
+    .smi{padding:6px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;font-family:'Silkscreen',monospace;font-size:10px;color:#5A2D48;transition:background .1s}
+    .smi:hover{background:#FFD0E4}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:100;display:flex;align-items:center;justify-content:center;animation:fadeInOverlay .15s ease-out}
+    .dialog{background:#FFE8F0;border:2px solid;border-color:#FFF #B07A90 #B07A90 #FFF;box-shadow:3px 3px 10px rgba(0,0,0,.3);animation:fadeIn .2s ease-out;display:flex;flex-direction:column;max-height:80vh}
+    .dialog-title{height:26px;background:linear-gradient(90deg,#D876A8,#E8A0C8,#D876A8);display:flex;align-items:center;justify-content:space-between;padding:0 3px;flex-shrink:0}
+    .dialog-body{padding:16px;overflow:auto}
+    .mono{font-family:'VT323',monospace}.pixel{font-family:'Silkscreen',monospace}
+    .divider{width:1px;height:20px;background:#E0B8C8;margin:0 2px}
+    .line-divider{flex:1;height:1px;background:linear-gradient(90deg,transparent,#E0C0D0,transparent)}
+    .demo-mapping{background:#FFF;padding:8px;border-radius:2px;border:1px solid #E0C0D0;word-break:break-all}
+    .processing .ab{pointer-events:none;opacity:.6}
+
+    /* Play button */
+    .play-row{padding:6px 8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:linear-gradient(180deg,#FFF0F5,#FFE4EE);border-top:1px solid #E8C8D8}
+    .play-btn{height:32px;border:none;outline:none;padding:0 18px;background:linear-gradient(180deg,#B8E6FF,#80CCFF 50%,#60B8F0);box-shadow:inset -1px -1px 0 #5090B0,inset 1px 1px 0 #D0EEFF,0 2px 6px rgba(80,140,200,.3);font-family:'Silkscreen',monospace;font-size:12px;color:#1A4A6A;cursor:pointer;border-radius:3px;display:flex;align-items:center;gap:6px;transition:all .15s;white-space:nowrap}
+    .play-btn:hover{background:linear-gradient(180deg,#C8EEFF,#90D4FF 50%,#70C4F8);transform:translateY(-1px)}
+    .play-btn:active{transform:translateY(1px);box-shadow:inset 1px 1px 0 #5090B0,inset -1px -1px 0 #D0EEFF}
+    .play-btn:disabled{opacity:.5;pointer-events:none;transform:none}
+    .play-btn.playing{background:linear-gradient(180deg,#FFD0D0,#FF9090 50%,#E07070);color:#600}
+    .play-btn .play-icon{font-size:14px;line-height:1}
+    @keyframes pulse-glow{0%,100%{box-shadow:inset -1px -1px 0 #5090B0,inset 1px 1px 0 #D0EEFF,0 2px 6px rgba(80,140,200,.3)}50%{box-shadow:inset -1px -1px 0 #5090B0,inset 1px 1px 0 #D0EEFF,0 2px 12px rgba(80,180,255,.5)}}
+    .play-btn.has-output{animation:pulse-glow 2s ease-in-out infinite}.play-btn.playing,.play-btn:hover{animation:none}
+    .speed-group{display:flex;border-radius:2px;overflow:hidden;border:1px solid #D0B8C8;margin-left:4px}
+    .speed-group button{border:none;outline:none;padding:2px 8px;font-family:'Silkscreen',monospace;font-size:8px;cursor:pointer;transition:all .15s;background:#FFF5F8;color:#8A5A70}
+    .speed-group button.on{background:#6AACDA;color:#FFF;text-shadow:0 1px 0 rgba(0,0,0,.2)}
+    .speed-group button:not(.on):hover{background:#FFE8F0}
+    .viz-bars{display:flex;align-items:flex-end;gap:2px;height:16px;margin-left:auto}
+    .viz-bar{width:3px;background:#80CCFF;border-radius:1px 1px 0 0;transition:height .1s}
+    .viz-bars.active .viz-bar{animation:vizBounce .4s ease-in-out infinite alternate}
+    .viz-bar:nth-child(1){animation-delay:0s!important}.viz-bar:nth-child(2){animation-delay:.08s!important}
+    .viz-bar:nth-child(3){animation-delay:.16s!important}.viz-bar:nth-child(4){animation-delay:.24s!important}
+    .viz-bar:nth-child(5){animation-delay:.32s!important}.viz-bar:nth-child(6){animation-delay:.4s!important}
+    @keyframes vizBounce{0%{height:3px;background:#80CCFF}100%{height:16px;background:#D876A8}}
+
+    /* Mode toggle (Text / File) */
+    .mode-toggle{display:flex;border-radius:3px;overflow:hidden;border:1px solid #B07A90}
+    .mode-toggle button{border:none;outline:none;padding:2px 12px;font-family:'Silkscreen',monospace;font-size:9px;cursor:pointer;transition:all .15s;height:28px;display:flex;align-items:center;gap:4px}
+    .mode-toggle button.on{background:linear-gradient(180deg,#D876A8,#C060A0);color:#FFF;text-shadow:0 1px 0 rgba(0,0,0,.2)}
+    .mode-toggle button:not(.on){background:linear-gradient(180deg,#FFF5F9,#FFDDE8);color:#6B3A5A}
+    .mode-toggle button:not(.on):hover{background:linear-gradient(180deg,#FFF,#FFE8F0)}
+
+    /* ===== FILE MODE UI ===== */
+    .file-body{display:flex;flex-direction:column;background:#FFF8FA;padding:8px;gap:8px;animation:fadeIn .3s ease-out}
+    .drop-zone{
+      border:2px dashed #D0A0B8;border-radius:8px;padding:24px 16px;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:all .2s;
+      background:repeating-linear-gradient(45deg,#FFF8FA,#FFF8FA 8px,#FFF0F5 8px,#FFF0F5 16px);
+      min-height:120px;position:relative;
+    }
+    .drop-zone:hover,.drop-zone.drag-over{
+      border-color:#D876A8;background:repeating-linear-gradient(45deg,#FFF0F5,#FFF0F5 8px,#FFE4EE 8px,#FFE4EE 16px);
+      box-shadow:0 0 12px rgba(216,118,168,.15);
+    }
+    .drop-zone.drag-over{transform:scale(1.01)}
+    .drop-zone-icon{font-size:36px;line-height:1;animation:catB 2.5s ease-in-out infinite}
+    .drop-zone-text{font-family:'Silkscreen',monospace;font-size:11px;color:#8A5A70;text-align:center;line-height:1.5}
+    .drop-zone-sub{font-family:'VT323',monospace;font-size:13px;color:#B090A0}
+    .drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+    .file-card{
+      display:flex;align-items:center;gap:12px;padding:12px;border-radius:6px;
+      background:linear-gradient(135deg,#FFF5F8,#FFE8F0);border:1px solid #E0C0D0;
+      animation:fadeIn .2s ease-out;
+    }
+    .file-card-icon{font-size:32px;flex-shrink:0}
+    .file-card-info{flex:1;min-width:0}
+    .file-card-name{font-family:'VT323',monospace;font-size:16px;color:#5A2D48;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .file-card-meta{font-family:'Silkscreen',monospace;font-size:9px;color:#B090A0;margin-top:2px}
+    .file-card-remove{
+      width:24px;height:24px;border:none;outline:none;border-radius:50%;cursor:pointer;
+      background:linear-gradient(180deg,#FFD0D0,#FF9090);color:#800;font-size:12px;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;
+    }
+    .file-card-remove:hover{background:linear-gradient(180deg,#FFD8D8,#FFA0A0);transform:scale(1.1)}
+
+    .file-action-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .file-action-btn{
+      height:36px;border:none;outline:none;padding:0 20px;font-family:'Silkscreen',monospace;font-size:12px;
+      cursor:pointer;border-radius:3px;display:flex;align-items:center;gap:6px;transition:all .15s;white-space:nowrap;
+    }
+    .file-action-btn:active{transform:translateY(1px)}
+    .file-action-btn:disabled{opacity:.5;pointer-events:none}
+    .file-encrypt-btn{
+      background:linear-gradient(180deg,#FFE0F0,#FFB8D4 50%,#FF9EC0);color:#4A1A38;
+      box-shadow:inset -1px -1px 0 #A0607A,inset 1px 1px 0 #FFE8F3,0 2px 6px rgba(180,80,120,.25);
+    }
+    .file-encrypt-btn:hover{background:linear-gradient(180deg,#FFE8F4,#FFC8DE 50%,#FFAAD0)}
+    .file-decrypt-btn{
+      background:linear-gradient(180deg,#B8E6FF,#80CCFF 50%,#60B8F0);color:#1A4A6A;
+      box-shadow:inset -1px -1px 0 #5090B0,inset 1px 1px 0 #D0EEFF,0 2px 6px rgba(80,140,200,.25);
+    }
+    .file-decrypt-btn:hover{background:linear-gradient(180deg,#C8EEFF,#90D4FF 50%,#70C4F8)}
+
+    .file-result{
+      display:flex;align-items:center;gap:12px;padding:12px;border-radius:6px;flex-wrap:wrap;
+      border:1px solid #B8DAB8;animation:fadeIn .3s ease-out;
+      background:linear-gradient(135deg,#F0FFF0,#E0F8E0);
+    }
+    .file-result-icon{font-size:28px;flex-shrink:0}
+    .file-result-info{flex:1}
+    .file-result-name{font-family:'VT323',monospace;font-size:15px;color:#3A5A3A}
+    .file-result-meta{font-family:'Silkscreen',monospace;font-size:9px;color:#80A080;margin-top:2px}
+    .file-download-btn{
+      height:30px;border:none;outline:none;padding:0 16px;font-family:'Silkscreen',monospace;font-size:10px;
+      background:linear-gradient(180deg,#C0F0C0,#80D880 50%,#60C060);color:#1A4A1A;cursor:pointer;
+      box-shadow:inset -1px -1px 0 #509050,inset 1px 1px 0 #D0F8D0;border-radius:3px;
+      display:flex;align-items:center;gap:4px;transition:all .15s;flex-shrink:0;
+    }
+    .file-download-btn:hover{background:linear-gradient(180deg,#D0F8D0,#90E090 50%,#70D070)}
+
+    /* Progress bar */
+    .file-progress{height:20px;background:#FFF;border:1px solid #E0C0D0;border-radius:3px;overflow:hidden;position:relative}
+    .file-progress-bar{height:100%;background:linear-gradient(90deg,#D876A8,#FF9EC0,#D876A8);background-size:200% 100%;animation:progressShimmer 1.5s linear infinite;transition:width .3s}
+    .file-progress-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Silkscreen',monospace;font-size:9px;color:#5A2D48}
+    @keyframes progressShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    /* Cat alert */
+    .cat-alert-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:flex;align-items:center;justify-content:center;animation:fadeInOverlay .1s ease-out}
+    .cat-alert{width:min(340px,calc(100vw - 32px));background:#FFE8F0;border:2px solid;border-color:#FFF #B07A90 #B07A90 #FFF;box-shadow:4px 4px 16px rgba(80,20,50,.35);animation:alertPop .25s cubic-bezier(.34,1.56,.64,1)}
+    .cat-alert-title{height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 6px;font-family:'Silkscreen',monospace;font-size:10px;color:#FFF;text-shadow:1px 1px 0 #A05080}
+    .cat-alert-title.error-title{background:linear-gradient(90deg,#E06080,#F090A8,#E06080)}
+    .cat-alert-title.warn-title{background:linear-gradient(90deg,#E0A040,#F0C870,#E0A040)}
+    .cat-alert-title.success-title{background:linear-gradient(90deg,#60B080,#90D8A8,#60B080)}
+    .cat-alert-body{padding:20px;display:flex;gap:16px;align-items:flex-start}
+    .cat-alert-emoji{font-size:48px;line-height:1;flex-shrink:0;animation:catAlertBounce .5s ease-out}
+    .cat-alert-msg{font-family:'VT323',monospace;font-size:16px;color:#5A2D48;line-height:1.5;margin-top:4px}
+    .cat-alert-footer{padding:8px 20px 16px;display:flex;justify-content:flex-end;gap:8px}
+    .cat-alert-ok{height:26px;padding:0 24px;border:none;outline:none;cursor:pointer;background:linear-gradient(180deg,#FFF5F9,#FFD6E8 50%,#FFC0D9);box-shadow:inset -1px -1px 0 #C48BA0,inset 1px 1px 0 #FFF;font-family:'Silkscreen',monospace;font-size:10px;color:#6B3A5A;border-radius:2px;transition:all .1s}
+    .cat-alert-ok:hover{background:linear-gradient(180deg,#FFF,#FFE0EC 50%,#FFD0E3)}
+    .cat-alert-ok:active{box-shadow:inset 1px 1px 0 #C48BA0,inset -1px -1px 0 #FFF}
+
+    @keyframes alertPop{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
+    @keyframes catAlertBounce{0%{transform:scale(0) rotate(-20deg)}50%{transform:scale(1.2) rotate(5deg)}100%{transform:scale(1) rotate(0deg)}}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+    @keyframes fadeInOverlay{from{opacity:0}to{opacity:1}}
+    @keyframes catB{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+    .shortcut-hint{font-family:'Silkscreen',monospace;font-size:8px;color:#B090A0;margin-left:4px;opacity:.7}
+    @media(max-width:600px){
+      .desktop-icons{display:none}.main-window-wrap{width:calc(100vw - 16px);top:44%}
+      .toolbar{gap:3px;align-items:flex-start}.toolbar-actions{width:100%}.toolbar-spacer{display:none}.ab{padding:0 8px;font-size:10px}.shortcut-hint{display:none}
+      .play-btn{padding:0 12px;font-size:10px}.speed-group button{padding:2px 5px;font-size:7px}
+      .file-action-btn{padding:0 14px;font-size:10px}
+      .mode-toggle button{padding:2px 8px;font-size:8px}
+    }
+  </style>
+</head>
+<body>
+  <div id="boot" class="boot"><div id="bootBox" class="boot-box"></div></div>
+  <div id="desktop" class="desktop hidden">
+    <div class="desktop-icons">
+      <div class="di" data-open="about"><span style="font-size:28px">🐱</span><span class="label">About</span></div>
+      <div class="di" data-open="help"><span style="font-size:28px">📖</span><span class="label">Help</span></div>
+      <div class="di" id="demoIcon"><span style="font-size:28px">✨</span><span class="label">Demo</span></div>
+      <div class="di" data-open="spec"><span style="font-size:28px">📋</span><span class="label">Spec</span></div>
+    </div>
+    <div class="paw" style="left:15%;top:20%;transform:rotate(20deg)">🐾</div>
+    <div class="paw" style="left:82%;top:12%;transform:rotate(-15deg)">🐾</div>
+    <div class="paw" style="left:72%;top:78%;transform:rotate(30deg)">🐾</div>
+    <div class="paw" style="left:25%;top:82%;transform:rotate(-25deg)">🐾</div>
+
+    <div id="windowWrap" class="main-window-wrap">
+      <div class="main-window" id="mainWindow">
+        <div id="titlebar" class="titlebar">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span style="font-size:14px;animation:catB 2s ease-in-out infinite">🐱</span>
+            <span class="pixel" style="font-size:11px;color:#FFF;text-shadow:1px 1px 0 #A05080;font-weight:700">CatCode.exe</span>
+            <span id="titleVersion" class="pixel" style="font-size:8px;color:rgba(255,255,255,.75);margin-left:4px;background:rgba(255,255,255,.15);padding:1px 5px;border-radius:2px">V1</span>
+          </div>
+          <div style="display:flex;gap:2px">
+            <button class="wb" type="button" title="Minimize">─</button>
+            <button class="wb" type="button" title="Maximize">□</button>
+            <button id="clearTopBtn" class="wb" type="button" style="background:linear-gradient(180deg,#FFD0D0,#FF9090);color:#800" title="Clear All">✕</button>
+          </div>
+        </div>
+        <div class="menu-bar"><div class="menu-item">File</div><div class="menu-item">Edit</div><div class="menu-item">View</div><div class="menu-item" data-open="help">Help</div></div>
+        <div class="toolbar" id="toolbar">
+          <div class="mode-toggle">
+            <button id="modeTextBtn" class="on" type="button">📝 Text</button>
+            <button id="modeFileBtn" type="button">📁 File</button>
+          </div>
+          <div class="divider"></div>
+          <div id="textToolbar" class="toolbar-group toolbar-actions">
+            <button id="autoBtn" class="ab abp" type="button">🐱 Encode</button>
+            <button id="encodeBtn" class="ab" type="button">Encode</button>
+            <button id="decodeBtn" class="ab" type="button">Decode</button>
+            <div class="divider"></div>
+            <button id="swapBtn" class="ab" type="button">↕ Swap</button>
+            <button id="copyBtn" class="ab" type="button">📋 Copy</button>
+            <button id="clearBtn" class="ab" type="button">🧹</button>
+            <button id="demoBtn" class="ab" type="button" style="font-size:9px">✨ Demo</button>
+          </div>
+          <div class="toolbar-spacer"></div>
+          <div id="versionToggle" class="vt">
+            <button id="v1Btn" class="on" type="button">v1</button>
+            <button id="v2Btn" type="button">v2</button>
+          </div>
+        </div>
+
+        <div id="passwordRow" class="password-row hidden">
+          <span class="pixel" style="font-size:10px;color:#8A5A70">🔑 Key:</span>
+          <div class="snk" style="flex:1;max-width:240px;padding:0;display:flex;align-items:center">
+            <input id="passwordInput" type="password" placeholder="Enter password..." style="border:none;outline:none;background:transparent;width:100%;font-family:'VT323',monospace;font-size:14px;color:#6B3A5A;padding:3px 6px" autocomplete="off" />
+          </div>
+          <label class="pixel" style="font-size:9px;color:#8A5A70;cursor:pointer;display:flex;align-items:center;gap:2px">
+            <input id="showPassword" type="checkbox" style="accent-color:#D876A8" /> Show
+          </label>
+        </div>
+
+        <!-- TEXT MODE -->
+        <div id="textBody" class="app-body">
+          <div style="padding:8px 8px 4px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span class="pixel" style="font-size:10px;color:#8A5A70">📝 Input <span id="detectedHint" style="color:#D876A8;margin-left:4px"></span></span>
+              <span id="inputCount" class="mono" style="font-size:13px;color:#B090A0">0 chars</span>
+            </div>
+            <div class="snk" style="height:100px"><textarea id="inputText" class="tf" placeholder="Type here... 🐾 Chinese, English, URLs, emoji all work!"></textarea></div>
+            <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;align-items:center">
+              <span class="pixel" style="font-size:9px;color:#B090A0;line-height:20px">Try:</span>
+              <button class="eb exampleBtn" type="button" data-text="Hello, World!">English</button>
+              <button class="eb exampleBtn" type="button" data-text="你好世界！猫咪最可爱！">中文</button>
+              <button class="eb exampleBtn" type="button" data-text="CatCode 是最棒的 encoding tool! 🐱">Mixed</button>
+              <button class="eb exampleBtn" type="button" data-text="https://github.com/catcode?lang=zh&cute=true">URL</button>
+              <span class="shortcut-hint">Ctrl+Enter = Auto</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;padding:2px 12px">
+            <div class="line-divider"></div>
+            <span id="middleLabel" style="padding:0 8px;font-size:10px;color:#C8A0B8">↕ cat translator ↕</span>
+            <div class="line-divider"></div>
+          </div>
+          <div style="padding:4px 8px 0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span class="pixel" style="font-size:10px;color:#8A5A70">📤 Output</span>
+              <span id="outputCount" class="mono" style="font-size:13px;color:#B090A0">0 chars</span>
+            </div>
+            <div class="snk" style="height:100px"><textarea id="outputText" class="tf" readonly placeholder="CatCode output here... 🐱" style="color:#7A3A68"></textarea></div>
+          </div>
+          <div class="play-row">
+            <button id="playBtn" class="play-btn" type="button" disabled><span class="play-icon" id="playIcon">▶</span><span id="playLabel">Listen to Cat</span></button>
+            <div class="speed-group">
+              <button class="speed-btn" data-speed="0.7" type="button">0.7x</button>
+              <button class="speed-btn on" data-speed="1" type="button">1x</button>
+              <button class="speed-btn" data-speed="1.5" type="button">1.5x</button>
+              <button class="speed-btn" data-speed="2" type="button">2x</button>
+            </div>
+            <div id="vizBars" class="viz-bars"><div class="viz-bar" style="height:3px"></div><div class="viz-bar" style="height:3px"></div><div class="viz-bar" style="height:3px"></div><div class="viz-bar" style="height:3px"></div><div class="viz-bar" style="height:3px"></div><div class="viz-bar" style="height:3px"></div></div>
+          </div>
+        </div>
+
+        <!-- FILE MODE -->
+        <div id="fileBody" class="file-body hidden">
+          <div id="fileDropZone" class="drop-zone">
+            <input type="file" id="fileInput" />
+            <div class="drop-zone-icon">🐱📁</div>
+            <div class="drop-zone-text">Drop a file here or click to browse<br><span style="color:#D876A8">Encrypt any file • Decrypt .catlock files</span></div>
+            <div class="drop-zone-sub">Max 100 MB • All file types supported</div>
+          </div>
+          <div id="fileCard" class="file-card hidden">
+            <div id="fileCardIcon" class="file-card-icon">📄</div>
+            <div class="file-card-info">
+              <div id="fileCardName" class="file-card-name"></div>
+              <div id="fileCardMeta" class="file-card-meta"></div>
+            </div>
+            <button id="fileCardRemove" class="file-card-remove" type="button" title="Remove file">✕</button>
+          </div>
+          <div id="fileProgress" class="file-progress hidden">
+            <div id="fileProgressBar" class="file-progress-bar" style="width:0%"></div>
+            <div id="fileProgressText" class="file-progress-text">Encrypting...</div>
+          </div>
+          <div id="fileActionRow" class="file-action-row hidden">
+            <button id="fileActionBtn" class="file-action-btn file-encrypt-btn" type="button">🔒 Encrypt File</button>
+          </div>
+          <div id="fileResult" class="file-result hidden">
+            <div id="fileResultIcon" class="file-result-icon">✅</div>
+            <div class="file-result-info">
+              <div id="fileResultName" class="file-result-name"></div>
+              <div id="fileResultMeta" class="file-result-meta"></div>
+            </div>
+            <button id="fileDownloadBtn" class="file-download-btn" type="button">⬇ Download</button>
+          </div>
+        </div>
+
+        <div class="statusbar">
+          <div id="statusCell" class="statuscell" style="flex:1">Compact v1 Cat Translator Ready 🐱</div>
+          <div id="statusMode" class="statuscell">🐱v1</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="taskbar">
+      <div style="display:flex;align-items:center;gap:4px;position:relative">
+        <button id="startBtn" class="wb" type="button" style="font-weight:700;padding:0 8px;font-size:11px"><span style="margin-right:4px">🐾</span>Start</button>
+        <div id="startMenu" class="start-menu hidden">
+          <div class="start-header"><span style="font-size:24px">🐱</span><span class="pixel" style="font-size:11px;color:#FFF;font-weight:700">CatCode v6</span></div>
+          <div class="smi" data-start-action="new"><span style="font-size:16px">📝</span>New Encode</div>
+          <div class="smi" data-start-action="demo"><span style="font-size:16px">✨</span>Demo Encode</div>
+          <div class="smi" data-start-action="filemode"><span style="font-size:16px">📁</span>File Locker</div>
+          <div class="smi" data-open="help"><span style="font-size:16px">📖</span>Help</div>
+          <div class="smi" data-open="about"><span style="font-size:16px">🐱</span>About</div>
+          <div style="border-top:1px solid #E0B8C8;margin:2px 4px"></div>
+          <div class="smi" data-start-action="shutdown"><span style="font-size:16px">🔌</span>Shut Down...</div>
+        </div>
+        <div style="width:1px;height:20px;background:#D8A0B8;margin:0 2px"></div>
+        <div class="taskbox">🐱 CatCode.exe — <span id="taskVersion">V1</span></div>
+      </div>
+      <div class="taskbox"><span>🐾</span><span id="clockText"></span></div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div id="overlayAbout" class="overlay hidden" data-modal="about">
+    <div class="dialog" style="width:380px">
+      <div class="dialog-title"><span class="pixel" style="font-size:10px;color:#FFF;text-shadow:1px 1px 0 #A05080">About CatCode</span><button class="wb closeModal" type="button" style="background:linear-gradient(180deg,#FFD0D0,#FF9090);color:#800;height:18px;min-width:18px">✕</button></div>
+      <div class="dialog-body" style="text-align:center">
+        <div style="font-size:28px;margin-bottom:4px;letter-spacing:2px">🐱😸😹😺😻😼😽🙀😿😾🐈🐾</div>
+        <div class="pixel" style="font-size:16px;color:#6B3A5A;font-weight:700">CatCode v6</div>
+        <div class="mono" style="font-size:14px;color:#8A5A70;margin-top:8px;line-height:1.65">
+          <span style="color:#D876A8">📝 Text</span>: v1 translator + v2 AES-GCM cipher<br>
+          <span style="color:#D876A8">📁 File</span>: .catlock file encryption<br>
+          <span style="color:#6AACDA">🔊 Sound</span>: hear your cat messages!<br><br>
+          <span style="font-size:12px;color:#B090A0">Ctrl+Enter = Auto • Esc = Close</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="overlayHelp" class="overlay hidden" data-modal="help">
+    <div class="dialog" style="width:460px">
+      <div class="dialog-title"><span class="pixel" style="font-size:10px;color:#FFF;text-shadow:1px 1px 0 #A05080">📖 Help</span><button class="wb closeModal" type="button" style="background:linear-gradient(180deg,#FFD0D0,#FF9090);color:#800;height:18px;min-width:18px">✕</button></div>
+      <div class="dialog-body mono" style="font-size:15px;color:#5A2D48;line-height:1.7">
+        <div class="pixel" style="font-size:12px;color:#D876A8;margin-bottom:4px">📝 Text Mode — v1 Cat Translator</div>
+        <div style="margin-bottom:10px">Reversible UTF-8 → compact Cat64 shell. No password needed.</div>
+        <div class="pixel" style="font-size:12px;color:#D876A8;margin-bottom:4px">📝 Text Mode — v2 CatCipher</div>
+        <div style="margin-bottom:10px">Real PBKDF2 + AES-GCM encryption. Only the correct password can decrypt.</div>
+        <div class="pixel" style="font-size:12px;color:#D876A8;margin-bottom:4px">📁 File Mode — CatLock</div>
+        <div style="margin-bottom:10px">Encrypt any file (max 100 MB) with a cat password. Creates a .catlock file that can only be opened by decrypting it back. Uses PBKDF2 + AES-256-GCM. Original filename and type are preserved inside.</div>
+        <div class="pixel" style="font-size:12px;color:#6AACDA;margin-bottom:4px">🔊 Listen to Cat</div>
+        <div style="margin-bottom:10px">After encoding text, click play to hear your message as a cat melody! Each message sounds different.</div>
+        <div class="pixel" style="font-size:12px;color:#D876A8;margin-bottom:4px">Shortcuts</div>
+        <div><b>Ctrl+Enter</b> (⌘+Enter): Auto encode/decode<br><b>Escape</b>: Close dialogs</div>
+      </div>
+    </div>
+  </div>
+  <div id="overlaySpec" class="overlay hidden" data-modal="spec">
+    <div class="dialog" style="width:500px">
+      <div class="dialog-title"><span class="pixel" style="font-size:10px;color:#FFF;text-shadow:1px 1px 0 #A05080">📋 Spec</span><button class="wb closeModal" type="button" style="background:linear-gradient(180deg,#FFD0D0,#FF9090);color:#800;height:18px;min-width:18px">✕</button></div>
+      <div id="specBody" class="dialog-body mono" style="font-size:14px;color:#5A2D48;line-height:1.55"></div>
+    </div>
+  </div>
+  <div id="catAlertContainer"></div>
+
+<script>
+/* ===== Constants ===== */
+const MARKER='=^.^=',VERSION_V1='1',VERSION_V2='2',LEGACY_VERSION_V1='CATv1T',LEGACY_VERSION_V2='CATv2E';
+const TRANSLATOR_MAGIC='\u0000CAT_TRANSLATOR_V1\u0000',CIPHER_PAYLOAD_VERSION=1;
+const PBKDF2_ITERATIONS=250000,PBKDF2_HASH='SHA-256',AES_KEY_LENGTH=256,SALT_LEN=16,NONCE_LEN=12;
+const BASE64URL_ALPHABET='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+const CAT64_SYMBOLS=['🐱','😸','😹','😺','😻','😼','😽','🙀','😿','😾','🐈','🐾','🌙','⭐','✨','💖','🎀','🧶','🍥','🍡','🍬','🍓','🍑','🌸','🌼','🌷','🌺','🍀','🌿','🌱','💗','💓','💘','💝','💛','💚','💙','💜','🤍','🖤','🤎','💫','⚡','🔥','❄','🌈','🍯','🥛','☕','🧁','🍰','🎵','🎶','🔒','🔑','📦','🎁','🧸','🎐','🫧','🌟','🪄','🍭','🍼'];
+const CAT64_TO_B64=new Map(),B64_TO_CAT64=new Map();
+for(let i=0;i<BASE64URL_ALPHABET.length;i++){CAT64_TO_B64.set(CAT64_SYMBOLS[i],BASE64URL_ALPHABET[i]);B64_TO_CAT64.set(BASE64URL_ALPHABET[i],CAT64_SYMBOLS[i])}
+const CAT_DECORATORS=['mew','purrr','nya','mrp','reow','mrr'],CAT_DECORATOR_RE=/(?:mew|purrr|nya|mrp|reow|mrr)/g,CAT_GROUP_SIZE=5;
+const CAT64_SYMBOL_SET=new Set(CAT64_SYMBOLS);
+const CATLOCK_MAGIC='CATLOCK\0',CATLOCK_VERSION=1,FILE_MAX_SIZE=100*1024*1024;
+
+/* Legacy */
+const LEGACY_CAT_EMOJIS=['🐱','😸','😹','😺','😻','😼','😽','🙀','😿','😾','🐈','🐾'];
+const LEGACY_CAT_EMOJI_SET=new Set(LEGACY_CAT_EMOJIS);
+const LEGACY_CAT_SOUNDS=['mew','purrrrrrrrrrr','mrp','mrrreooowww','chirp','miaow','rrr','mrrrrrrrow','trill','yoooowwwl','mew','prrrt','mreeeooow','nrr','churrrrr','mrrow','mmmrrrreeeooowww','chirrup','mrrp','purrr','reow','mewwwwl','brr','mraaaaow','prrt','mrrrrrow','ow','churrrrrrrr','mrrp','miaoooowwww'];
+const LEGACY_CAT_PARTS=[...new Set(LEGACY_CAT_SOUNDS)];
+function seededShuffle(a,seed){const r=[...a];let s=seed|0;const rng=()=>{s=(s+0x6D2B79F5)|0;let t=Math.imul(s^(s>>>15),1|s);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296};for(let i=r.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[r[i],r[j]]=[r[j],r[i]]}return r}
+function buildLegacyTokenPool(){const pool=[],seen=new Set(),n=LEGACY_CAT_PARTS.length;for(let i=0;pool.length<4096;i++){const a=LEGACY_CAT_PARTS[i%n],b=LEGACY_CAT_PARTS[Math.floor(i/n)%n],c=LEGACY_CAT_PARTS[Math.floor(i/(n*n))%n],d=LEGACY_CAT_PARTS[Math.floor(i/(n*n*n))%n],emoji=LEGACY_CAT_EMOJIS[i%LEGACY_CAT_EMOJIS.length];let t='';switch(i%10){case 0:t=`${a}${b}${emoji}`;break;case 1:t=`${a}${b}${c}${emoji}`;break;case 2:t=`${a}nya${b}${emoji}`;break;case 3:t=`${a}${b}meow${c}${emoji}`;break;case 4:t=`${a}${b}${c}${d}${emoji}`;break;case 5:t=`${a}purr${b}nya${c}${emoji}`;break;case 6:t=`${a}${b}mrow${emoji}`;break;case 7:t=`${a}${c}mew${b}hah${emoji}`;break;case 8:t=`${a}meow${b}purr${c}${emoji}`;break;default:t=`${a}${b}${c}nya${emoji}`;break}if(!seen.has(t)){seen.add(t);pool.push(t)}}return seededShuffle(pool,0x51f15e)}
+const LEGACY_BYTE_TOKENS=buildLegacyTokenPool().slice(0,256);
+const LEGACY_TOKEN_TO_BYTE=new Map();for(let i=0;i<256;i++)LEGACY_TOKEN_TO_BYTE.set(LEGACY_BYTE_TOKENS[i],i);
+
+/* Core codec */
+function normalizeBody(b){return(b||'').replace(/\s+/g,'')}
+function wrapCat(v,b){return`${MARKER}${v}|${b}${MARKER}`}
+function parseEnvelope(input){if(!input||!input.trim())return{ok:false,msg:'Empty input'};const s=input.trim();if(!s.startsWith(MARKER)||!s.endsWith(MARKER))return{ok:false,msg:'Missing =^.^= markers'};const inner=s.slice(MARKER.length,s.length-MARKER.length);const sep=inner.indexOf('|');if(sep===-1)return{ok:false,msg:'Missing | separator'};const version=inner.slice(0,sep),body=inner.slice(sep+1);if(!body)return{ok:false,msg:'Empty body'};return{ok:true,version,body}}
+function isCatCode(s){if(!s)return false;const t=s.trim();return t.startsWith(MARKER)&&t.endsWith(MARKER)}
+function detectVersion(s){const e=parseEnvelope(s);if(!e.ok)return null;if(e.version===VERSION_V1||e.version===LEGACY_VERSION_V1)return'v1';if(e.version===VERSION_V2||e.version===LEGACY_VERSION_V2)return'v2';return null}
+function describeVersionTag(v){return v===VERSION_V1?'v1 compact':v===VERSION_V2?'v2 compact':v===LEGACY_VERSION_V1?'v1 legacy':v===LEGACY_VERSION_V2?'v2 legacy':v||''}
+function concatBytes(...a){const t=a.reduce((s,x)=>s+x.length,0),o=new Uint8Array(t);let off=0;for(const x of a){o.set(x,off);off+=x.length}return o}
+function getWebCrypto(){return globalThis?.crypto?.subtle?globalThis.crypto:null}
+function bytesToBase64Url(bytes){let b='';const c=0x8000;for(let i=0;i<bytes.length;i+=c)b+=String.fromCharCode(...bytes.subarray(i,i+c));return btoa(b).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/g,'')}
+function base64UrlToBytes(b64u){if(!/^[A-Za-z0-9\-_]*$/.test(b64u))throw new Error('Invalid base64url');let b=b64u.replace(/-/g,'+').replace(/_/g,'/');while(b.length%4)b+='=';const s=atob(b),o=new Uint8Array(s.length);for(let i=0;i<s.length;i++)o[i]=s.charCodeAt(i);return o}
+function decorateCompactSymbols(sym){if(!sym.length)return'';const g=[];for(let i=0;i<sym.length;i+=CAT_GROUP_SIZE)g.push(sym.slice(i,i+CAT_GROUP_SIZE).join(''));let o='';for(let i=0;i<g.length;i++)o+=CAT_DECORATORS[i%CAT_DECORATORS.length]+g[i];o+=CAT_DECORATORS[g.length%CAT_DECORATORS.length];return o}
+function undecorateCompactBody(b){return normalizeBody(b).replace(CAT_DECORATOR_RE,'')}
+function bytesToCompactCat(bytes){const b=bytesToBase64Url(bytes),sym=[];for(const c of b)sym.push(B64_TO_CAT64.get(c));return decorateCompactSymbols(sym)}
+function compactCatToBytes(body){const u=undecorateCompactBody(body),sym=Array.from(u);if(!sym.length)return{ok:false,msg:'Empty body'};let b='';for(const s of sym){const m=CAT64_TO_B64.get(s);if(!m)return{ok:false,msg:`Unknown symbol`};b+=m}try{return{ok:true,bytes:base64UrlToBytes(b)}}catch{return{ok:false,msg:'Corrupted body'}}}
+function parseLegacyTokens(body){const ch=Array.from(normalizeBody(body)),tok=[];let cur='';for(const c of ch){cur+=c;if(LEGACY_CAT_EMOJI_SET.has(c)){tok.push(cur);cur=''}}if(cur.length)return{ok:false,msg:'Broken legacy token'};return{ok:true,tokens:tok}}
+function legacyCatBodyToBytes(body){const p=parseLegacyTokens(body);if(!p.ok)return p;const bytes=[];for(const t of p.tokens){const b=LEGACY_TOKEN_TO_BYTE.get(t);if(b===undefined)return{ok:false,msg:'Unknown legacy token'};bytes.push(b)}return{ok:true,bytes:new Uint8Array(bytes)}}
+function encodeTranslator(text){if(!text)return{ok:true,out:''};try{return{ok:true,out:wrapCat(VERSION_V1,bytesToCompactCat(new TextEncoder().encode(text)))}}catch(e){return{ok:false,msg:e?.message||'Encode failed'}}}
+function decodeTranslator(body){const p=compactCatToBytes(body);if(!p.ok)return p;try{return{ok:true,out:new TextDecoder('utf-8',{fatal:true}).decode(p.bytes)}}catch{return{ok:false,msg:'UTF-8 decode failed'}}}
+function decodeLegacyTranslator(body){const p=legacyCatBodyToBytes(body);if(!p.ok)return p;try{const t=new TextDecoder('utf-8',{fatal:true}).decode(p.bytes);if(!t.startsWith(TRANSLATOR_MAGIC))return{ok:false,msg:'Not a valid legacy v1 payload'};return{ok:true,out:t.slice(TRANSLATOR_MAGIC.length)}}catch{return{ok:false,msg:'Legacy decode failed'}}}
+async function deriveAesKey(pw,salt){const wc=getWebCrypto();if(!wc)throw new Error('Web Crypto unavailable');const k=await wc.subtle.importKey('raw',new TextEncoder().encode(pw),{name:'PBKDF2'},false,['deriveKey']);return wc.subtle.deriveKey({name:'PBKDF2',salt,iterations:PBKDF2_ITERATIONS,hash:PBKDF2_HASH},k,{name:'AES-GCM',length:AES_KEY_LENGTH},false,['encrypt','decrypt'])}
+async function encryptCatCipher(text,pw){if(!text)return{ok:true,out:''};if(!pw)return{ok:false,msg:'Password required! 🔑'};const wc=getWebCrypto();if(!wc)return{ok:false,msg:'Web Crypto unavailable'};try{const salt=new Uint8Array(SALT_LEN);wc.getRandomValues(salt);const nonce=new Uint8Array(NONCE_LEN);wc.getRandomValues(nonce);const key=await deriveAesKey(pw,salt);const enc=await wc.subtle.encrypt({name:'AES-GCM',iv:nonce},key,new TextEncoder().encode(text));return{ok:true,out:wrapCat(VERSION_V2,bytesToCompactCat(concatBytes(Uint8Array.of(CIPHER_PAYLOAD_VERSION),salt,nonce,new Uint8Array(enc))))}}catch(e){return{ok:false,msg:e?.message||'Encryption failed'}}}
+async function decryptCompactCatCipher(body,pw){if(!pw)return{ok:false,msg:'Password required! 🔑'};const wc=getWebCrypto();if(!wc)return{ok:false,msg:'Web Crypto unavailable'};const p=compactCatToBytes(body);if(!p.ok)return p;const b=p.bytes;if(b.length<1+SALT_LEN+NONCE_LEN+16)return{ok:false,msg:'Payload too short'};if(b[0]!==CIPHER_PAYLOAD_VERSION)return{ok:false,msg:'Unsupported version'};try{const key=await deriveAesKey(pw,b.slice(1,1+SALT_LEN));const dec=await wc.subtle.decrypt({name:'AES-GCM',iv:b.slice(1+SALT_LEN,1+SALT_LEN+NONCE_LEN)},key,b.slice(1+SALT_LEN+NONCE_LEN));return{ok:true,out:new TextDecoder('utf-8',{fatal:true}).decode(new Uint8Array(dec))}}catch{return{ok:false,msg:'Wrong password or corrupted data! 🔑❌'}}}
+async function decryptLegacyCatCipher(body,pw){if(!pw)return{ok:false,msg:'Password required! 🔑'};const wc=getWebCrypto();if(!wc)return{ok:false,msg:'Web Crypto unavailable'};const p=legacyCatBodyToBytes(body);if(!p.ok)return p;const b=p.bytes;if(b.length<1+SALT_LEN+NONCE_LEN+16)return{ok:false,msg:'Legacy payload too short'};if(b[0]!==CIPHER_PAYLOAD_VERSION)return{ok:false,msg:'Unsupported version'};try{const key=await deriveAesKey(pw,b.slice(1,1+SALT_LEN));const dec=await wc.subtle.decrypt({name:'AES-GCM',iv:b.slice(1+SALT_LEN,1+SALT_LEN+NONCE_LEN)},key,b.slice(1+SALT_LEN+NONCE_LEN));return{ok:true,out:new TextDecoder('utf-8',{fatal:true}).decode(new Uint8Array(dec))}}catch{return{ok:false,msg:'Wrong password or corrupted legacy data! 🔑❌'}}}
+async function encodeByMode(mode,text,pw){return mode==='v1'?encodeTranslator(text):encryptCatCipher(text,pw)}
+async function decodeAuto(input,pw){const e=parseEnvelope(input);if(!e.ok)return e;if(e.version===VERSION_V1)return decodeTranslator(e.body);if(e.version===LEGACY_VERSION_V1)return decodeLegacyTranslator(e.body);if(e.version===VERSION_V2)return decryptCompactCatCipher(e.body,pw);if(e.version===LEGACY_VERSION_V2)return decryptLegacyCatCipher(e.body,pw);return{ok:false,msg:`Unknown version: ${e.version}`}}
+
+/* ===== FILE ENCRYPTION (.catlock) ===== */
+function formatSize(b){if(b<1024)return b+' B';if(b<1024*1024)return(b/1024).toFixed(1)+' KB';return(b/(1024*1024)).toFixed(1)+' MB'}
+function isCatlockFile(name){return name&&name.toLowerCase().endsWith('.catlock')}
+function isCatlockData(buf){if(buf.byteLength<8)return false;const m=new TextDecoder('ascii').decode(new Uint8Array(buf,0,7));return m==='CATLOCK'}
+
+async function encryptFile(file,password){
+  if(!password)throw new Error('Password required!');
+  if(file.size>FILE_MAX_SIZE)throw new Error('File too large! Max 100 MB.');
+  const wc=getWebCrypto();if(!wc)throw new Error('Web Crypto unavailable');
+  const data=await file.arrayBuffer();
+  const salt=new Uint8Array(SALT_LEN);wc.getRandomValues(salt);
+  const nonce=new Uint8Array(NONCE_LEN);wc.getRandomValues(nonce);
+  const key=await deriveAesKey(password,salt);
+  const enc=new TextEncoder();
+  const nameBytes=enc.encode(file.name||'file');
+  const mimeBytes=enc.encode(file.type||'application/octet-stream');
+  const header=new Uint8Array(8+1+2+nameBytes.length+2+mimeBytes.length);
+  let off=0;
+  for(let i=0;i<7;i++)header[off++]=CATLOCK_MAGIC.charCodeAt(i);
+  header[off++]=0;
+  header[off++]=CATLOCK_VERSION;
+  header[off++]=(nameBytes.length>>8)&0xFF;header[off++]=nameBytes.length&0xFF;
+  header.set(nameBytes,off);off+=nameBytes.length;
+  header[off++]=(mimeBytes.length>>8)&0xFF;header[off++]=mimeBytes.length&0xFF;
+  header.set(mimeBytes,off);
+  const plaintext=concatBytes(header,new Uint8Array(data));
+  const encrypted=await wc.subtle.encrypt({name:'AES-GCM',iv:nonce},key,plaintext);
+  const output=concatBytes(enc.encode('CATLOCK'),Uint8Array.of(0,CATLOCK_VERSION),salt,nonce,new Uint8Array(encrypted));
+  return{blob:new Blob([output]),name:(file.name||'file')+'.catlock',size:output.length};
+}
+
+async function decryptFile(file,password){
+  if(!password)throw new Error('Password required!');
+  const wc=getWebCrypto();if(!wc)throw new Error('Web Crypto unavailable');
+  const buf=await file.arrayBuffer();
+  const bytes=new Uint8Array(buf);
+  const minLen=8+1+SALT_LEN+NONCE_LEN+16;
+  if(bytes.length<minLen)throw new Error('File too small to be a valid .catlock');
+  const magic=new TextDecoder('ascii').decode(bytes.slice(0,7));
+  if(magic!=='CATLOCK')throw new Error('Not a valid .catlock file!');
+  const ver=bytes[8];
+  if(ver!==CATLOCK_VERSION)throw new Error('Unsupported .catlock version: '+ver);
+  const salt=bytes.slice(9,9+SALT_LEN);
+  const nonce=bytes.slice(9+SALT_LEN,9+SALT_LEN+NONCE_LEN);
+  const ciphertext=bytes.slice(9+SALT_LEN+NONCE_LEN);
+  let decrypted;
+  try{
+    const key=await deriveAesKey(password,salt);
+    decrypted=new Uint8Array(await wc.subtle.decrypt({name:'AES-GCM',iv:nonce},key,ciphertext));
+  }catch{throw new Error('Wrong password or corrupted .catlock file! 🔑❌')}
+  let off=0;
+  const hMagic=new TextDecoder('ascii').decode(decrypted.slice(0,7));
+  if(hMagic!=='CATLOCK')throw new Error('Inner header corrupted');
+  off=8;const hVer=decrypted[off++];
+  const nameLen=(decrypted[off]<<8)|decrypted[off+1];off+=2;
+  const origName=new TextDecoder('utf-8').decode(decrypted.slice(off,off+nameLen));off+=nameLen;
+  const mimeLen=(decrypted[off]<<8)|decrypted[off+1];off+=2;
+  const origMime=new TextDecoder('utf-8').decode(decrypted.slice(off,off+mimeLen));off+=mimeLen;
+  const fileData=decrypted.slice(off);
+  return{blob:new Blob([fileData],{type:origMime}),name:origName,size:fileData.length,mime:origMime};
+}
+
+/* ===== CAT SOUND SYNTHESIZER ===== */
+const CatSynth=(()=>{
+  let ctx=null,playing=false,stopFlag=false,masterGain=null;
+  const PENTA=[];{const base=261.6;const semi=[0,2,4,7,9,12,14,16,19,21,24,26,28,31,33];for(const s of semi)PENTA.push(base*Math.pow(2,s/12))}
+  const PRESETS={mew:{wave:'sawtooth',base:600,dur:.22,fStart:400,fPeak:950,fEnd:350,Q:5,vol:.25},purrr:{wave:'sawtooth',base:160,dur:.45,fStart:120,fPeak:280,fEnd:100,Q:10,vol:.20,vibRate:30,vibDepth:20},nya:{wave:'square',base:780,dur:.20,fStart:600,fPeak:1300,fEnd:500,Q:4,vol:.22},mrp:{wave:'triangle',base:420,dur:.14,fStart:350,fPeak:700,fEnd:300,Q:7,vol:.22},reow:{wave:'sawtooth',base:480,dur:.50,fStart:300,fPeak:1050,fEnd:250,Q:3,vol:.25},mrr:{wave:'sawtooth',base:320,dur:.30,fStart:220,fPeak:550,fEnd:200,Q:6,vol:.20,vibRate:18,vibDepth:30}};
+  function init(){if(!ctx||ctx.state==='closed'){ctx=new(window.AudioContext||window.webkitAudioContext)();masterGain=ctx.createGain();masterGain.gain.value=.7;masterGain.connect(ctx.destination)}if(ctx.state==='suspended')ctx.resume()}
+  function schedDec(time,name,speed){const p=PRESETS[name]||PRESETS.mew;const dur=p.dur/speed;const osc=ctx.createOscillator(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();osc.type=p.wave;osc.frequency.value=p.base;if(p.vibRate){const lfo=ctx.createOscillator(),lg=ctx.createGain();lfo.frequency.value=p.vibRate;lg.gain.value=p.vibDepth;lfo.connect(lg);lg.connect(osc.frequency);lfo.start(time);lfo.stop(time+dur+.05)}filter.type='bandpass';filter.Q.value=p.Q;filter.frequency.setValueAtTime(p.fStart,time);filter.frequency.linearRampToValueAtTime(p.fPeak,time+dur*.3);filter.frequency.linearRampToValueAtTime(p.fPeak*.8,time+dur*.6);filter.frequency.linearRampToValueAtTime(p.fEnd,time+dur);gain.gain.setValueAtTime(.001,time);gain.gain.linearRampToValueAtTime(p.vol,time+dur*.08);gain.gain.setValueAtTime(p.vol,time+dur*.65);gain.gain.exponentialRampToValueAtTime(.001,time+dur);osc.connect(filter);filter.connect(gain);gain.connect(masterGain);osc.start(time);osc.stop(time+dur+.01);return dur}
+  function schedSym(time,symIdx,speed){const dur=.08/speed,freq=PENTA[symIdx%PENTA.length];const osc=ctx.createOscillator(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();osc.type='sawtooth';osc.frequency.value=freq;filter.type='bandpass';filter.Q.value=8;filter.frequency.setValueAtTime(freq*1.5,time);filter.frequency.linearRampToValueAtTime(freq*2.5,time+dur*.5);filter.frequency.linearRampToValueAtTime(freq*1.2,time+dur);gain.gain.setValueAtTime(.001,time);gain.gain.linearRampToValueAtTime(.15,time+dur*.1);gain.gain.exponentialRampToValueAtTime(.001,time+dur);osc.connect(filter);filter.connect(gain);gain.connect(masterGain);osc.start(time);osc.stop(time+dur+.01);return dur}
+  function parseSegs(body){const clean=normalizeBody(body),segs=[];let rem=clean;while(rem.length>0){let matched=false;for(const dec of CAT_DECORATORS){if(rem.startsWith(dec)){segs.push({type:'d',name:dec});rem=rem.slice(dec.length);matched=true;break}}if(matched)continue;const ch=Array.from(rem),f=ch[0];if(CAT64_SYMBOL_SET.has(f)){const idx=CAT64_SYMBOLS.indexOf(f);segs.push({type:'s',idx:idx>=0?idx:0});rem=rem.slice(f.length)}else rem=rem.slice(f.length)}return segs}
+  async function play(catText,speed=1){const env=parseEnvelope(catText);if(!env.ok)return;init();stopFlag=false;playing=true;const segs=parseSegs(env.body);let t=ctx.currentTime+.05;const gap=.03/speed;for(const seg of segs){if(stopFlag)break;if(seg.type==='d')t+=schedDec(t,seg.name,speed)+gap;else t+=schedSym(t,seg.idx,speed)+gap*.5}await new Promise(r=>setTimeout(r,Math.max(0,(t-ctx.currentTime)*1000)));playing=false;stopFlag=false}
+  function stop(){stopFlag=true;playing=false;if(ctx&&ctx.state!=='closed'){try{ctx.close()}catch{};ctx=null}}
+  function isPlaying(){return playing}
+  // Quick celebratory meow
+  function celebrateMeow(){init();const t=ctx.currentTime+.05;schedDec(t,'mew',1);schedDec(t+.25,'nya',1.2)}
+  return{play,stop,isPlaying,celebrateMeow};
+})();
+
+/* ===== CAT ALERT ===== */
+function showCatAlert(title,message,emoji='😿',type='error'){
+  const c=document.getElementById('catAlertContainer');c.innerHTML='';
+  const tc=type==='error'?'error-title':type==='warn'?'warn-title':'success-title';
+  const ov=document.createElement('div');ov.className='cat-alert-overlay';
+  ov.innerHTML=`<div class="cat-alert"><div class="cat-alert-title ${tc}"><span>${title}</span><button class="wb" type="button" style="background:linear-gradient(180deg,#FFD0D0,#FF9090);color:#800;height:18px;min-width:18px;font-size:9px" onclick="closeCatAlert()">✕</button></div><div class="cat-alert-body"><div class="cat-alert-emoji">${emoji}</div><div class="cat-alert-text"><div class="cat-alert-msg">${message}</div></div></div><div class="cat-alert-footer"><button class="cat-alert-ok" type="button" onclick="closeCatAlert()">OK 🐾</button></div></div>`;
+  ov.addEventListener('click',e=>{if(e.target===ov)closeCatAlert()});
+  c.appendChild(ov);setTimeout(()=>{const ok=ov.querySelector('.cat-alert-ok');if(ok)ok.focus()},50);
+}
+function closeCatAlert(){document.getElementById('catAlertContainer').innerHTML=''}
+
+/* ===== STATE ===== */
+const state={inputText:'',outputText:'',encVersion:'v1',password:'',showPassword:false,statusMsg:'Compact v1 Cat Translator Ready 🐱',statusType:'info',copied:false,time:'',startOpen:false,winPos:{x:0,y:0},drag:false,dragS:{x:0,y:0},processing:false,playSpeed:1,isPlaying:false,appMode:'text',selectedFile:null,fileIsCatlock:false,fileProcessing:false,fileResult:null};
+
+/* ===== DOM ===== */
+const el={boot:document.getElementById('boot'),bootBox:document.getElementById('bootBox'),desktop:document.getElementById('desktop'),inputText:document.getElementById('inputText'),outputText:document.getElementById('outputText'),passwordInput:document.getElementById('passwordInput'),showPassword:document.getElementById('showPassword'),passwordRow:document.getElementById('passwordRow'),statusCell:document.getElementById('statusCell'),statusMode:document.getElementById('statusMode'),inputCount:document.getElementById('inputCount'),outputCount:document.getElementById('outputCount'),detectedHint:document.getElementById('detectedHint'),autoBtn:document.getElementById('autoBtn'),copyBtn:document.getElementById('copyBtn'),titleVersion:document.getElementById('titleVersion'),taskVersion:document.getElementById('taskVersion'),clockText:document.getElementById('clockText'),middleLabel:document.getElementById('middleLabel'),v1Btn:document.getElementById('v1Btn'),v2Btn:document.getElementById('v2Btn'),startBtn:document.getElementById('startBtn'),startMenu:document.getElementById('startMenu'),titlebar:document.getElementById('titlebar'),windowWrap:document.getElementById('windowWrap'),specBody:document.getElementById('specBody'),toolbar:document.getElementById('toolbar'),playBtn:document.getElementById('playBtn'),playIcon:document.getElementById('playIcon'),playLabel:document.getElementById('playLabel'),vizBars:document.getElementById('vizBars'),textBody:document.getElementById('textBody'),fileBody:document.getElementById('fileBody'),modeTextBtn:document.getElementById('modeTextBtn'),modeFileBtn:document.getElementById('modeFileBtn'),textToolbar:document.getElementById('textToolbar'),versionToggle:document.getElementById('versionToggle'),fileDropZone:document.getElementById('fileDropZone'),fileInput:document.getElementById('fileInput'),fileCard:document.getElementById('fileCard'),fileCardIcon:document.getElementById('fileCardIcon'),fileCardName:document.getElementById('fileCardName'),fileCardMeta:document.getElementById('fileCardMeta'),fileCardRemove:document.getElementById('fileCardRemove'),fileActionRow:document.getElementById('fileActionRow'),fileActionBtn:document.getElementById('fileActionBtn'),fileProgress:document.getElementById('fileProgress'),fileProgressBar:document.getElementById('fileProgressBar'),fileProgressText:document.getElementById('fileProgressText'),fileResult:document.getElementById('fileResult'),fileResultIcon:document.getElementById('fileResultIcon'),fileResultName:document.getElementById('fileResultName'),fileResultMeta:document.getElementById('fileResultMeta'),fileDownloadBtn:document.getElementById('fileDownloadBtn')};
+const modals={about:document.getElementById('overlayAbout'),help:document.getElementById('overlayHelp'),spec:document.getElementById('overlaySpec')};
+
+/* ===== RENDER ===== */
+let _rs=false;function scheduleRender(){if(_rs)return;_rs=true;requestAnimationFrame(()=>{_rs=false;render()})}
+function setStatus(msg,type='info'){state.statusMsg=msg;state.statusType=type;scheduleRender()}
+function currentEnvelope(){const e=parseEnvelope(state.inputText);return e.ok?e:null}
+function inputIsCat(){return isCatCode(state.inputText)}
+function shouldShowPassword(){if(state.appMode==='file')return true;const e=currentEnvelope();return state.encVersion==='v2'||(e&&(e.version===VERSION_V2||e.version===LEGACY_VERSION_V2))}
+function clampWindowPos(pos){
+  if(!el.windowWrap)return pos;
+  const r=el.windowWrap.getBoundingClientRect(),vw=window.innerWidth||1024,vh=window.innerHeight||768,taskbarH=40,pad=8;
+  const minX=pad-vw*.5+r.width*.5,maxX=vw-pad-vw*.5-r.width*.5;
+  const minY=pad-vh*.48+r.height*.5,maxY=vh-taskbarH-vh*.48-r.height*.5;
+  return{x:Math.min(Math.max(pos.x,Math.min(minX,maxX)),Math.max(minX,maxX)),y:Math.min(Math.max(pos.y,Math.min(minY,maxY)),Math.max(minY,maxY))};
+}
+
+function render(){
+  // Mode
+  el.textBody.classList.toggle('hidden',state.appMode!=='text');
+  el.fileBody.classList.toggle('hidden',state.appMode!=='file');
+  el.modeTextBtn.classList.toggle('on',state.appMode==='text');
+  el.modeFileBtn.classList.toggle('on',state.appMode==='file');
+  el.textToolbar.classList.toggle('hidden',state.appMode!=='text');
+  el.versionToggle.classList.toggle('hidden',state.appMode==='file');
+
+  // Password row
+  el.passwordRow.classList.toggle('hidden',!shouldShowPassword());
+
+  if(state.appMode==='text'){
+    const env=currentEnvelope(),detected=env?describeVersionTag(env.version):'';
+    if(document.activeElement!==el.inputText)el.inputText.value=state.inputText;
+    if(document.activeElement!==el.outputText)el.outputText.value=state.outputText;
+    el.inputCount.textContent=`${state.inputText.length} chars`;
+    el.outputCount.textContent=`${state.outputText.length} chars`;
+    el.detectedHint.textContent=inputIsCat()&&detected?`(${detected} detected)`:'';
+    el.autoBtn.textContent=state.processing?'⏳ Working...':inputIsCat()?'🔓 Decode':'🐱 Encode';
+    el.copyBtn.textContent=state.copied?'✓ Done':'📋 Copy';
+    el.toolbar.classList.toggle('processing',state.processing);
+    el.middleLabel.textContent=state.encVersion==='v1'?'↕ mew compact cat translator ↕':'↕ mew compact shell + AES-GCM ↕';
+    el.v1Btn.classList.toggle('on',state.encVersion==='v1');el.v2Btn.classList.toggle('on',state.encVersion==='v2');
+    const hasOutput=isCatCode(state.outputText);
+    el.playBtn.disabled=!hasOutput&&!state.isPlaying;
+    el.playBtn.classList.toggle('has-output',hasOutput&&!state.isPlaying);
+    el.playBtn.classList.toggle('playing',state.isPlaying);
+    el.playIcon.textContent=state.isPlaying?'■':'▶';
+    el.playLabel.textContent=state.isPlaying?'Stop':'Listen to Cat';
+    el.vizBars.classList.toggle('active',state.isPlaying);
+    document.querySelectorAll('.speed-btn').forEach(b=>{b.classList.toggle('on',parseFloat(b.dataset.speed)===state.playSpeed)});
+  }
+
+  // File mode UI
+  if(state.appMode==='file'){
+    const hasFile=!!state.selectedFile;
+    el.fileDropZone.classList.toggle('hidden',hasFile);
+    el.fileCard.classList.toggle('hidden',!hasFile||state.fileProcessing);
+    el.fileActionRow.classList.toggle('hidden',!hasFile||state.fileProcessing||!!state.fileResult);
+    el.fileProgress.classList.toggle('hidden',!state.fileProcessing);
+    el.fileResult.classList.toggle('hidden',!state.fileResult);
+    if(hasFile){
+      el.fileCardIcon.textContent=state.fileIsCatlock?'🔒':'📄';
+      el.fileCardName.textContent=state.selectedFile.name;
+      el.fileCardMeta.textContent=`${formatSize(state.selectedFile.size)} • ${state.selectedFile.type||'unknown type'}`;
+      el.fileActionBtn.textContent=state.fileIsCatlock?'🔓 Decrypt .catlock':'🔒 Encrypt File';
+      el.fileActionBtn.className='file-action-btn '+(state.fileIsCatlock?'file-decrypt-btn':'file-encrypt-btn');
+    }
+    if(state.fileResult){
+      el.fileResultIcon.textContent='✅';
+      el.fileResultName.textContent=state.fileResult.name;
+      el.fileResultMeta.textContent=formatSize(state.fileResult.size);
+    }
+  }
+
+  if(document.activeElement!==el.passwordInput)el.passwordInput.value=state.password;
+  el.passwordInput.type=state.showPassword?'text':'password';
+  el.showPassword.checked=state.showPassword;
+  el.titleVersion.textContent=state.appMode==='file'?'FILE':state.encVersion.toUpperCase();
+  el.taskVersion.textContent=state.appMode==='file'?'FILE':state.encVersion.toUpperCase();
+  el.statusMode.textContent=state.appMode==='file'?'📁file':state.encVersion==='v1'?'🐱v1':'🔐v2';
+  const sc=state.statusType==='error'?'#C04060':state.statusType==='success'?'#408040':'#6B3A5A';
+  el.statusCell.textContent=state.statusMsg;el.statusCell.style.color=sc;
+  el.clockText.textContent=state.time;
+  el.startMenu.classList.toggle('hidden',!state.startOpen);
+  el.startBtn.style.background=state.startOpen?'linear-gradient(180deg,#FFC0D9,#FFD6E8)':'linear-gradient(180deg,#FFF5F9,#FFD6E8 50%,#FFC0D9)';
+  el.startBtn.style.boxShadow=state.startOpen?'inset 1px 1px 0 #C48BA0,inset -1px -1px 0 #FFF':'inset -1px -1px 0 #C48BA0,inset 1px 1px 0 #FFF';
+  state.winPos=clampWindowPos(state.winPos);
+  el.windowWrap.style.left=`calc(50% + ${state.winPos.x}px)`;el.windowWrap.style.top=`calc(48% + ${state.winPos.y}px)`;
+  el.titlebar.classList.toggle('dragging',state.drag);
+}
+
+/* ===== TEXT MODE HANDLERS ===== */
+async function handleEncode(){if(!state.inputText.trim()){showCatAlert('Meow...','Type something in the input box first!','😿');return setStatus('Enter text first! 😿','error')}if(state.encVersion==='v2'&&!state.password){showCatAlert('Oh no!','v2 CatCipher needs a password!','🙀','warn');return setStatus('Password required! 🔐','error')}state.processing=true;render();await new Promise(r=>setTimeout(r,16));const r=await encodeByMode(state.encVersion,state.inputText,state.password);state.processing=false;if(r.ok){state.outputText=r.out;setStatus(`Encoded! ${state.inputText.length}→${r.out.length} chars 🐾`,'success')}else{state.outputText='';showCatAlert('Encode Failed',r.msg,'😿');setStatus(r.msg,'error')}render()}
+async function handleDecode(){if(!state.inputText.trim()){showCatAlert('Meow...','Paste some CatCode first!','😿');return setStatus('Paste CatCode! 😿','error')}const env=parseEnvelope(state.inputText);if(!env.ok){state.outputText='';showCatAlert('Hiss!','Not valid CatCode! Must start and end with =^.^=','😾');setStatus(env.msg,'error');render();return}if((env.version===VERSION_V2||env.version===LEGACY_VERSION_V2)&&!state.password){showCatAlert('Oh no!','This CatCipher needs a password! 🔐','🙀','warn');return setStatus('Password required!','error')}state.processing=true;render();await new Promise(r=>setTimeout(r,16));const r=await decodeAuto(state.inputText,state.password);state.processing=false;if(r.ok){state.outputText=r.out;setStatus('Decoded! 🎉','success')}else{state.outputText='';showCatAlert('Decode Failed',r.msg,'😾');setStatus(r.msg,'error')}render()}
+async function handleAuto(){if(!state.inputText.trim()){showCatAlert('Meow...','Input box is empty!','😿');return setStatus('Type something! 😿','error')}if(inputIsCat())await handleDecode();else await handleEncode()}
+function handleSwap(){state.inputText=state.outputText;state.outputText='';setStatus('Swapped! ↕️');render()}
+async function handleCopy(){if(!state.outputText){showCatAlert('Meow...','Nothing to copy!','😿');return}try{await navigator.clipboard.writeText(state.outputText);state.copied=true;setStatus('Copied! 📋✨','success');render();setTimeout(()=>{state.copied=false;render()},2000)}catch{try{const ta=document.createElement('textarea');ta.value=state.outputText;ta.style.cssText='position:fixed;left:-9999px';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);state.copied=true;setStatus('Copied!','success');render();setTimeout(()=>{state.copied=false;render()},2000)}catch{setStatus('Copy failed 😿','error')}}}
+function handleClear(){state.inputText='';state.outputText='';state.password='';state.copied=false;state.selectedFile=null;state.fileIsCatlock=false;state.fileResult=null;state.fileProcessing=false;if(el.fileInput)el.fileInput.value='';if(CatSynth.isPlaying()){CatSynth.stop();state.isPlaying=false}setStatus(state.appMode==='file'?'File Locker Ready 📁🐱':state.encVersion==='v1'?'Compact v1 Ready 🐱':'Compact v2 Ready 🔐','info');render()}
+function insertExample(text){state.inputText=text;state.outputText='';render()}
+async function showDemo(){const demo=state.inputText.trim()||'Hello, World! 🐱';state.inputText=demo;render();if(state.encVersion==='v2'&&!state.password){showCatAlert('Oh no!','Enter a password for v2 demo!','🙀','warn');return}state.processing=true;render();await new Promise(r=>setTimeout(r,16));const r=await encodeByMode(state.encVersion,demo,state.password);state.processing=false;if(r.ok){state.outputText=r.out;setStatus(`Demo encoded! 🐱`,'success')}else{setStatus(r.msg,'error')}render()}
+async function handlePlay(){if(state.isPlaying){CatSynth.stop();state.isPlaying=false;setStatus('Stopped 🔇');render();return}if(!isCatCode(state.outputText))return;state.isPlaying=true;setStatus('♪ Playing... 🎵','success');render();try{await CatSynth.play(state.outputText,state.playSpeed)}catch(e){console.error(e)}state.isPlaying=false;setStatus('Playback done 🐾','info');render()}
+
+/* ===== FILE MODE HANDLERS ===== */
+function handleFileSelect(file){
+  if(!file)return;
+  if(file.size>FILE_MAX_SIZE){showCatAlert('Too Big!',`File is ${formatSize(file.size)}. Max is 100 MB!`,'🙀','warn');return}
+  state.selectedFile=file;state.fileIsCatlock=isCatlockFile(file.name);state.fileResult=null;state.fileProcessing=false;
+  if(!state.fileIsCatlock&&!state.password){setStatus('Set a password in the Key field, then encrypt! 🔑','info')}else if(state.fileIsCatlock){setStatus('.catlock detected! Enter password to decrypt 🔓','info')}
+  render();
+}
+
+function handleFileRemove(){state.selectedFile=null;state.fileIsCatlock=false;state.fileResult=null;state.fileProcessing=false;el.fileInput.value='';setStatus('File Locker Ready 📁🐱','info');render()}
+
+async function handleFileAction(){
+  if(!state.selectedFile)return;
+  if(!state.password){showCatAlert('Oh no!','A password is required to '+(state.fileIsCatlock?'decrypt':'encrypt')+' files!','🙀','warn');return}
+  state.fileProcessing=true;state.fileResult=null;
+  el.fileProgressBar.style.width='10%';
+  el.fileProgressText.textContent=state.fileIsCatlock?'Decrypting... 🔓':'Encrypting... 🔒';
+  render();
+  await new Promise(r=>setTimeout(r,50));
+  el.fileProgressBar.style.width='40%';
+  try{
+    let result;
+    if(state.fileIsCatlock){
+      result=await decryptFile(state.selectedFile,state.password);
+    }else{
+      result=await encryptFile(state.selectedFile,state.password);
+    }
+    el.fileProgressBar.style.width='100%';
+    el.fileProgressText.textContent='Done! ✅';
+    await new Promise(r=>setTimeout(r,300));
+    state.fileProcessing=false;
+    state.fileResult={blob:result.blob,name:result.name,size:result.size};
+    CatSynth.celebrateMeow();
+    setStatus((state.fileIsCatlock?'Decrypted':'Encrypted')+` → ${result.name} (${formatSize(result.size)}) 🐾`,'success');
+    render();
+  }catch(e){
+    state.fileProcessing=false;
+    el.fileProgressBar.style.width='0%';
+    showCatAlert(state.fileIsCatlock?'Decrypt Failed':'Encrypt Failed',e.message,'😾');
+    setStatus(e.message,'error');
+    render();
+  }
+}
+
+function handleFileDownload(){
+  if(!state.fileResult)return;
+  const url=URL.createObjectURL(state.fileResult.blob);
+  const a=document.createElement('a');a.href=url;a.download=state.fileResult.name;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+  setStatus(`Downloaded ${state.fileResult.name} 📥`,'success');
+}
+
+/* ===== SHARED ===== */
+function switchMode(mode){state.appMode=mode;if(mode==='file'){setStatus('File Locker Ready 📁🐱','info')}else{setStatus(state.encVersion==='v1'?'Compact v1 Ready 🐱':'Compact v2 Ready 🔐','info')}render()}
+function openModal(n){const m=modals[n];if(m)m.classList.remove('hidden');state.startOpen=false;render()}
+function closeAllModals(){Object.values(modals).forEach(m=>m.classList.add('hidden'))}
+function updateClock(){state.time=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});render()}
+
+/* Spec */
+function renderSpec(){
+  const sampleMap=BASE64URL_ALPHABET.slice(0,12).split('').map((c,i)=>`${c}→${CAT64_SYMBOLS[i]}`).join(' ');
+  el.specBody.innerHTML=`
+    <div class="pixel" style="font-size:11px;color:#D876A8;margin-bottom:4px">Text — Compact Cat64</div>
+    <div style="margin-bottom:8px">64-symbol cat alphabet with mew/purrr/nya decorations. v1: reversible translator. v2: real AES-GCM.</div>
+    <div class="pixel" style="font-size:11px;color:#D876A8;margin-bottom:4px">File — .catlock format</div>
+    <div class="demo-mapping" style="margin-bottom:8px">
+      [7+1 bytes] Magic: CATLOCK\\0<br>
+      [1 byte] Version: ${CATLOCK_VERSION}<br>
+      [${SALT_LEN} bytes] PBKDF2 salt<br>
+      [${NONCE_LEN} bytes] AES-GCM nonce<br>
+      [rest] Encrypted payload (includes original filename + MIME + file data + 16-byte auth tag)
+    </div>
+    <div class="pixel" style="font-size:11px;color:#6AACDA;margin-bottom:4px">🔊 Sound synthesis</div>
+    <div style="margin-bottom:8px">Decorator words → cat vocalization presets. Cat64 symbols → pentatonic pitches. Every message = unique cat melody.</div>
+    <div class="pixel" style="font-size:11px;color:#D876A8;margin-bottom:4px">Crypto parameters</div>
+    <div class="demo-mapping" style="margin-bottom:8px">PBKDF2: ${PBKDF2_ITERATIONS} iters, ${PBKDF2_HASH} | Salt: ${SALT_LEN}B | Nonce: ${NONCE_LEN}B | AES-${AES_KEY_LENGTH}-GCM</div>
+    <div class="pixel" style="font-size:11px;color:#D876A8;margin-bottom:4px">Compact alphabet</div>
+    <div class="demo-mapping">${sampleMap} ...</div>`;
+}
+
+/* Boot */
+function renderBoot(p){const L=[];if(p>=1)L.push('<div style="color:#ccc">CatCode BIOS v6.0 🐱</div>','<div>Scanning modules...</div>');if(p>=2)L.push('<div>  v1: Compact Translator ✓</div>');if(p>=3)L.push('<div>  v2: AES-GCM CatCipher ✓</div>');if(p>=4)L.push(`<div style="color:#f9c">  ${CAT64_SYMBOLS.slice(0,12).join('')}</div>`);if(p>=5)L.push('<div style="color:#8cf">Cat Sound Synthesizer... OK</div>');if(p>=6)L.push('<div style="color:#fda">CatLock File Encryptor... OK</div>');if(p>=7)L.push('<div>Web Crypto + Web Audio... OK</div>','<div style="margin-top:4px"><span style="color:#fff">▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓</span> 100%</div>');el.bootBox.innerHTML=L.join('')}
+function startBoot(){[300,600,900,1200,1500,1800,2100].forEach((ms,i)=>setTimeout(()=>renderBoot(i+1),ms));setTimeout(()=>{el.boot.classList.add('fade-out');setTimeout(()=>{el.boot.classList.add('hidden');el.desktop.classList.remove('hidden');render()},300)},2500)}
+
+/* ===== EVENTS ===== */
+function wireEvents(){
+  let _composing=false;
+  el.inputText.addEventListener('compositionstart',()=>{_composing=true});
+  el.inputText.addEventListener('compositionend',e=>{_composing=false;state.inputText=e.target.value;scheduleRender()});
+  el.inputText.addEventListener('input',e=>{if(_composing)return;state.inputText=e.target.value;scheduleRender()});
+  el.passwordInput.addEventListener('input',e=>{state.password=e.target.value});
+  el.showPassword.addEventListener('change',e=>{state.showPassword=e.target.checked;render()});
+  document.getElementById('encodeBtn').addEventListener('click',handleEncode);
+  document.getElementById('decodeBtn').addEventListener('click',handleDecode);
+  el.autoBtn.addEventListener('click',handleAuto);
+  document.getElementById('swapBtn').addEventListener('click',handleSwap);
+  el.copyBtn.addEventListener('click',handleCopy);
+  document.getElementById('clearBtn').addEventListener('click',handleClear);
+  document.getElementById('clearTopBtn').addEventListener('click',handleClear);
+  document.getElementById('demoBtn').addEventListener('click',showDemo);
+  document.getElementById('demoIcon').addEventListener('click',showDemo);
+  el.playBtn.addEventListener('click',handlePlay);
+  document.querySelectorAll('.speed-btn').forEach(b=>{b.addEventListener('click',()=>{state.playSpeed=parseFloat(b.dataset.speed);render()})});
+  el.v1Btn.addEventListener('click',()=>{state.encVersion='v1';setStatus('v1 Cat Translator 🐱')});
+  el.v2Btn.addEventListener('click',()=>{state.encVersion='v2';setStatus('v2 CatCipher 🔐')});
+  document.querySelectorAll('.exampleBtn').forEach(b=>{b.addEventListener('click',()=>insertExample(b.dataset.text))});
+  document.querySelectorAll('[data-open]').forEach(n=>{n.addEventListener('click',()=>openModal(n.dataset.open))});
+  document.querySelectorAll('.closeModal').forEach(b=>{b.addEventListener('click',closeAllModals)});
+  document.querySelectorAll('.overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)closeAllModals()})});
+
+  // Mode toggle
+  el.modeTextBtn.addEventListener('click',()=>switchMode('text'));
+  el.modeFileBtn.addEventListener('click',()=>switchMode('file'));
+
+  // File mode events
+  el.fileInput.addEventListener('change',e=>{if(e.target.files[0])handleFileSelect(e.target.files[0])});
+  el.fileDropZone.addEventListener('dragover',e=>{e.preventDefault();el.fileDropZone.classList.add('drag-over')});
+  el.fileDropZone.addEventListener('dragleave',()=>{el.fileDropZone.classList.remove('drag-over')});
+  el.fileDropZone.addEventListener('drop',e=>{e.preventDefault();el.fileDropZone.classList.remove('drag-over');if(e.dataTransfer.files[0])handleFileSelect(e.dataTransfer.files[0])});
+  el.fileCardRemove.addEventListener('click',handleFileRemove);
+  el.fileActionBtn.addEventListener('click',handleFileAction);
+  el.fileDownloadBtn.addEventListener('click',handleFileDownload);
+
+  // Keyboard
+  document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();if(state.appMode==='text')handleAuto();else if(state.selectedFile)handleFileAction()}if(e.key==='Escape'){closeAllModals();closeCatAlert();state.startOpen=false;render()}});
+
+  // Start menu
+  el.startBtn.addEventListener('click',e=>{e.stopPropagation();state.startOpen=!state.startOpen;render()});
+  document.addEventListener('mousedown',e=>{if(!el.startMenu.contains(e.target)&&e.target!==el.startBtn&&!el.startBtn.contains(e.target)){state.startOpen=false;render()}});
+  document.querySelectorAll('[data-start-action]').forEach(n=>{n.addEventListener('click',async()=>{const a=n.dataset.startAction;if(a==='new'||a==='shutdown')handleClear();if(a==='demo')await showDemo();if(a==='filemode')switchMode('file');state.startOpen=false;render()})});
+
+  // Drag window
+  function startDrag(cx,cy){state.drag=true;state.dragS={x:cx-state.winPos.x,y:cy-state.winPos.y};render()}
+  function moveDrag(cx,cy){if(!state.drag)return;state.winPos=clampWindowPos({x:cx-state.dragS.x,y:cy-state.dragS.y});render()}
+  function endDrag(){if(!state.drag)return;state.drag=false;render()}
+  el.titlebar.addEventListener('mousedown',e=>{if(e.target.closest('button'))return;startDrag(e.clientX,e.clientY)});
+  window.addEventListener('mousemove',e=>moveDrag(e.clientX,e.clientY));
+  window.addEventListener('mouseup',endDrag);
+  el.titlebar.addEventListener('touchstart',e=>{if(e.target.closest('button'))return;startDrag(e.touches[0].clientX,e.touches[0].clientY)},{passive:true});
+  window.addEventListener('touchmove',e=>{if(!state.drag)return;moveDrag(e.touches[0].clientX,e.touches[0].clientY)},{passive:true});
+  window.addEventListener('touchend',endDrag);
+  window.addEventListener('touchcancel',endDrag);
+}
+
+/* Init */
+renderSpec();wireEvents();updateClock();setInterval(updateClock,15000);renderBoot(0);startBoot();
+</script>
+</body>
+</html>

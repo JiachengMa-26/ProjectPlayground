@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#090806">
+<title>JC Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Outfit:wght@200;300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#090806;--bg1:#0E0D0A;--bg2:#141210;--bg3:#1B1915;
+  --bd:rgba(180,155,100,.06);--bdh:rgba(180,155,100,.14);
+  --gold:#B89E6A;--gold2:#D4BA82;--goldd:#8A7548;--goldm:#5C4E2E;
+  --tx:#DDD6C4;--tx2:#8A7E6B;--tx3:#4A4237;--tx4:#2A2520;
+  --grn:#6BAF7A;--red:#C76B6B;
+  --se:'Cormorant Garamond',Georgia,serif;
+  --sa:'Outfit',-apple-system,sans-serif;
+  --mo:'JetBrains Mono','SF Mono',monospace;
+  --r:3px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--tx);font-family:var(--sa);min-height:100vh;min-height:100dvh;overflow-x:hidden}
+::selection{background:rgba(180,155,100,.18)}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:rgba(180,155,100,.1);border-radius:2px}
+input,button,select{font-family:inherit;outline:none;border:none;background:none}
+button{cursor:pointer;-webkit-user-select:none}
+
+@keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes si{from{transform:translateX(100%)}to{transform:none}}
+@keyframes su{from{transform:translateY(100%)}to{transform:none}}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+@keyframes pu{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ═══ App Shell ═══ */
+.app{max-width:1300px;margin:0 auto;padding:32px 44px 24px}
+
+/* ═══ Header ═══ */
+.hdr{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:44px}
+.brand{font-family:var(--se);font-weight:300;font-size:40px;letter-spacing:10px;color:var(--tx);text-transform:uppercase;line-height:1}
+.brand-dt{font-family:var(--mo);font-size:10px;color:var(--tx4);margin-top:12px;letter-spacing:1.5px}
+.hdr-r{display:flex;gap:8px;align-items:center}
+.sync{display:inline-flex;align-items:center;gap:5px;margin-right:6px}
+.sync-d{width:5px;height:5px;border-radius:50%}
+.sync-d.ok{background:var(--grn)}.sync-d.busy{background:var(--gold);animation:pu 1.2s infinite}.sync-d.err{background:var(--red)}
+.sync-t{font-family:var(--mo);font-size:8px;color:var(--tx4);letter-spacing:.5px}
+
+/* ═══ Buttons ═══ */
+.bg{background:linear-gradient(135deg,var(--gold),var(--goldd));color:var(--bg);border-radius:var(--r);padding:11px 24px;font-size:12px;font-weight:600;letter-spacing:.8px;transition:all .3s}
+.bg:hover{filter:brightness(1.1)}.bg:disabled{opacity:.3;cursor:default}
+.bgh{color:var(--tx3);border:1px solid var(--bd);border-radius:var(--r);padding:9px 16px;font-size:10px;letter-spacing:.5px;transition:all .3s}
+.bgh:hover{border-color:var(--bdh);color:var(--tx2)}
+
+/* ═══ Metrics ═══ */
+.mets{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bd);border-radius:var(--r);overflow:hidden;margin-bottom:44px;animation:fu .5s ease}
+.met{background:var(--bg);padding:28px 20px;text-align:center;transition:background .3s}
+.met:hover{background:var(--bg1)}
+.met-l{font-size:7px;font-weight:600;color:var(--tx4);text-transform:uppercase;letter-spacing:3px}
+.met-v{font-family:var(--mo);font-size:22px;font-weight:400;margin-top:9px;letter-spacing:-.5px}
+.met-s{font-family:var(--mo);font-size:9px;color:var(--tx4);margin-top:7px}
+
+/* ═══ Main Grid ═══ */
+.main{display:grid;grid-template-columns:210px 1fr;gap:44px;margin-bottom:44px}
+
+/* ═══ Allocation ═══ */
+.apc{animation:fu .7s ease}
+.slbl{font-size:7px;font-weight:600;color:var(--tx4);text-transform:uppercase;letter-spacing:3px;margin-bottom:22px}
+.dn-w{display:flex;justify-content:center;margin-bottom:22px}
+.leg{display:flex;flex-direction:column;gap:8px}
+.leg-r{display:flex;align-items:center;justify-content:space-between}
+.leg-l{display:flex;align-items:center;gap:7px}
+.leg-d{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.leg-s{font-family:var(--mo);font-size:10px;color:var(--tx2)}
+.leg-p{font-family:var(--mo);font-size:9px;color:var(--tx4)}
+
+/* ═══ Table Area ═══ */
+.ta{min-width:0;display:flex;flex-direction:column}
+.ctrls{display:flex;gap:10px;margin-bottom:18px;align-items:center;flex-wrap:wrap}
+.sb{flex:1;min-width:140px;position:relative}
+.sb input{width:100%;background:var(--bg1);border:1px solid var(--bd);border-radius:var(--r);padding:9px 32px 9px 14px;color:var(--tx);font-size:12px;transition:border-color .2s}
+.sb input:focus{border-color:var(--bdh)}
+.sb .x{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--tx4);font-size:10px;padding:2px}
+.sg{display:flex;gap:3px}
+.sp{border:1px solid var(--bd);border-radius:var(--r);padding:5px 9px;font-family:var(--mo);font-size:9px;color:var(--tx4);transition:all .2s}
+.sp.on{border-color:rgba(180,155,100,.2);color:var(--gold);background:rgba(180,155,100,.03)}
+
+/* Tabs */
+.tabs{display:flex;border-bottom:1px solid var(--bd)}
+.tab{border-bottom:1px solid transparent;padding:11px 22px;font-size:10px;font-weight:500;color:var(--tx4);letter-spacing:1px;text-transform:uppercase;transition:all .25s}
+.tab:hover{color:var(--tx2)}.tab.on{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* Desktop Table */
+.th{display:grid;grid-template-columns:90px 1fr 60px 85px 85px 55px 88px;padding:9px 14px;border-bottom:1px solid var(--bd)}
+.th span{font-size:7px;font-weight:600;color:var(--tx4);text-transform:uppercase;letter-spacing:2px}
+.th .r{text-align:right}
+.tr{display:grid;grid-template-columns:90px 1fr 60px 85px 85px 55px 88px;padding:12px 14px;align-items:center;border-bottom:1px solid rgba(180,155,100,.02);transition:background .15s;animation:fu .3s ease}
+.tr:hover{background:rgba(180,155,100,.015)}
+.tr:hover .ra{opacity:1}
+.cs{font-family:var(--mo);font-weight:600;font-size:13px;letter-spacing:1px}
+.cn{font-size:11px;color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:6px}
+.cv{text-align:right;font-family:var(--mo);font-size:11px;color:var(--tx2)}
+.ct{text-align:right;font-family:var(--mo);font-size:11px;font-weight:500}
+.cw{text-align:right;font-family:var(--mo);font-size:10px;color:var(--tx4)}
+.ra{display:flex;gap:3px;justify-content:flex-end;opacity:0;transition:opacity .2s}
+.ba{border:1px solid;border-radius:var(--r);padding:4px 12px;font-size:9px;font-weight:500;letter-spacing:.5px;transition:all .2s}
+.ba.sell{color:var(--red);border-color:rgba(199,107,107,.2)}.ba.sell:hover{background:rgba(199,107,107,.04)}
+.ba.exec{color:var(--grn);border-color:rgba(107,175,122,.2)}.ba.exec:hover{background:rgba(107,175,122,.04)}
+.ba.rm{color:var(--tx4);border-color:var(--bd);font-size:10px;padding:3px 7px}
+.empty{text-align:center;color:var(--tx4);padding:52px 0;font-family:var(--se);font-style:italic;font-size:14px;letter-spacing:1px}
+
+/* ═══ Mobile Cards (hidden on desktop) ═══ */
+.cards{display:none}
+.card{background:var(--bg1);border:1px solid var(--bd);border-radius:6px;padding:16px;animation:fu .3s ease}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.card-sym{font-family:var(--mo);font-weight:600;font-size:16px;letter-spacing:1px}
+.card-nm{font-size:11px;color:var(--tx3);margin-top:2px}
+.card-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+.card-c{text-align:center}
+.card-cl{font-size:7px;font-weight:600;color:var(--tx4);text-transform:uppercase;letter-spacing:1.5px}
+.card-cv{font-family:var(--mo);font-size:13px;font-weight:500;margin-top:3px}
+.card-acts{display:flex;gap:8px;justify-content:flex-end}
+.card-acts .ba{padding:7px 18px;font-size:10px;opacity:1}
+
+/* ═══ Panel / Slide-over ═══ */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(14px);display:none;z-index:1000;animation:fi .2s ease}
+.ov.open{display:flex;justify-content:flex-end}
+.pnl{width:440px;max-width:94vw;height:100vh;height:100dvh;background:var(--bg1);border-left:1px solid var(--bd);display:flex;flex-direction:column;animation:si .4s cubic-bezier(.16,1,.3,1)}
+.pnl-h{display:flex;justify-content:space-between;align-items:flex-start;padding:36px 32px 22px;border-bottom:1px solid var(--bd)}
+.pnl-t{font-family:var(--se);font-size:24px;font-weight:300;letter-spacing:1px}
+.pnl-s{font-size:11px;color:var(--tx3);margin-top:5px}
+.pnl-x{color:var(--tx3);font-size:22px;padding:0 4px;line-height:1}
+.pnl-b{flex:1;padding:28px 32px;overflow-y:auto;display:flex;flex-direction:column;gap:18px;-webkit-overflow-scrolling:touch}
+
+/* Form */
+.fg{display:flex;flex-direction:column;gap:6px}
+.fl{font-size:8px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:2px}
+.fi{background:rgba(180,155,100,.03);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;color:var(--tx);font-family:var(--mo);font-size:13px;width:100%;transition:border-color .2s}
+.fi:focus{border-color:var(--bdh)}.fi::placeholder{color:var(--tx4)}
+.fr{display:flex;gap:10px}.fr>.fg{flex:1}
+.favg{font-family:var(--mo);font-size:11px;color:var(--tx3);margin-top:-4px}
+.ftr{display:flex;gap:8px}
+.ftb{flex:1;background:rgba(180,155,100,.015);border:1px solid var(--bd);border-radius:var(--r);padding:11px;font-size:11px;color:var(--tx3);font-weight:500;transition:all .2s}
+.ftb.on{border-color:rgba(180,155,100,.2);color:var(--gold);background:rgba(180,155,100,.04)}
+.sum{background:rgba(180,155,100,.02);border:1px solid var(--bd);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:9px}
+.sr{display:flex;justify-content:space-between;font-family:var(--mo);font-size:12px;color:var(--tx2)}
+.srt{font-weight:600;font-size:14px;padding-top:9px;border-top:1px solid var(--bd);color:var(--tx)}
+.dv{height:1px;background:var(--bd);margin:2px 0}
+
+/* Quick chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.chip{background:rgba(180,155,100,.02);border:1px solid var(--bd);border-radius:var(--r);padding:7px 14px;font-family:var(--mo);font-size:11px;color:var(--tx3);font-weight:500;transition:all .2s}
+.chip:hover{border-color:var(--bdh);color:var(--tx2)}
+.chip.on{border-color:rgba(180,155,100,.25);color:var(--gold);background:rgba(180,155,100,.05)}
+
+/* Settings guide */
+.guide{font-size:11px;color:var(--tx3);line-height:1.8}
+.guide code{font-family:var(--mo);font-size:10px;color:var(--tx2);background:rgba(180,155,100,.04);padding:1px 5px;border-radius:2px}
+.gs{counter-reset:s;margin-top:6px}.gs>div{counter-increment:s;padding-left:22px;position:relative;margin-bottom:5px}
+.gs>div::before{content:counter(s);position:absolute;left:0;font-family:var(--mo);font-size:10px;color:var(--goldm);font-weight:600}
+
+.foot{text-align:center;color:var(--tx4);font-size:8px;letter-spacing:2px;padding-top:20px;border-top:1px solid rgba(180,155,100,.02);opacity:.6}
+
+/* ═══════ MOBILE ═══════ */
+@media(max-width:820px){
+  .app{padding:20px 16px 16px}
+  .brand{font-size:24px;letter-spacing:6px}
+  .brand-dt{font-size:8px;margin-top:6px}
+  .hdr{margin-bottom:24px;flex-wrap:wrap;gap:10px}
+  .hdr-r{width:100%;justify-content:flex-end}
+  .bgh{padding:8px 12px;font-size:9px}
+  .bg{padding:9px 16px;font-size:11px}
+  .mets{grid-template-columns:1fr 1fr;margin-bottom:24px}
+  .met{padding:18px 12px}
+  .met-v{font-size:18px}
+  .main{grid-template-columns:1fr;gap:24px;margin-bottom:24px}
+  .apc{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+  .dn-w{margin-bottom:0}
+  .leg{gap:5px}
+  .ctrls{gap:8px;margin-bottom:12px}
+  .th,.tr{display:none!important}
+  .cards{display:flex;flex-direction:column;gap:8px}
+  /* Panel → bottom sheet on mobile */
+  .ov.open{justify-content:stretch;align-items:flex-end}
+  .pnl{width:100%;max-width:100vw;height:92vh;height:92dvh;border-left:none;border-top:1px solid var(--bd);border-radius:16px 16px 0 0;animation:su .4s cubic-bezier(.16,1,.3,1)}
+  .pnl-h{padding:20px 20px 16px}
+  .pnl-t{font-size:20px}
+  .pnl-b{padding:20px}
+}
+@media(max-width:420px){
+  .mets{grid-template-columns:1fr 1fr}
+  .met{padding:14px 8px}
+  .met-v{font-size:15px}
+  .met-l{font-size:6px;letter-spacing:2px}
+  .apc{grid-template-columns:1fr;gap:12px}
+  .card-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   JC PORTFOLIO ENGINE — v6
+   ═══════════════════════════════════════════════════════════════ */
+
+// ── Default data matching JC's spreadsheet exactly ──
+const D_H=[
+  {id:"h1",symbol:"MSFT",name:"Microsoft Corp",shares:2,totalCost:786.66,avgCost:393.33},
+  {id:"h2",symbol:"META",name:"Meta Platforms Inc",shares:1,totalCost:593,avgCost:593},
+  {id:"h3",symbol:"GOOGL",name:"Alphabet Inc Class A",shares:1,totalCost:282,avgCost:282},
+  {id:"h4",symbol:"HOOD",name:"Robinhood Markets Inc",shares:3,totalCost:222.87,avgCost:74.29},
+  {id:"h5",symbol:"DUOL",name:"Duolingo Inc",shares:1,totalCost:95,avgCost:95},
+  {id:"h6",symbol:"CALM",name:"Cal-Maine Foods Inc",shares:1,totalCost:92.02,avgCost:92.02},
+  {id:"h7",symbol:"DUOL",name:"Duolingo Inc",shares:3,totalCost:293.33,avgCost:97.78},
+  {id:"h8",symbol:"NFLX",name:"Netflix Inc",shares:4,totalCost:325.43,avgCost:81.36},
+  {id:"h9",symbol:"NVDA",name:"NVIDIA Corp",shares:2,totalCost:361.42,avgCost:180.71},
+];
+const D_G=[
+  {id:"g1",symbol:"ETHA",name:"iShares Ethereum Trust ETF",shares:5,totalCost:67.5,avgCost:13.5,window:"180d"},
+  {id:"g2",symbol:"IBIT",name:"iShares Bitcoin Trust ETF",shares:10,totalCost:350,avgCost:35,window:"180d"},
+  {id:"g3",symbol:"MSFT",name:"Microsoft Corp",shares:1,totalCost:251,avgCost:251,window:"180d"},
+  {id:"g4",symbol:"ABBV",name:"AbbVie Inc",shares:1,totalCost:198,avgCost:198,window:"180d"},
+  {id:"g5",symbol:"PLTR",name:"Palantir Technologies Inc",shares:1,totalCost:132,avgCost:132,window:"180d"},
+  {id:"g6",symbol:"SCHD",name:"Schwab US Dividend Equity ETF",shares:5,totalCost:146,avgCost:29.2,window:"180d"},
+  {id:"g7",symbol:"AMZN",name:"Amazon.com Inc",shares:2,totalCost:396,avgCost:198,window:"180d"},
+];
+
+const LS="jc-pw6",LU="jc-pw6-url";
+const DEFAULT_GS_URL="https://script.google.com/macros/s/AKfycbwnCR3lHJfwzG5rXBHuuoGlVwSs4AjghM0e8p9PbFQi81xFJiCCE3uehE4SHxuhfA/exec";
+const $=n=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",minimumFractionDigits:2}).format(n);
+const $p=n=>(n>=0?"+":"")+n.toFixed(2)+"%";
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const G=["#B89E6A","#9A8558","#CDAF74","#7A6438","#DFC48E","#6B5730","#A68E5C","#524424","#E8D5A3","#5C4E2A","#C4A56E","#8B7544"];
+
+// ── State ──
+let S={h:[],g:[],s:[],tab:"holdings",q:"",sk:"totalCost",sd:"desc",
+  pnl:null,pd:null,gsUrl:"https://script.google.com/macros/s/AKfycbwnCR3lHJfwzG5rXBHuuoGlVwSs4AjghM0e8p9PbFQi81xFJiCCE3uehE4SHxuhfA/exec",gsS:"",
+  f:{sym:"",name:"",shares:"",price:"",cost:"",bucket:"holding"}};
+
+// ── Flexible column parser ──
+function findCol(headers,keywords){
+  const h=headers.map(x=>String(x).toLowerCase().trim());
+  for(const kw of keywords){for(let i=0;i<h.length;i++)if(h[i].includes(kw))return i;}
+  return -1;
+}
+function parseSheetRows(rows){
+  if(!rows||rows.length<2)return{holdings:[],gtc:[]};
+  const hdr=rows[0];
+  const ci={
+    bucket:findCol(hdr,["bucket","type","category"]),
+    symbol:findCol(hdr,["symbol","ticker","sym"]),
+    name:findCol(hdr,["name","company","stock"]),
+    shares:findCol(hdr,["shares","qty","quantity","share"]),
+    total:findCol(hdr,["total cost","total","cost","amount"]),
+    avg:findCol(hdr,["avg","average","cost / share","cost/share","price"]),
+    status:findCol(hdr,["status","window","note"]),
+  };
+  const holdings=[],gtc=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    if(!r||!r[ci.symbol])continue;
+    const bucket=ci.bucket>=0?String(r[ci.bucket]).toLowerCase():"";
+    const sym=String(r[ci.symbol]).trim().toUpperCase();
+    const name=ci.name>=0?String(r[ci.name]).trim():sym;
+    const shares=Number(r[ci.shares])||0;
+    const tc=Number(r[ci.total])||0;
+    const avg=Number(r[ci.avg])||(shares?tc/shares:0);
+    const win=ci.status>=0?String(r[ci.status]).trim():"";
+    const item={id:uid(),symbol:sym,name,shares,totalCost:tc,avgCost:avg};
+    if(bucket.includes("gtc")||bucket.includes("pending")||win.includes("tentative"))
+      gtc.push({...item,window:win.includes("180")?"180d":win.includes("90")?"90d":"GTC"});
+    else holdings.push(item);
+  }
+  return{holdings,gtc};
+}
+
+// ── Google Sheets ──
+async function gsRead(){
+  if(!S.gsUrl)return null;
+  try{
+    const r=await fetch(S.gsUrl+"?action=readAll",{redirect:"follow"});
+    if(!r.ok)throw new Error(r.status);
+    const d=await r.json();
+    // Flexible: might be {holdings,gtc,sold} OR {data:[[...]]} OR [[...]]
+    if(d.holdings) return d;
+    if(d.data&&Array.isArray(d.data)) return parseSheetRows(d.data);
+    if(Array.isArray(d)&&Array.isArray(d[0])) return parseSheetRows(d);
+    return null;
+  }catch(e){console.error("GS read:",e);return null;}
+}
+async function gsSync(){
+  if(!S.gsUrl)return;
+  S.gsS="syncing";render();
+  try{
+    await fetch(S.gsUrl,{method:"POST",redirect:"follow",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({action:"sync",holdings:S.h,gtc:S.g,sold:S.s})});
+    S.gsS="synced";render();setTimeout(()=>{S.gsS="";render();},2500);
+  }catch(e){console.error("GS sync:",e);S.gsS="error";render();}
+}
+function persist(){
+  try{localStorage.setItem(LS,JSON.stringify({h:S.h,g:S.g,s:S.s}));}catch{}
+  if(S.gsUrl)gsSync();
+}
+
+// ── Init ──
+async function init(){
+  S.gsUrl=localStorage.getItem(LU)||DEFAULT_GS_URL;
+  if(S.gsUrl){
+    const d=await gsRead();
+    if(d){
+      const num=x=>({...x,shares:Number(x.shares),totalCost:Number(x.totalCost),avgCost:Number(x.avgCost),soldPrice:Number(x.soldPrice||0)});
+      if(d.holdings?.length||d.gtc?.length){
+        S.h=(d.holdings||[]).map(num);S.g=(d.gtc||[]).map(num);S.s=(d.sold||[]).map(num);
+        S.gsS="synced";setTimeout(()=>{S.gsS="";render();},2000);render();return;
+      }
+    }
+  }
+  try{const d=JSON.parse(localStorage.getItem(LS));if(d){S.h=d.h||[];S.g=d.g||[];S.s=d.s||[];}}catch{}
+  if(!S.h.length&&!S.g.length){S.h=D_H.map(x=>({...x}));S.g=D_G.map(x=>({...x}));}
+  render();
+}
+
+// ── Computed ──
+function stats(){
+  const hT=S.h.reduce((a,x)=>a+x.totalCost,0),gT=S.g.reduce((a,x)=>a+x.totalCost,0);
+  const sP=S.s.reduce((a,x)=>a+(x.soldPrice||0)*x.shares,0),sC=S.s.reduce((a,x)=>a+x.totalCost,0);
+  return{hT,gT,sP,sC,rPL:sP-sC};
+}
+function filtered(arr){
+  const q=S.q.toLowerCase();
+  let f=q?arr.filter(x=>x.symbol.toLowerCase().includes(q)||x.name.toLowerCase().includes(q)):[...arr];
+  const m=S.sd==="desc"?-1:1;
+  f.sort((a,b)=>S.sk==="symbol"?m*a.symbol.localeCompare(b.symbol):m*((a[S.sk]||0)-(b[S.sk]||0)));
+  return f;
+}
+function allSyms(){
+  const m=new Map();[...S.h,...S.g].forEach(x=>{if(!m.has(x.symbol))m.set(x.symbol,x.name);});
+  return Array.from(m.entries()).map(([symbol,name])=>({symbol,name}));
+}
+
+// ── Actions ──
+function cls(){S.pnl=null;S.pd=null;render();}
+function oSell(x){S.pnl="sell";S.pd=x;S.f.shares=x.shares+"";S.f.price="";render();}
+function oExec(x){S.pnl="exec";S.pd=x;S.f.price=x.avgCost.toFixed(2);render();}
+function oAdd(pf){S.pnl="add";S.pd=null;S.f={sym:pf?.symbol||"",name:pf?.name||"",shares:"",price:"",cost:"",bucket:"holding"};render();}
+function oSet(){S.pnl="settings";render();}
+
+function doSell(){
+  const d=S.pd,sh=parseInt(S.f.shares)||0,pr=parseFloat(S.f.price)||0;if(!sh||!pr)return;
+  S.s.unshift({...d,id:uid(),shares:sh,totalCost:sh*d.avgCost,soldPrice:pr,soldDate:new Date().toLocaleDateString("en-US")});
+  const rem=d.shares-sh;
+  if(rem>0)S.h=S.h.map(x=>x.id===d.id?{...x,shares:rem,totalCost:rem*x.avgCost}:x);
+  else S.h=S.h.filter(x=>x.id!==d.id);
+  cls();persist();
+}
+function doExec(){
+  const d=S.pd,pr=parseFloat(S.f.price)||0;if(!pr)return;
+  const ex=S.h.find(x=>x.symbol===d.symbol);
+  if(ex){const ts=ex.shares+d.shares,tc=ex.totalCost+d.shares*pr;S.h=S.h.map(x=>x.id===ex.id?{...x,shares:ts,totalCost:tc,avgCost:tc/ts}:x);}
+  else S.h.push({...d,id:uid(),avgCost:pr,totalCost:d.shares*pr});
+  S.g=S.g.filter(x=>x.id!==d.id);cls();persist();
+}
+function doAdd(){
+  const{sym,name:nm,shares:sh,cost,bucket}=S.f;
+  const shares=parseFloat(sh)||0,tc=parseFloat(cost)||0;
+  if(!sym.trim()||!shares||!tc)return;
+  const it={id:uid(),symbol:sym.trim().toUpperCase(),name:nm.trim()||sym.trim().toUpperCase(),shares,totalCost:tc,avgCost:tc/shares};
+  if(bucket==="holding"){
+    // Don't auto-merge — keep as separate lot (like DUOL)
+    S.h.push(it);
+  }else S.g.push({...it,window:"180d"});
+  cls();persist();
+}
+function rm(id){S.h=S.h.filter(x=>x.id!==id);S.g=S.g.filter(x=>x.id!==id);S.s=S.s.filter(x=>x.id!==id);persist();render();}
+function resetAll(){if(!confirm("Reset to initial data?"))return;S.h=D_H.map(x=>({...x}));S.g=D_G.map(x=>({...x}));S.s=[];persist();render();}
+function saveUrl(){const u=S.gsUrl.trim();localStorage.setItem(LU,u);if(u)gsSync();render();}
+
+// ── Donut SVG ──
+function donut(pie,total,sz){
+  if(!total)return'';
+  const r=sz/2-10,ir=r*.55,cx=sz/2,cy=sz/2;
+  let cum=0,p='';
+  pie.forEach((d,i)=>{
+    const pc=d.v/total,sa=cum*Math.PI*2-Math.PI/2;cum+=pc;
+    const ea=cum*Math.PI*2-Math.PI/2,la=pc>.5?1:0;
+    p+=`<path d="M${cx+r*Math.cos(sa)},${cy+r*Math.sin(sa)} A${r},${r} 0 ${la} 1 ${cx+r*Math.cos(ea)},${cy+r*Math.sin(ea)} L${cx+ir*Math.cos(ea)},${cy+ir*Math.sin(ea)} A${ir},${ir} 0 ${la} 0 ${cx+ir*Math.cos(sa)},${cy+ir*Math.sin(sa)} Z" fill="${G[i%G.length]}" style="cursor:pointer"><title>${d.l}: ${$(d.v)} · ${(pc*100).toFixed(1)}%</title></path>`;
+  });
+  return`<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}">${p}<text x="${cx}" y="${cy+5}" text-anchor="middle" fill="var(--gold)" style="font:500 14px var(--mo)">${$(total)}</text></svg>`;
+}
+
+// ══════════════════ RENDER ══════════════════
+function render(){
+  const{hT,gT,rPL}=stats();
+  // Aggregate for pie (merge same symbols for visualization)
+  const pm=new Map();S.h.forEach(x=>{pm.set(x.symbol,(pm.get(x.symbol)||0)+x.totalCost);});
+  const pie=[...pm.entries()].map(([l,v])=>({l,v})).sort((a,b)=>b.v-a.v);
+  const dt=new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+
+  // Current list
+  const list=S.tab==="holdings"?filtered(S.h):S.tab==="gtc"?filtered(S.g):S.s.filter(x=>!S.q||x.symbol.toLowerCase().includes(S.q.toLowerCase())||x.name.toLowerCase().includes(S.q.toLowerCase()));
+  const tot=S.tab==="holdings"?hT:S.tab==="gtc"?gT:S.s.reduce((a,x)=>a+x.totalCost,0);
+
+  // Sync badge
+  let sb='';
+  if(S.gsUrl){const c=S.gsS==="syncing"?"busy":S.gsS==="error"?"err":"ok";
+    const t=S.gsS==="syncing"?"Syncing":S.gsS==="error"?"Error":"Sheets";
+    sb=`<span class="sync"><span class="sync-d ${c}"></span><span class="sync-t">${t}</span></span>`;}
+
+  // Table rows (desktop)
+  let trs='';
+  // Card rows (mobile)
+  let cds='';
+  if(!list.length){
+    const msg=S.tab==="sold"?"No closed positions":"No "+(S.tab==="gtc"?"GTC orders":"holdings")+(S.q?" matching":"");
+    trs=`<div class="empty">${msg}</div>`;
+    cds=`<div class="empty">${msg}</div>`;
+  } else {
+    list.forEach(x=>{
+      const wt=tot>0?(x.totalCost/tot*100).toFixed(1):"0";
+      let nameX='',cardX='';
+      if(S.tab==="gtc"&&x.window){nameX=`<span style="margin-left:6px;color:var(--gold);font-family:var(--mo);font-size:8px">${x.window}</span>`;cardX=`<span style="font-family:var(--mo);font-size:9px;color:var(--gold);border:1px solid var(--bd);padding:2px 8px;border-radius:2px">${x.window}</span>`;}
+      if(S.tab==="sold"){const pl=(x.soldPrice||0)*x.shares-x.totalCost;nameX=`<span style="margin-left:6px;font-family:var(--mo);font-size:10px;color:${pl>=0?'var(--grn)':'var(--red)'}">${$(pl)}</span>`;cardX=`<span style="font-family:var(--mo);font-size:12px;color:${pl>=0?'var(--grn)':'var(--red)'}">${$(pl)}</span>`;}
+      // Find source array for action binding
+      const src=S.tab==="holdings"?"S.h":S.tab==="gtc"?"S.g":"S.s";
+      let acts='';
+      if(S.tab==="holdings")acts=`<button class="ba sell" onclick="oSell(${src}.find(x=>x.id==='${x.id}'))">Sell</button>`;
+      if(S.tab==="gtc")acts=`<button class="ba exec" onclick="oExec(${src}.find(x=>x.id==='${x.id}'))">Execute</button>`;
+      acts+=`<button class="ba rm" onclick="rm('${x.id}')">×</button>`;
+
+      trs+=`<div class="tr"><div class="cs">${x.symbol}</div><div class="cn">${x.name}${nameX}</div><div class="cv">${x.shares}</div><div class="cv">${$(x.avgCost)}</div><div class="ct">${$(x.totalCost)}</div><div class="cw">${wt}%</div><div class="ra">${acts}</div></div>`;
+
+      cds+=`<div class="card"><div class="card-top"><div><div class="card-sym">${x.symbol}</div><div class="card-nm">${x.name}</div></div>${cardX}</div><div class="card-grid"><div class="card-c"><div class="card-cl">Shares</div><div class="card-cv">${x.shares}</div></div><div class="card-c"><div class="card-cl">Avg Cost</div><div class="card-cv">${$(x.avgCost)}</div></div><div class="card-c"><div class="card-cl">Total</div><div class="card-cv" style="color:var(--tx)">${$(x.totalCost)}</div></div></div><div class="card-acts">${acts}</div></div>`;
+    });
+  }
+
+  // Legend
+  let leg='';
+  pie.forEach((d,i)=>{const p=hT>0?(d.v/hT*100).toFixed(1):"0";
+    leg+=`<div class="leg-r"><div class="leg-l"><div class="leg-d" style="background:${G[i%G.length]}"></div><span class="leg-s">${d.l}</span></div><span class="leg-p">${p}%</span></div>`;});
+
+  // Sort pills
+  const sp=(k,l)=>`<button class="sp ${S.sk===k?'on':''}" onclick="S.sk==='${k}'?S.sd=S.sd==='desc'?'asc':'desc':(S.sk='${k}',S.sd='desc');render()">${l}${S.sk===k?(S.sd==='desc'?' ↓':' ↑'):''}</button>`;
+
+  // Determine donut size based on screen
+  const dnSz=window.innerWidth<=420?120:window.innerWidth<=820?130:150;
+
+  document.getElementById('app').innerHTML=`
+<header class="hdr">
+  <div><h1 class="brand">Portfolio</h1><p class="brand-dt">${dt}</p></div>
+  <div class="hdr-r">${sb}<button class="bgh" onclick="oSet()">⚙</button><button class="bgh" onclick="resetAll()">Reset</button><button class="bg" onclick="oAdd({})">+ New Position</button></div>
+</header>
+<div class="mets">
+  <div class="met"><div class="met-l">Invested</div><div class="met-v">${$(hT)}</div><div class="met-s">${S.h.length} positions</div></div>
+  <div class="met"><div class="met-l">GTC Pending</div><div class="met-v" style="color:var(--gold)">${$(gT)}</div><div class="met-s">${S.g.length} orders</div></div>
+  <div class="met"><div class="met-l">Realized P&L</div><div class="met-v" style="color:${rPL>=0?'var(--grn)':'var(--red)'}">${S.s.length?$(rPL):'—'}</div><div class="met-s">${S.s.length} closed</div></div>
+  <div class="met"><div class="met-l">Total Capital</div><div class="met-v">${$(hT+gT)}</div><div class="met-s">${S.h.length+S.g.length} total</div></div>
+</div>
+<div class="main">
+  <div class="apc"><div><div class="slbl">Allocation</div><div class="dn-w">${donut(pie,hT,dnSz)}</div></div><div class="leg">${leg}</div></div>
+  <div class="ta">
+    <div class="ctrls">
+      <div class="sb"><input placeholder="Search..." value="${S.q}" oninput="S.q=this.value;render()">${S.q?'<button class="x" onclick="S.q=\'\';render()">×</button>':''}</div>
+      <div class="sg">${sp("totalCost","Value")}${sp("shares","Qty")}${sp("avgCost","Avg")}${sp("symbol","A–Z")}</div>
+    </div>
+    <div class="tabs">${[["holdings","Holdings · "+S.h.length],["gtc","GTC · "+S.g.length],["sold","Sold · "+S.s.length]].map(([k,l])=>`<button class="tab ${S.tab===k?'on':''}" onclick="S.tab='${k}';render()">${l}</button>`).join('')}</div>
+    <div class="th"><span>Symbol</span><span>Name</span><span class="r">Shares</span><span class="r">Avg Cost</span><span class="r">Total</span><span class="r">Wt</span><span></span></div>
+    ${trs}
+    <div class="cards">${cds}</div>
+  </div>
+</div>
+<div class="foot">Persistent Storage${S.gsUrl?' · Google Sheets':''}${S.h.some(x=>x.symbol==='DUOL'&&S.h.filter(y=>y.symbol==='DUOL').length>1)?' · Separate lots preserved':''}</div>
+${renderPnl()}`;
+}
+
+// ── Panel ──
+function renderPnl(){
+  if(!S.pnl)return'';
+  let inner='';
+
+  if(S.pnl==="sell"){
+    const d=S.pd,sh=parseInt(S.f.shares)||0,pr=parseFloat(S.f.price)||0;
+    const proc=sh*pr,basis=sh*d.avgCost,pl=proc-basis;
+    inner=`<div class="pnl-h"><div><div class="pnl-t">Sell ${d.symbol}</div><div class="pnl-s">${d.name} · ${d.shares} shares held</div></div><button class="pnl-x" onclick="cls()">×</button></div>
+    <div class="pnl-b">
+      <div class="fg"><span class="fl">Shares to sell</span><input class="fi" type="number" min="1" max="${d.shares}" value="${S.f.shares}" oninput="S.f.shares=this.value;render()" id="af"></div>
+      <div class="fg"><span class="fl">Sell price / share</span><input class="fi" type="number" step="0.01" value="${S.f.price}" placeholder="0.00" oninput="S.f.price=this.value;render()"></div>
+      ${pr>0?`<div class="sum"><div class="sr"><span>Proceeds</span><span>${$(proc)}</span></div><div class="sr"><span>Cost basis</span><span>${$(basis)}</span></div><div class="sr srt"><span>P&L</span><span style="color:${pl>=0?'var(--grn)':'var(--red)'}">${$(pl)} (${$p(basis?(pl/basis)*100:0)})</span></div></div>`:''}
+      <button class="bg" style="width:100%" ${pr<=0||sh<=0?'disabled':''} onclick="doSell()">Confirm Sale</button>
+    </div>`;
+  }
+
+  if(S.pnl==="exec"){
+    const d=S.pd,pr=parseFloat(S.f.price)||0;
+    inner=`<div class="pnl-h"><div><div class="pnl-t">Execute ${d.symbol}</div><div class="pnl-s">Move to current holdings</div></div><button class="pnl-x" onclick="cls()">×</button></div>
+    <div class="pnl-b">
+      <div class="fg"><span class="fl">Fill price / share</span><input class="fi" type="number" step="0.01" value="${S.f.price}" oninput="S.f.price=this.value;render()" id="af"></div>
+      <div class="sum"><div class="sr"><span>Shares</span><span>${d.shares}</span></div><div class="sr"><span>GTC limit</span><span>${$(d.avgCost)}</span></div><div class="sr srt"><span>New cost</span><span>${$(d.shares*pr)}</span></div></div>
+      <button class="bg" style="width:100%" ${pr<=0?'disabled':''} onclick="doExec()">Execute → Holdings</button>
+    </div>`;
+  }
+
+  if(S.pnl==="add"){
+    const syms=allSyms();
+    const avg=(parseFloat(S.f.shares)>0&&parseFloat(S.f.cost)>0)?$(parseFloat(S.f.cost)/parseFloat(S.f.shares)):'';
+    const ok=S.f.sym.trim()&&parseFloat(S.f.shares)>0&&parseFloat(S.f.cost)>0;
+    inner=`<div class="pnl-h"><div><div class="pnl-t">New Position</div><div class="pnl-s">Add to your portfolio</div></div><button class="pnl-x" onclick="cls()">×</button></div>
+    <div class="pnl-b">
+      ${syms.length?`<div class="fg"><span class="fl">Quick add from portfolio</span><div class="chips">${syms.map(s=>`<button class="chip ${S.f.sym===s.symbol?'on':''}" onclick="S.f.sym='${s.symbol}';S.f.name='${s.name.replace(/'/g,"\\'")}';render()">${s.symbol}</button>`).join('')}</div></div><div class="dv"></div>`:''}
+      <div class="fr"><div class="fg"><span class="fl">Symbol</span><input class="fi" value="${S.f.sym}" oninput="S.f.sym=this.value.toUpperCase();render()" placeholder="AAPL" id="af"></div><div class="fg" style="flex:2"><span class="fl">Name</span><input class="fi" value="${S.f.name}" oninput="S.f.name=this.value;render()" placeholder="Apple Inc"></div></div>
+      <div class="fr"><div class="fg"><span class="fl">Shares</span><input class="fi" type="number" value="${S.f.shares}" oninput="S.f.shares=this.value;render()" placeholder="10"></div><div class="fg"><span class="fl">Total cost ($)</span><input class="fi" type="number" step="0.01" value="${S.f.cost}" oninput="S.f.cost=this.value;render()" placeholder="1500.00"></div></div>
+      ${avg?`<div class="favg">Avg: ${avg}/share</div>`:''}
+      <div class="fg"><span class="fl">Type</span><div class="ftr"><button class="ftb ${S.f.bucket==='holding'?'on':''}" onclick="S.f.bucket='holding';render()">Current Holding</button><button class="ftb ${S.f.bucket==='gtc'?'on':''}" onclick="S.f.bucket='gtc';render()">GTC Order</button></div></div>
+      <button class="bg" style="width:100%" ${!ok?'disabled':''} onclick="doAdd()">Add Position</button>
+    </div>`;
+  }
+
+  if(S.pnl==="settings"){
+    inner=`<div class="pnl-h"><div><div class="pnl-t">Settings</div><div class="pnl-s">Backend & sync</div></div><button class="pnl-x" onclick="cls()">×</button></div>
+    <div class="pnl-b">
+      <div class="fg"><span class="fl">Google Sheets Web App URL</span><input class="fi" value="${S.gsUrl}" oninput="S.gsUrl=this.value" placeholder="https://script.google.com/macros/s/.../exec" id="af"></div>
+      ${S.gsUrl?`<div style="display:flex;align-items:center;gap:7px"><span class="sync-d ${S.gsS==='synced'?'ok':S.gsS==='error'?'err':'ok'}" style="width:6px;height:6px;border-radius:50%;display:inline-block"></span><span style="font-family:var(--mo);font-size:10px;color:var(--tx3)">${S.gsS==='syncing'?'Syncing...':S.gsS==='synced'?'Connected & synced':S.gsS==='error'?'Connection failed':'Ready'}</span></div>`:''}
+      <div style="display:flex;gap:8px"><button class="bg" style="flex:1" onclick="saveUrl()">Save & Sync</button>${S.gsUrl?`<button class="bgh" style="color:var(--red);border-color:rgba(199,107,107,.15)" onclick="S.gsUrl='';localStorage.setItem(LU,'');S.gsS='';render()">Disconnect</button>`:''}</div>
+      <div class="dv"></div>
+      <div class="slbl" style="margin-bottom:0">Setup Guide</div>
+      <div class="guide"><div class="gs">
+        <div>Create a Google Sheet with 3 tabs: <code>Holdings</code>, <code>GTC</code>, <code>Sold</code></div>
+        <div>Add column headers in Row 1 — the parser is flexible with naming (e.g. "Symbol" or "Ticker", "Total Cost" or "Amount")</div>
+        <div>Extensions → Apps Script → paste the backend code</div>
+        <div>Deploy → New Deployment → Web App → Execute as <code>Me</code> → Who has access: <code>Anyone</code></div>
+        <div>Paste URL above → Save & Sync</div>
+      </div></div>
+      <div class="dv"></div>
+      <div class="slbl" style="margin-bottom:0">Data note</div>
+      <div class="guide">Separate lots (e.g. two DUOL purchases) are preserved as independent rows — not auto-merged. Each lot tracks its own cost basis.</div>
+    </div>`;
+  }
+
+  return`<div class="ov open" onclick="cls()"><div class="pnl" onclick="event.stopPropagation()">${inner}</div></div>`;
+}
+
+// Autofocus
+new MutationObserver(()=>{const e=document.getElementById('af');if(e&&document.activeElement!==e)e.focus();}).observe(document.body,{childList:true,subtree:true});
+
+init();
+</script>
+</body>
+</html>

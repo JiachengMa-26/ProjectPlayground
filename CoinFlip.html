@@ -1,0 +1,774 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Physics Coin Flip (Three.js + cannon-es)</title>
+  <style>
+    :root{
+      --gold1:#ffd700;
+      --gold2:#b8860b;
+      --bg:#121212;
+      --panel: rgba(0,0,0,0.55);
+      --panelBorder: rgba(255,255,255,0.12);
+      --text:#ffffff;
+      --muted:#bdbdbd;
+      --danger:#ff6b6b;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      /* Radial gradient background for depth */
+      background: radial-gradient(1200px 800px at 30% 10%, #1b1b1b 0%, #0c0c0c 55%, #000 100%);
+      color: var(--text);
+    }
+
+    #canvas-container {
+      width: 100vw;
+      height: 100vh;
+    }
+
+    #ui-layer {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      z-index: 10;
+      pointer-events: auto;
+      user-select: none;
+    }
+
+    .stats-box {
+      background: var(--panel);
+      backdrop-filter: blur(8px);
+      padding: 14px 14px 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--panelBorder);
+      width: 260px;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+    }
+
+    h1 {
+      font-size: 1.15rem;
+      margin: 0 0 8px 0;
+      letter-spacing: 0.5px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.55);
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 0.92rem;
+      color: rgba(255,255,255,0.90);
+    }
+
+    .stat-value {
+      font-weight: 800;
+      color: var(--gold1);
+      text-shadow: 0 1px 8px rgba(255,215,0,0.20);
+    }
+
+    .divider {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .controls-panel {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.14);
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      margin-bottom: 6px;
+      color: rgba(255,255,255,0.78);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .inline-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .checkbox {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.82);
+    }
+
+    .note {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.58);
+      margin-top: 8px;
+      line-height: 1.25;
+    }
+
+    #controls {
+      position: absolute;
+      bottom: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 16px;
+      z-index: 10;
+      pointer-events: auto;
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--gold1) 0%, var(--gold2) 100%);
+      border: none;
+      border-radius: 999px;
+      padding: 14px 34px;
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: #2c1a00;
+      cursor: pointer;
+      box-shadow: 0 10px 28px rgba(255, 215, 0, 0.18);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.2s ease;
+      letter-spacing: 0.5px;
+    }
+
+    button:active {
+      transform: scale(0.96);
+      box-shadow: 0 6px 18px rgba(255, 215, 0, 0.14);
+      filter: brightness(0.98);
+    }
+
+    button:disabled {
+      background: #3b3b3b;
+      color: #9a9a9a;
+      cursor: not-allowed;
+      box-shadow: none;
+      filter: none;
+    }
+
+    #status-msg {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -56%);
+      font-size: 3rem;
+      font-weight: 900;
+      opacity: 0;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+      text-shadow: 0 8px 26px rgba(0,0,0,0.85);
+      z-index: 12;
+    }
+
+    #status-msg.show {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="ui-layer">
+    <div class="stats-box">
+      <h1>Physics Coin Flip</h1>
+
+      <div class="stat-row">
+        <span>Heads</span>
+        <span id="heads-count" class="stat-value">0</span>
+      </div>
+      <div class="stat-row">
+        <span>Tails</span>
+        <span id="tails-count" class="stat-value">0</span>
+      </div>
+      <div class="stat-row">
+        <span>Edge</span>
+        <span id="edge-count" class="stat-value" style="color: var(--danger)">0</span>
+      </div>
+
+      <div class="stat-row divider">
+        <span>Total Flips</span>
+        <span id="total-count" class="stat-value" style="color:#fff">0</span>
+      </div>
+
+      <div class="stat-row">
+        <span>Same-Side Bias</span>
+        <span id="same-side-rate" class="stat-value" style="color:#9fe7ff">0%</span>
+      </div>
+
+      <div class="controls-panel">
+        <label for="force-slider">Throw Force (Velocity)</label>
+        <input type="range" id="force-slider" min="8" max="25" step="0.5" value="15">
+
+        <label for="flip-slider" style="margin-top:10px">Flip Speed (Diameter Axis)</label>
+        <input type="range" id="flip-slider" min="8" max="45" step="1" value="24">
+
+        <label for="spin-slider" style="margin-top:10px">Spin Speed (Normal Axis)</label>
+        <input type="range" id="spin-slider" min="0" max="25" step="1" value="8">
+
+        <div class="inline-row">
+          <div class="checkbox">
+            <input type="checkbox" id="sound-toggle" checked />
+            <label for="sound-toggle" style="margin:0">Sound Effects 🔊</label>
+          </div>
+        </div>
+
+        <div class="inline-row">
+          <div class="checkbox">
+            <input type="checkbox" id="random-start" checked />
+            <label for="random-start" style="margin:0">Random Start Side (Fair)</label>
+          </div>
+        </div>
+
+        <div class="inline-row">
+          <div class="checkbox">
+            <input type="checkbox" id="dhm-wobble" checked />
+            <label for="dhm-wobble" style="margin:0">DHM Precession (Wobble)</label>
+          </div>
+        </div>
+
+        <div class="note">
+          Note: Camera tracking enabled. Coin stays in view.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="status-msg">Heads</div>
+
+  <div id="controls">
+    <button id="flip-btn">Flip Coin</button>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <!-- Import maps polyfill -->
+  <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+        "cannon-es": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import * as CANNON from "cannon-es";
+
+    // =========================
+    // ✅ Configuration
+    // =========================
+    const CONFIG = {
+      coinRadius: 1.5,
+      coinThickness: 0.14,
+      segments: 48,
+
+      gravity: -19.6,
+      friction: 0.35,
+      restitution: 0.35,
+
+      linearDamping: 0.03,
+      angularDamping: 0.06,
+
+      fixedTimeStep: 1 / 120,
+      maxSubSteps: 5,
+
+      settleSpeed: 0.08,
+      settleAngSpeed: 0.12,
+      settleMinY: 0.25,
+      settleHoldTime: 0.35
+    };
+
+    // =========================
+    // State Variables
+    // =========================
+    let world, scene, camera, renderer, controls;
+    let coinBody, coinMesh;
+    let groundBody;
+
+    let isFlipping = false;
+    let settleTimer = 0;
+    
+    // Audio Context
+    let audioCtx = null;
+    let audioEnabled = false;
+
+    let stats = {
+      heads: 0,
+      tails: 0,
+      edges: 0,
+      total: 0,
+      sameSide: 0
+    };
+
+    let lastStartSide = null;
+
+    const clock = new THREE.Clock();
+
+    // Camera Tracking
+    const cameraRelativeOffset = new THREE.Vector3();
+
+    // =========================
+    // Audio System
+    // =========================
+    function initAudio() {
+      if (audioCtx) return;
+      
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContext();
+      audioEnabled = true;
+    }
+
+    function playHitSound(velocity) {
+      const toggle = document.getElementById("sound-toggle");
+      if (!toggle || !toggle.checked) return;
+
+      if (!audioCtx) initAudio();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      if (velocity < 0.4) return;
+
+      const t = audioCtx.currentTime;
+      const gainNode = audioCtx.createGain();
+      gainNode.connect(audioCtx.destination);
+
+      let vol = Math.min(velocity / 12, 0.8);
+      vol = Math.max(vol, 0.05);
+
+      const osc1 = audioCtx.createOscillator();
+      osc1.type = 'sine';
+      const freq1 = 2200 + (Math.random() - 0.5) * 300; 
+      osc1.frequency.setValueAtTime(freq1, t);
+      osc1.connect(gainNode);
+
+      const osc2 = audioCtx.createOscillator();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(freq1 * 1.58, t);
+      osc2.connect(gainNode);
+
+      gainNode.gain.setValueAtTime(0, t);
+      gainNode.gain.linearRampToValueAtTime(vol, t + 0.005);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+
+      osc1.start(t);
+      osc2.start(t);
+      
+      const duration = 0.2;
+      osc1.stop(t + duration);
+      osc2.stop(t + duration);
+    }
+
+    // =========================
+    // Initialization
+    // =========================
+    init();
+    animate();
+
+    function init() {
+      // ---------- Three.js ----------
+      const container = document.getElementById("canvas-container");
+
+      scene = new THREE.Scene();
+      // Keep background null/transparent for ShadowMaterial to work with body background
+      
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      container.appendChild(renderer.domElement);
+
+      camera = new THREE.PerspectiveCamera(
+        45,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        200
+      );
+      camera.position.set(0, 10, 15);
+
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.target.set(0, 2, 0); 
+
+      // Lights
+      const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+      scene.add(ambient);
+
+      const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+      dir.position.set(6, 14, 6);
+      dir.castShadow = true;
+      dir.shadow.mapSize.width = 2048;
+      dir.shadow.mapSize.height = 2048;
+      scene.add(dir);
+
+      const rim = new THREE.SpotLight(0xffd700, 3, 0, Math.PI / 5, 0.4, 1);
+      rim.position.set(-6, 12, -6);
+      rim.target.position.set(0, 1, 0);
+      scene.add(rim);
+      scene.add(rim.target);
+
+      // ✅ Floor: ShadowMaterial (Invisible floor, visible shadows)
+      const floorGeo = new THREE.PlaneGeometry(100, 100);
+      const floorMat = new THREE.ShadowMaterial({
+        opacity: 0.5,
+        color: 0x000000
+      });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.receiveShadow = true;
+      scene.add(floor);
+
+      // ---------- Cannon-es ----------
+      world = new CANNON.World();
+      world.gravity.set(0, CONFIG.gravity, 0);
+      world.allowSleep = true;
+      world.solver.iterations = 12;
+
+      const groundMat = new CANNON.Material("ground");
+      const coinMat = new CANNON.Material("coin");
+
+      world.defaultContactMaterial.friction = CONFIG.friction;
+      world.defaultContactMaterial.restitution = CONFIG.restitution;
+
+      const contact = new CANNON.ContactMaterial(groundMat, coinMat, {
+        friction: CONFIG.friction,
+        restitution: CONFIG.restitution,
+        contactEquationStiffness: 1e8,
+        contactEquationRelaxation: 3
+      });
+      world.addContactMaterial(contact);
+
+      const plane = new CANNON.Plane();
+      groundBody = new CANNON.Body({ mass: 0, material: groundMat });
+      groundBody.addShape(plane);
+      groundBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+      world.addBody(groundBody);
+
+      createCoin(coinMat);
+
+      window.addEventListener("resize", onResize);
+      document.getElementById("flip-btn").addEventListener("click", flipCoin);
+
+      updateStatsUI();
+    }
+
+    // =========================
+    // Create Coin
+    // =========================
+    function createCoin(coinMat) {
+      const texHead = createFaceTexture(true);
+      const texTail = createFaceTexture(false);
+
+      const geo = new THREE.CylinderGeometry(
+        CONFIG.coinRadius,
+        CONFIG.coinRadius,
+        CONFIG.coinThickness,
+        CONFIG.segments
+      );
+
+      const mats = [
+        new THREE.MeshStandardMaterial({
+          color: 0xffd700,
+          metalness: 0.92,
+          roughness: 0.25
+        }), 
+        new THREE.MeshStandardMaterial({
+          map: texHead,
+          metalness: 0.75,
+          roughness: 0.35
+        }), 
+        new THREE.MeshStandardMaterial({
+          map: texTail,
+          metalness: 0.75,
+          roughness: 0.35
+        })  
+      ];
+
+      coinMesh = new THREE.Mesh(geo, mats);
+      coinMesh.castShadow = true;
+      coinMesh.receiveShadow = true;
+      coinMesh.position.set(0, 3, 0);
+      scene.add(coinMesh);
+
+      const shape = new CANNON.Cylinder(
+        CONFIG.coinRadius,
+        CONFIG.coinRadius,
+        CONFIG.coinThickness,
+        CONFIG.segments
+      );
+
+      coinBody = new CANNON.Body({
+        mass: 1.0,
+        material: coinMat,
+        linearDamping: CONFIG.linearDamping,
+        angularDamping: CONFIG.angularDamping
+      });
+
+      coinBody.addShape(shape);
+      coinBody.position.set(0, 3, 0);
+      coinBody.allowSleep = true;
+      coinBody.sleepSpeedLimit = 0.08;
+      coinBody.sleepTimeLimit = 0.35;
+
+      coinBody.addEventListener("collide", (e) => {
+        const relativeVelocity = e.contact.getImpactVelocityAlongNormal();
+        if (Math.abs(relativeVelocity) > 0.4) {
+           playHitSound(Math.abs(relativeVelocity));
+        }
+      });
+
+      world.addBody(coinBody);
+      syncMesh();
+    }
+
+    function createFaceTexture(isHead) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext("2d");
+
+      const bg = isHead ? "#ffd700" : "#d7d7d7";
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, 512, 512);
+
+      ctx.beginPath();
+      ctx.arc(256, 256, 235, 0, Math.PI * 2);
+      ctx.strokeStyle = isHead ? "#b8860b" : "#7b7b7b";
+      ctx.lineWidth = 18;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(256, 256, 170, 0, Math.PI * 2);
+      ctx.setLineDash([10, 10]);
+      ctx.strokeStyle = "rgba(0,0,0,0.18)";
+      ctx.lineWidth = 5;
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.translate(256, 256);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      if (isHead) {
+        ctx.fillStyle = "rgba(60,30,0,0.85)";
+        // Changed font to standard system font fallback
+        ctx.font = "900 210px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+        ctx.fillText("H", 0, -10);
+        ctx.font = "800 60px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+        ctx.fillText("HEAD", 0, 120);
+      } else {
+        ctx.fillStyle = "rgba(20,20,20,0.75)";
+        ctx.font = "900 210px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+        ctx.fillText("T", 0, -10);
+        ctx.font = "800 60px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+        ctx.fillText("TAIL", 0, 120);
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.anisotropy = 16;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    // =========================
+    // Flip Logic
+    // =========================
+    function flipCoin() {
+      if (isFlipping) return;
+
+      initAudio();
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const btn = document.getElementById("flip-btn");
+      const status = document.getElementById("status-msg");
+
+      const forceVal = parseFloat(document.getElementById("force-slider").value);
+      const flipVal  = parseFloat(document.getElementById("flip-slider").value);
+      const spinVal  = parseFloat(document.getElementById("spin-slider").value);
+
+      const randomStart = document.getElementById("random-start").checked;
+      const wobbleOn    = document.getElementById("dhm-wobble").checked;
+
+      btn.disabled = true;
+      status.classList.remove("show");
+
+      isFlipping = true;
+      settleTimer = 0;
+
+      coinBody.wakeUp();
+      coinBody.position.set(0, 3.2, 0);
+      coinBody.velocity.set(0, 0, 0);
+      coinBody.angularVelocity.set(0, 0, 0);
+
+      if (randomStart) {
+        const startIsHead = Math.random() > 0.5;
+        coinBody.quaternion.setFromEuler(startIsHead ? 0 : Math.PI, 0, 0);
+      } else {
+        const q = coinBody.quaternion.clone();
+        coinBody.quaternion.copy(q);
+      }
+
+      lastStartSide = getCoinSideNow(); 
+
+      const tiltX = (Math.random() - 0.5) * 0.12; 
+      const tiltZ = (Math.random() - 0.5) * 0.12;
+      const tiltQ = new CANNON.Quaternion();
+      tiltQ.setFromEuler(tiltX, 0, tiltZ);
+      coinBody.quaternion = coinBody.quaternion.mult(tiltQ);
+
+      const vUp = forceVal + (Math.random() - 0.5) * 1.2;
+      const impulse = new CANNON.Vec3(0, coinBody.mass * vUp, 0);
+      coinBody.applyImpulse(impulse, new CANNON.Vec3(0, 0, 0));
+
+      const flipAxisChoice = Math.random() > 0.5 ? "x" : "z";
+      const flipMain = flipVal * (0.85 + Math.random() * 0.3);
+
+      let wx = 0, wy = 0, wz = 0;
+      if (flipAxisChoice === "x") wx = flipMain;
+      else wz = flipMain;
+
+      wy = spinVal * (0.75 + Math.random() * 0.5);
+
+      if (wobbleOn) {
+        wx += (Math.random() - 0.5) * 2.2;
+        wz += (Math.random() - 0.5) * 2.2;
+        wy += (Math.random() - 0.5) * 1.0;
+      }
+
+      coinBody.angularVelocity.set(wx, wy, wz);
+    }
+
+    function finalizeResult() {
+      isFlipping = false;
+      settleTimer = 0;
+      document.getElementById("flip-btn").disabled = false;
+
+      const side = getCoinSideNow();
+      const statusEl = document.getElementById("status-msg");
+
+      let resultText = "";
+      let color = "";
+
+      if (side === "H") {
+        resultText = "Heads";
+        color = "#ffd700";
+        stats.heads++;
+      } else if (side === "T") {
+        resultText = "Tails";
+        color = "#d7d7d7";
+        stats.tails++;
+      } else {
+        resultText = "Edge!";
+        color = "#ff6b6b";
+        stats.edges++;
+      }
+
+      stats.total++;
+
+      if (lastStartSide && (side === "H" || side === "T")) {
+        if (side === lastStartSide) stats.sameSide++;
+      }
+
+      updateStatsUI();
+
+      statusEl.textContent = resultText;
+      statusEl.style.color = color;
+      statusEl.classList.add("show");
+    }
+
+    function getCoinSideNow() {
+      const localUp = new THREE.Vector3(0, 1, 0);
+      localUp.applyQuaternion(coinMesh.quaternion);
+      const dot = localUp.y; 
+      if (dot > 0.72) return "H";
+      if (dot < -0.72) return "T";
+      return "E";
+    }
+
+    function updateStatsUI() {
+      document.getElementById("heads-count").textContent = stats.heads;
+      document.getElementById("tails-count").textContent = stats.tails;
+      document.getElementById("edge-count").textContent = stats.edges;
+      document.getElementById("total-count").textContent = stats.total;
+
+      const base = stats.total === 0 ? 1 : stats.total;
+      const rate = (stats.sameSide / base) * 100;
+      document.getElementById("same-side-rate").textContent = `${rate.toFixed(1)}%`;
+    }
+
+    // =========================
+    // Loop + Camera Follow
+    // =========================
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const dt = Math.min(clock.getDelta(), 0.033);
+
+      world.step(CONFIG.fixedTimeStep, dt, CONFIG.maxSubSteps);
+      syncMesh();
+
+      // ✅ Camera Tracking Logic
+      if (coinMesh) {
+        const currentRelOffset = camera.position.clone().sub(controls.target);
+        
+        const targetPos = coinMesh.position.clone();
+        
+        controls.target.lerp(targetPos, 0.1);
+        
+        camera.position.copy(controls.target).add(currentRelOffset);
+      }
+
+      controls.update();
+
+      if (isFlipping) {
+        const speed = coinBody.velocity.length();
+        const angSpeed = coinBody.angularVelocity.length();
+        const y = coinBody.position.y;
+
+        const stable =
+          speed < CONFIG.settleSpeed &&
+          angSpeed < CONFIG.settleAngSpeed &&
+          y < CONFIG.settleMinY;
+
+        if (stable) {
+          settleTimer += dt;
+          if (settleTimer >= CONFIG.settleHoldTime) {
+            finalizeResult();
+          }
+        } else {
+          settleTimer = 0;
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    function syncMesh() {
+      coinMesh.position.copy(coinBody.position);
+      coinMesh.quaternion.copy(coinBody.quaternion);
+    }
+
+    function onResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+  </script>
+</body>
+</html>
