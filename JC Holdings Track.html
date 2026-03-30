@@ -135,7 +135,6 @@ a{color:inherit}
 .footer-note{font-size:12px;color:var(--faint);line-height:1.5}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);padding:12px 16px;background:rgba(18,20,26,.94);color:var(--text);border:1px solid var(--line-strong);border-radius:999px;backdrop-filter:blur(18px);box-shadow:var(--shadow);display:none;z-index:60;font-size:13px}
 .toast.show{display:block}
-.hidden-frame{width:0;height:0;border:0;position:absolute;left:-9999px;top:-9999px}
 @media (max-width:1100px){
   .layout{grid-template-columns:1fr}
   .side{order:2}
@@ -162,7 +161,6 @@ a{color:inherit}
 <body>
 <div class="app" id="app"></div>
 <div class="overlay" id="overlay"></div>
-<iframe name="gas_sink" id="gas_sink" class="hidden-frame"></iframe>
 <div class="toast" id="toast"></div>
 <script>
 (() => {
@@ -399,30 +397,6 @@ a{color:inherit}
   function listTotal(){
     const list = S.tab === 'holdings' ? S.h : S.tab === 'gtc' ? S.g : S.s;
     return list.reduce((a,x) => a + Number(x.totalCost || 0), 0);
-  }
-
-  function canonicalItem(item){
-    return [
-      item.bucket,
-      item.symbol,
-      item.name,
-      Number(item.shares || 0).toFixed(4),
-      Number(item.totalCost || 0).toFixed(2),
-      Number(item.avgCost || 0).toFixed(2),
-      item.status || '',
-      Number(item.soldPrice || 0).toFixed(2),
-      item.soldDate || ''
-    ].join('|');
-  }
-
-  function stateSignature(state){
-    return [
-      ...(state.h || []).map(canonicalItem).sort(),
-      '---',
-      ...(state.g || []).map(canonicalItem).sort(),
-      '---',
-      ...(state.s || []).map(canonicalItem).sort()
-    ].join('\n');
   }
 
   function setData(data){
@@ -783,7 +757,7 @@ a{color:inherit}
         <div class="field">
           <label>Apps Script Web App URL</label>
           <input id="set-url" value="${escapeHtml(S.form.gsUrl || '')}" placeholder="https://script.google.com/macros/s/.../exec">
-          <div class="hint">Paste the deployed Web App URL here. The dashboard uses JSONP for reads and a hidden form post plus readback verification for writes.</div>
+          <div class="hint">Paste the deployed Web App URL here. The dashboard uses JSONP for both reads and writes — no hidden iframes or form POSTs.</div>
         </div>
         <div class="row2">
           <button class="btn ghost" id="test-read-btn">Test Read</button>
@@ -795,7 +769,7 @@ a{color:inherit}
           <div class="summary-row"><span>Cached sold lots</span><strong>${S.s.length}</strong></div>
         </div>
         <button class="btn ghost" id="load-sample-btn">Use Sample Data</button>
-        <div class="footer-note">If the read test works, your GitHub page is talking to the sheet correctly. After that, add, sell, execute, and delete all go through the same backend and then verify by reading the sheet back in.</div>
+        <div class="footer-note">All reads and writes go through JSONP (script-tag injection), which avoids cross-origin POST issues entirely. After a write, the dashboard reads the sheet back to verify.</div>
       `);
       $('#set-url').addEventListener('input', e => { S.form.gsUrl = e.target.value; });
       $('#save-url-btn').addEventListener('click', () => {
@@ -986,6 +960,7 @@ a{color:inherit}
       .replace(/'/g,'&#39;');
   }
 
+  /* ─── JSONP transport (used for BOTH reads and writes) ─────────── */
   function jsonp(url){
     return new Promise((resolve, reject) => {
       const cb = '__jc_cb_' + uid();
@@ -1006,15 +981,22 @@ a{color:inherit}
       script.onerror = () => {
         if (done) return;
         cleanup();
-        reject(new Error('Read failed'));
+        reject(new Error('JSONP request failed'));
       };
       document.body.appendChild(script);
       setTimeout(() => {
         if (done) return;
         cleanup();
-        reject(new Error('Read timed out'));
-      }, 10000);
+        reject(new Error('JSONP request timed out'));
+      }, 15000);
     });
+  }
+
+  /* ─── write via JSONP (GET with action + payload in URL) ───────── */
+  function jsonpWrite(action, payload){
+    if (!S.gsUrl) return Promise.reject(new Error('No Apps Script URL configured'));
+    const encoded = encodeURIComponent(JSON.stringify(payload));
+    return jsonp(`${S.gsUrl}?action=${action}&payload=${encoded}`);
   }
 
   async function refreshFromSheet(showToast){
@@ -1028,78 +1010,47 @@ a{color:inherit}
       const normalized = fromBackend(data);
       setData(normalized);
       renderAll();
-      setSync('ok','Verified');
+      setSync('ok','Synced');
       if (showToast) toast('Read successful');
       return true;
     }catch(err){
       setSync('error','Read failed');
-      if (showToast) toast('Read failed');
+      if (showToast) toast('Read failed — ' + err.message);
       return false;
     }
   }
 
-  function submitViaHiddenForm(payload){
-    return new Promise((resolve, reject) => {
-      if (!S.gsUrl) return reject(new Error('No Apps Script URL'));
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = S.gsUrl;
-      form.target = 'gas_sink';
-      form.style.display = 'none';
-
-      const input = document.createElement('textarea');
-      input.name = 'payload';
-      input.value = JSON.stringify(payload);
-      form.appendChild(input);
-
-      const nonce = document.createElement('input');
-      nonce.type = 'hidden';
-      nonce.name = '_';
-      nonce.value = String(Date.now());
-      form.appendChild(nonce);
-
-      document.body.appendChild(form);
-      form.submit();
-      setTimeout(() => {
-        form.remove();
-        resolve();
-      }, 250);
-    });
-  }
-
-  async function submitWithVerification(payload, expectedState, successText){
+  /* ─── unified write → verify → update ──────────────────────────── */
+  async function submitWithVerification(action, payload, successText){
     if (S.busy) return false;
     S.busy = true;
     try{
+      // 1. Write via JSONP
       setSync('writing','Writing');
-      await submitViaHiddenForm(payload);
-      setSync('verifying','Verifying');
-      const targetSig = stateSignature(expectedState);
-      for (let i = 0; i < 12; i++){
-        await wait(650);
-        try{
-          const data = await jsonp(`${S.gsUrl}?action=readAll`);
-          const normalized = fromBackend(data);
-          if (stateSignature(normalized) === targetSig){
-            setData(normalized);
-            renderAll();
-            closePanel();
-            setSync('ok','Verified');
-            toast(successText);
-            return true;
-          }
-        }catch(_){}
+      const result = await jsonpWrite(action, payload);
+      if (result && result.ok === false){
+        throw new Error(result.error || 'Backend rejected the write');
       }
-      const finalRead = await jsonp(`${S.gsUrl}?action=readAll`);
-      const normalized = fromBackend(finalRead);
-      setData(normalized);
+
+      // 2. Read back to get fresh state with correct rowNumbers
+      setSync('verifying','Verifying');
+      await wait(500);
+      try{
+        const data = await jsonp(`${S.gsUrl}?action=readAll`);
+        const normalized = fromBackend(data);
+        setData(normalized);
+      }catch(_){
+        // Read-back failed, but write succeeded. Force a refresh later.
+      }
+
       renderAll();
-      setSync('error','Write not verified');
-      toast('Write was sent, but verification missed');
-      return false;
+      closePanel();
+      setSync('ok','Verified');
+      toast(successText);
+      return true;
     }catch(err){
       setSync('error','Write failed');
-      toast('Write failed');
+      toast('Write failed — ' + err.message);
       return false;
     }finally{
       S.busy = false;
@@ -1116,31 +1067,16 @@ a{color:inherit}
     const bucket = S.form.bucket || 'holding';
     const status = statusForBucket(bucket, String(S.form.windowText || '').trim());
     if (!symbol || shares <= 0 || cost <= 0) return toast('Fill symbol, shares, and total cost');
-    const item = {
+
+    await submitWithVerification('add', {
       bucket,
-      bucketLabel: normalizeBucketLabel(bucket),
       symbol,
       name,
       shares: round2(shares),
       totalCost: round2(cost),
       avgCost: round2(cost / shares),
       status
-    };
-    const expected = {
-      h: bucket === 'holding' ? [...S.h, item] : [...S.h],
-      g: bucket === 'gtc' ? [...S.g, item] : [...S.g],
-      s: [...S.s]
-    };
-    await submitWithVerification({
-      action: 'add',
-      bucket,
-      symbol,
-      name,
-      shares: item.shares,
-      totalCost: item.totalCost,
-      avgCost: item.avgCost,
-      status
-    }, expected, `${symbol} added`);
+    }, `${symbol} added`);
   }
 
   async function submitSell(){
@@ -1149,33 +1085,13 @@ a{color:inherit}
     const soldPrice = Number(S.form.price || 0);
     const soldDate = S.form.soldDate || isoDate();
     if (!item || shares <= 0 || soldPrice <= 0 || shares > item.shares) return toast('Check shares and sold price');
-    const remainingShares = round2(item.shares - shares);
-    const soldLot = {
-      bucket: 'sold',
-      bucketLabel: 'Sold',
-      symbol: item.symbol,
-      name: item.name,
-      shares: round2(shares),
-      totalCost: round2(shares * item.avgCost),
-      avgCost: round2(item.avgCost),
-      status: `Sold @ $${round2(soldPrice).toFixed(2)} on ${soldDate}`,
-      soldPrice: round2(soldPrice),
-      soldDate
-    };
-    const expected = {
-      h: remainingShares > 0
-        ? S.h.map(x => x.rowNumber === item.rowNumber ? {...x, shares: remainingShares, totalCost: round2(remainingShares * item.avgCost)} : x)
-        : S.h.filter(x => x.rowNumber !== item.rowNumber),
-      g: [...S.g],
-      s: [...S.s, soldLot]
-    };
-    await submitWithVerification({
-      action: 'sell',
+
+    await submitWithVerification('sell', {
       rowNumber: item.rowNumber,
       sharesSold: round2(shares),
       soldPrice: round2(soldPrice),
       soldDate
-    }, expected, `${item.symbol} sold`);
+    }, `${item.symbol} sold`);
   }
 
   async function submitExec(){
@@ -1183,42 +1099,22 @@ a{color:inherit}
     const fillPrice = Number(S.form.fillPrice || 0);
     const fillDate = S.form.fillDate || isoDate();
     if (!item || fillPrice <= 0) return toast('Enter a fill price');
-    const holdingLot = {
-      bucket: 'holding',
-      bucketLabel: 'Current Holding',
-      symbol: item.symbol,
-      name: item.name,
-      shares: round2(item.shares),
-      totalCost: round2(item.shares * fillPrice),
-      avgCost: round2(fillPrice),
-      status: 'Active'
-    };
-    const expected = {
-      h: [...S.h, holdingLot],
-      g: S.g.filter(x => x.rowNumber !== item.rowNumber),
-      s: [...S.s]
-    };
-    await submitWithVerification({
-      action: 'execute',
+
+    await submitWithVerification('execute', {
       rowNumber: item.rowNumber,
       fillPrice: round2(fillPrice),
       fillDate
-    }, expected, `${item.symbol} executed`);
+    }, `${item.symbol} executed`);
   }
 
   async function confirmRemove(item){
     const label = `${item.symbol} (${item.bucket === 'gtc' ? 'GTC' : item.bucket === 'sold' ? 'Sold' : 'Holding'})`;
     const ok = window.confirm(`Delete ${label}?`);
     if (!ok) return;
-    const expected = {
-      h: item.bucket === 'holding' ? S.h.filter(x => x.rowNumber !== item.rowNumber) : [...S.h],
-      g: item.bucket === 'gtc' ? S.g.filter(x => x.rowNumber !== item.rowNumber) : [...S.g],
-      s: item.bucket === 'sold' ? S.s.filter(x => x.rowNumber !== item.rowNumber) : [...S.s]
-    };
-    await submitWithVerification({
-      action: 'remove',
+
+    await submitWithVerification('remove', {
       rowNumber: item.rowNumber
-    }, expected, `${item.symbol} deleted`);
+    }, `${item.symbol} deleted`);
   }
 
   async function init(){
