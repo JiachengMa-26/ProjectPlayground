@@ -200,6 +200,7 @@ button{cursor:pointer;-webkit-user-select:none}
 </head>
 <body>
 <div class="app" id="app"></div>
+<div id="pnl-root"></div>
 <script>
 /* ═══════════════════════════════════════════════════════════════
    JC PORTFOLIO ENGINE — v6
@@ -280,25 +281,39 @@ function parseSheetRows(rows){
 async function gsRead(){
   if(!S.gsUrl)return null;
   try{
-    const r=await fetch(S.gsUrl+"?action=readAll",{redirect:"follow"});
-    if(!r.ok)throw new Error(r.status);
+    // Google Apps Script redirects to googleusercontent.com — must follow
+    const r=await fetch(S.gsUrl+"?action=readAll");
+    if(!r.ok)throw new Error("HTTP "+r.status);
     const d=await r.json();
-    // Flexible: might be {holdings,gtc,sold} OR {data:[[...]]} OR [[...]]
     if(d.holdings) return d;
     if(d.data&&Array.isArray(d.data)) return parseSheetRows(d.data);
     if(Array.isArray(d)&&Array.isArray(d[0])) return parseSheetRows(d);
     return null;
-  }catch(e){console.error("GS read:",e);return null;}
+  }catch(e){
+    console.warn("GS read failed:",e.message,"\n→ Check: 1) Run readAllSheets once in Apps Script editor to authorize  2) Deploy → Who has access: Anyone  3) Re-deploy after code changes to get a fresh URL");
+    return null;
+  }
 }
 async function gsSync(){
   if(!S.gsUrl)return;
-  S.gsS="syncing";render();
+  S.gsS="syncing";updSync();
   try{
-    await fetch(S.gsUrl,{method:"POST",redirect:"follow",
+    // mode:no-cors → opaque response (can't read) but POST body is delivered
+    await fetch(S.gsUrl,{method:"POST",mode:"no-cors",
       headers:{"Content-Type":"text/plain;charset=utf-8"},
       body:JSON.stringify({action:"sync",holdings:S.h,gtc:S.g,sold:S.s})});
-    S.gsS="synced";render();setTimeout(()=>{S.gsS="";render();},2500);
-  }catch(e){console.error("GS sync:",e);S.gsS="error";render();}
+    // Opaque response = we can't verify, but request was sent
+    S.gsS="synced";updSync();setTimeout(()=>{S.gsS="";updSync();},2500);
+  }catch(e){
+    console.warn("GS sync failed:",e.message);
+    S.gsS="error";updSync();setTimeout(()=>{S.gsS="";updSync();},4000);
+  }
+}
+function updSync(){
+  const el=document.querySelector('.sync-d');
+  const tl=document.querySelector('.sync-t');
+  if(el)el.className='sync-d '+(S.gsS==='syncing'?'busy':S.gsS==='error'?'err':S.gsS==='synced'?'ok':'');
+  if(tl)tl.textContent=S.gsS==='syncing'?'Syncing…':S.gsS==='synced'?'Synced':S.gsS==='error'?'Sync error':'';
 }
 function persist(){
   try{localStorage.setItem(LS,JSON.stringify({h:S.h,g:S.g,s:S.s}));}catch{}
@@ -342,11 +357,11 @@ function allSyms(){
 }
 
 // ── Actions ──
-function cls(){S.pnl=null;S.pd=null;render();}
-function oSell(x){S.pnl="sell";S.pd=x;S.f.shares=x.shares+"";S.f.price="";render();}
-function oExec(x){S.pnl="exec";S.pd=x;S.f.price=x.avgCost.toFixed(2);render();}
-function oAdd(pf){S.pnl="add";S.pd=null;S.f={sym:pf?.symbol||"",name:pf?.name||"",shares:"",price:"",cost:"",bucket:"holding"};render();}
-function oSet(){S.pnl="settings";render();}
+function cls(){S.pnl=null;S.pd=null;renderPnl();}
+function oSell(x){S.pnl="sell";S.pd=x;S.f.shares=x.shares+"";S.f.price="";render();focusAf();}
+function oExec(x){S.pnl="exec";S.pd=x;S.f.price=x.avgCost.toFixed(2);render();focusAf();}
+function oAdd(pf){S.pnl="add";S.pd=null;S.f={sym:pf?.symbol||"",name:pf?.name||"",shares:"",price:"",cost:"",bucket:"holding"};render();focusAf();}
+function oSet(){S.pnl="settings";render();focusAf();}
 
 function doSell(){
   const d=S.pd,sh=parseInt(S.f.shares)||0,pr=parseFloat(S.f.price)||0;if(!sh||!pr)return;
@@ -376,7 +391,7 @@ function doAdd(){
 }
 function rm(id){S.h=S.h.filter(x=>x.id!==id);S.g=S.g.filter(x=>x.id!==id);S.s=S.s.filter(x=>x.id!==id);persist();render();}
 function resetAll(){if(!confirm("Reset to initial data?"))return;S.h=D_H.map(x=>({...x}));S.g=D_G.map(x=>({...x}));S.s=[];persist();render();}
-function saveUrl(){const u=S.gsUrl.trim();localStorage.setItem(LU,u);if(u)gsSync();render();}
+function saveUrl(){const u=S.gsUrl.trim();localStorage.setItem(LU,u);if(u)gsSync();renderPnl();}
 
 // ── Donut SVG ──
 function donut(pie,total,sz){
@@ -388,7 +403,13 @@ function donut(pie,total,sz){
     const ea=cum*Math.PI*2-Math.PI/2,la=pc>.5?1:0;
     p+=`<path d="M${cx+r*Math.cos(sa)},${cy+r*Math.sin(sa)} A${r},${r} 0 ${la} 1 ${cx+r*Math.cos(ea)},${cy+r*Math.sin(ea)} L${cx+ir*Math.cos(ea)},${cy+ir*Math.sin(ea)} A${ir},${ir} 0 ${la} 0 ${cx+ir*Math.cos(sa)},${cy+ir*Math.sin(sa)} Z" fill="${G[i%G.length]}" style="cursor:pointer"><title>${d.l}: ${$(d.v)} · ${(pc*100).toFixed(1)}%</title></path>`;
   });
-  return`<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}">${p}<text x="${cx}" y="${cy+5}" text-anchor="middle" fill="var(--gold)" style="font:500 14px var(--mo)">${$(total)}</text></svg>`;
+  // Dynamic font size: fit text inside inner ring (diameter = ir*2)
+  const txt=$(total);
+  const innerDia=ir*2;
+  // Approximate monospace char width ~ fontSize * 0.6
+  const maxFontForWidth=innerDia/(txt.length*0.6);
+  const fs=Math.min(14,Math.max(8,Math.floor(maxFontForWidth)));
+  return`<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}">${p}<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" fill="var(--gold)" style="font:500 ${fs}px var(--mo)">${txt}</text></svg>`;
 }
 
 // ══════════════════ RENDER ══════════════════
@@ -471,13 +492,15 @@ function render(){
     <div class="cards">${cds}</div>
   </div>
 </div>
-<div class="foot">Persistent Storage${S.gsUrl?' · Google Sheets':''}${S.h.some(x=>x.symbol==='DUOL'&&S.h.filter(y=>y.symbol==='DUOL').length>1)?' · Separate lots preserved':''}</div>
-${renderPnl()}`;
+<div class="foot">Persistent Storage${S.gsUrl?' · Google Sheets':''}${S.h.some(x=>x.symbol==='DUOL'&&S.h.filter(y=>y.symbol==='DUOL').length>1)?' · Separate lots preserved':''}</div>`;
+
+  renderPnl();
 }
 
-// ── Panel ──
+// ── Panel (renders into separate #pnl-root, never rebuilds main page) ──
 function renderPnl(){
-  if(!S.pnl)return'';
+  const root=document.getElementById('pnl-root');
+  if(!S.pnl){root.innerHTML='';return;}
   let inner='';
 
   if(S.pnl==="sell"){
@@ -485,8 +508,8 @@ function renderPnl(){
     const proc=sh*pr,basis=sh*d.avgCost,pl=proc-basis;
     inner=`<div class="pnl-h"><div><div class="pnl-t">Sell ${d.symbol}</div><div class="pnl-s">${d.name} · ${d.shares} shares held</div></div><button class="pnl-x" onclick="cls()">×</button></div>
     <div class="pnl-b">
-      <div class="fg"><span class="fl">Shares to sell</span><input class="fi" type="number" min="1" max="${d.shares}" value="${S.f.shares}" oninput="S.f.shares=this.value;render()" id="af"></div>
-      <div class="fg"><span class="fl">Sell price / share</span><input class="fi" type="number" step="0.01" value="${S.f.price}" placeholder="0.00" oninput="S.f.price=this.value;render()"></div>
+      <div class="fg"><span class="fl">Shares to sell</span><input class="fi" type="number" min="1" max="${d.shares}" value="${S.f.shares}" oninput="S.f.shares=this.value;renderPnl()" id="af"></div>
+      <div class="fg"><span class="fl">Sell price / share</span><input class="fi" type="number" step="0.01" value="${S.f.price}" placeholder="0.00" oninput="S.f.price=this.value;renderPnl()"></div>
       ${pr>0?`<div class="sum"><div class="sr"><span>Proceeds</span><span>${$(proc)}</span></div><div class="sr"><span>Cost basis</span><span>${$(basis)}</span></div><div class="sr srt"><span>P&L</span><span style="color:${pl>=0?'var(--grn)':'var(--red)'}">${$(pl)} (${$p(basis?(pl/basis)*100:0)})</span></div></div>`:''}
       <button class="bg" style="width:100%" ${pr<=0||sh<=0?'disabled':''} onclick="doSell()">Confirm Sale</button>
     </div>`;
@@ -496,7 +519,7 @@ function renderPnl(){
     const d=S.pd,pr=parseFloat(S.f.price)||0;
     inner=`<div class="pnl-h"><div><div class="pnl-t">Execute ${d.symbol}</div><div class="pnl-s">Move to current holdings</div></div><button class="pnl-x" onclick="cls()">×</button></div>
     <div class="pnl-b">
-      <div class="fg"><span class="fl">Fill price / share</span><input class="fi" type="number" step="0.01" value="${S.f.price}" oninput="S.f.price=this.value;render()" id="af"></div>
+      <div class="fg"><span class="fl">Fill price / share</span><input class="fi" type="number" step="0.01" value="${S.f.price}" oninput="S.f.price=this.value;renderPnl()" id="af"></div>
       <div class="sum"><div class="sr"><span>Shares</span><span>${d.shares}</span></div><div class="sr"><span>GTC limit</span><span>${$(d.avgCost)}</span></div><div class="sr srt"><span>New cost</span><span>${$(d.shares*pr)}</span></div></div>
       <button class="bg" style="width:100%" ${pr<=0?'disabled':''} onclick="doExec()">Execute → Holdings</button>
     </div>`;
@@ -508,11 +531,11 @@ function renderPnl(){
     const ok=S.f.sym.trim()&&parseFloat(S.f.shares)>0&&parseFloat(S.f.cost)>0;
     inner=`<div class="pnl-h"><div><div class="pnl-t">New Position</div><div class="pnl-s">Add to your portfolio</div></div><button class="pnl-x" onclick="cls()">×</button></div>
     <div class="pnl-b">
-      ${syms.length?`<div class="fg"><span class="fl">Quick add from portfolio</span><div class="chips">${syms.map(s=>`<button class="chip ${S.f.sym===s.symbol?'on':''}" onclick="S.f.sym='${s.symbol}';S.f.name='${s.name.replace(/'/g,"\\'")}';render()">${s.symbol}</button>`).join('')}</div></div><div class="dv"></div>`:''}
-      <div class="fr"><div class="fg"><span class="fl">Symbol</span><input class="fi" value="${S.f.sym}" oninput="S.f.sym=this.value.toUpperCase();render()" placeholder="AAPL" id="af"></div><div class="fg" style="flex:2"><span class="fl">Name</span><input class="fi" value="${S.f.name}" oninput="S.f.name=this.value;render()" placeholder="Apple Inc"></div></div>
-      <div class="fr"><div class="fg"><span class="fl">Shares</span><input class="fi" type="number" value="${S.f.shares}" oninput="S.f.shares=this.value;render()" placeholder="10"></div><div class="fg"><span class="fl">Total cost ($)</span><input class="fi" type="number" step="0.01" value="${S.f.cost}" oninput="S.f.cost=this.value;render()" placeholder="1500.00"></div></div>
+      ${syms.length?`<div class="fg"><span class="fl">Quick add from portfolio</span><div class="chips">${syms.map(s=>`<button class="chip ${S.f.sym===s.symbol?'on':''}" onclick="S.f.sym='${s.symbol}';S.f.name='${s.name.replace(/'/g,"\\'")}';renderPnl()">${s.symbol}</button>`).join('')}</div></div><div class="dv"></div>`:''}
+      <div class="fr"><div class="fg"><span class="fl">Symbol</span><input class="fi" value="${S.f.sym}" oninput="S.f.sym=this.value.toUpperCase();renderPnl()" placeholder="AAPL" id="af"></div><div class="fg" style="flex:2"><span class="fl">Name</span><input class="fi" value="${S.f.name}" oninput="S.f.name=this.value;renderPnl()" placeholder="Apple Inc"></div></div>
+      <div class="fr"><div class="fg"><span class="fl">Shares</span><input class="fi" type="number" value="${S.f.shares}" oninput="S.f.shares=this.value;renderPnl()" placeholder="10"></div><div class="fg"><span class="fl">Total cost ($)</span><input class="fi" type="number" step="0.01" value="${S.f.cost}" oninput="S.f.cost=this.value;renderPnl()" placeholder="1500.00"></div></div>
       ${avg?`<div class="favg">Avg: ${avg}/share</div>`:''}
-      <div class="fg"><span class="fl">Type</span><div class="ftr"><button class="ftb ${S.f.bucket==='holding'?'on':''}" onclick="S.f.bucket='holding';render()">Current Holding</button><button class="ftb ${S.f.bucket==='gtc'?'on':''}" onclick="S.f.bucket='gtc';render()">GTC Order</button></div></div>
+      <div class="fg"><span class="fl">Type</span><div class="ftr"><button class="ftb ${S.f.bucket==='holding'?'on':''}" onclick="S.f.bucket='holding';renderPnl()">Current Holding</button><button class="ftb ${S.f.bucket==='gtc'?'on':''}" onclick="S.f.bucket='gtc';renderPnl()">GTC Order</button></div></div>
       <button class="bg" style="width:100%" ${!ok?'disabled':''} onclick="doAdd()">Add Position</button>
     </div>`;
   }
@@ -522,7 +545,7 @@ function renderPnl(){
     <div class="pnl-b">
       <div class="fg"><span class="fl">Google Sheets Web App URL</span><input class="fi" value="${S.gsUrl}" oninput="S.gsUrl=this.value" placeholder="https://script.google.com/macros/s/.../exec" id="af"></div>
       ${S.gsUrl?`<div style="display:flex;align-items:center;gap:7px"><span class="sync-d ${S.gsS==='synced'?'ok':S.gsS==='error'?'err':'ok'}" style="width:6px;height:6px;border-radius:50%;display:inline-block"></span><span style="font-family:var(--mo);font-size:10px;color:var(--tx3)">${S.gsS==='syncing'?'Syncing...':S.gsS==='synced'?'Connected & synced':S.gsS==='error'?'Connection failed':'Ready'}</span></div>`:''}
-      <div style="display:flex;gap:8px"><button class="bg" style="flex:1" onclick="saveUrl()">Save & Sync</button>${S.gsUrl?`<button class="bgh" style="color:var(--red);border-color:rgba(199,107,107,.15)" onclick="S.gsUrl='';localStorage.setItem(LU,'');S.gsS='';render()">Disconnect</button>`:''}</div>
+      <div style="display:flex;gap:8px"><button class="bg" style="flex:1" onclick="saveUrl()">Save & Sync</button>${S.gsUrl?`<button class="bgh" style="color:var(--red);border-color:rgba(199,107,107,.15)" onclick="S.gsUrl='';localStorage.setItem(LU,'');S.gsS='';renderPnl()">Disconnect</button>`:''}</div>
       <div class="dv"></div>
       <div class="slbl" style="margin-bottom:0">Setup Guide</div>
       <div class="guide"><div class="gs">
@@ -538,11 +561,31 @@ function renderPnl(){
     </div>`;
   }
 
-  return`<div class="ov open" onclick="cls()"><div class="pnl" onclick="event.stopPropagation()">${inner}</div></div>`;
+  // Save which input had focus by label, restore after DOM write
+  const _ae=document.activeElement;
+  const _inp=_ae?.tagName==='INPUT'?_ae:null;
+  const _sel=_inp?_inp.selectionStart:null;
+  const _lbl=_inp?.closest?.('.fg')?.querySelector('.fl')?.textContent||'';
+  const _id=_inp?.id||'';
+
+  root.innerHTML=`<div class="ov open" onclick="cls()"><div class="pnl" onclick="event.stopPropagation()">${inner}</div></div>`;
+
+  // Restore focus
+  if(_lbl||_id){
+    requestAnimationFrame(()=>{
+      let el=_id?document.getElementById(_id):null;
+      if(!el&&_lbl){
+        root.querySelectorAll('.fg').forEach(fg=>{
+          const l=fg.querySelector('.fl');
+          if(l&&l.textContent===_lbl)el=fg.querySelector('input');
+        });
+      }
+      if(el){el.focus();if(_sel!==null)try{el.setSelectionRange(_sel,_sel)}catch{}}
+    });
+  }
 }
 
-// Autofocus
-new MutationObserver(()=>{const e=document.getElementById('af');if(e&&document.activeElement!==e)e.focus();}).observe(document.body,{childList:true,subtree:true});
+function focusAf(){requestAnimationFrame(()=>{const e=document.getElementById('af');if(e)e.focus();});}
 
 init();
 </script>
