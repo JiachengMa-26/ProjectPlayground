@@ -992,11 +992,47 @@ a{color:inherit}
     });
   }
 
-  /* ─── write via JSONP (GET with action + payload in URL) ───────── */
+  /* ─── write: dual-path (JSONP GET → fetch POST fallback) ────────── */
+
   function jsonpWrite(action, payload){
-    if (!S.gsUrl) return Promise.reject(new Error('No Apps Script URL configured'));
     const encoded = encodeURIComponent(JSON.stringify(payload));
     return jsonp(`${S.gsUrl}?action=${action}&payload=${encoded}`);
+  }
+
+  function fetchPostWrite(action, payload){
+    const outgoing = Object.assign({}, payload, { action });
+    const body = new URLSearchParams();
+    body.append('payload', JSON.stringify(outgoing));
+    return fetch(S.gsUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      redirect: 'follow',
+      body
+    });
+    // response is opaque with no-cors — that's fine, doPost still runs
+  }
+
+  async function writeToBackend(action, payload){
+    if (!S.gsUrl) throw new Error('No Apps Script URL configured');
+
+    // Path A: try JSONP GET (works if new Code.gs is deployed)
+    try{
+      const res = await jsonpWrite(action, payload);
+      if (res && res.ok === true) return 'jsonp-ok';
+      if (res && String(res.error || '').toLowerCase().includes('unknown'))
+        { /* old backend — fall through to POST */ }
+      else if (res && res.ok === false)
+        throw new Error(res.error || 'Backend error');
+      else return 'jsonp-ok';           // no error field → treat as ok
+    }catch(e){
+      // JSONP network / timeout errors also fall through
+      if (e.message && !e.message.includes('JSONP') && !e.message.includes('Unknown'))
+        throw e;
+    }
+
+    // Path B: fetch POST to existing doPost (old Code.gs)
+    await fetchPostWrite(action, payload);
+    return 'post-sent';
   }
 
   async function refreshFromSheet(showToast){
@@ -1024,23 +1060,45 @@ a{color:inherit}
   async function submitWithVerification(action, payload, successText){
     if (S.busy) return false;
     S.busy = true;
+
+    // Snapshot current counts so we can detect changes
+    const before = { h: S.h.length, g: S.g.length, s: S.s.length };
+
     try{
-      // 1. Write via JSONP
       setSync('writing','Writing');
-      const result = await jsonpWrite(action, payload);
-      if (result && result.ok === false){
-        throw new Error(result.error || 'Backend rejected the write');
+      const method = await writeToBackend(action, payload);
+
+      // Read back to get fresh state with correct rowNumbers
+      setSync('verifying','Verifying');
+
+      // If we used POST (fire-and-forget), poll until the sheet changes
+      const maxAttempts = method === 'post-sent' ? 10 : 3;
+      const delay       = method === 'post-sent' ? 900 : 500;
+      let verified = false;
+
+      for (let i = 0; i < maxAttempts; i++){
+        await wait(delay);
+        try{
+          const data = await jsonp(`${S.gsUrl}?action=readAll`);
+          const fresh = fromBackend(data);
+          const after = { h: fresh.h.length, g: fresh.g.length, s: fresh.s.length };
+          const changed = after.h !== before.h || after.g !== before.g || after.s !== before.s;
+
+          if (method === 'jsonp-ok' || changed){
+            setData(fresh);
+            verified = true;
+            break;
+          }
+        }catch(_){}
       }
 
-      // 2. Read back to get fresh state with correct rowNumbers
-      setSync('verifying','Verifying');
-      await wait(500);
-      try{
-        const data = await jsonp(`${S.gsUrl}?action=readAll`);
-        const normalized = fromBackend(data);
-        setData(normalized);
-      }catch(_){
-        // Read-back failed, but write succeeded. Force a refresh later.
+      if (!verified && method === 'jsonp-ok'){
+        // JSONP said ok but readback didn't load — still trust the write
+        verified = true;
+      }
+
+      if (!verified){
+        throw new Error('Sheet did not update — check Apps Script deployment');
       }
 
       renderAll();
@@ -1049,8 +1107,14 @@ a{color:inherit}
       toast(successText);
       return true;
     }catch(err){
+      // One final read so the UI isn't stale
+      try{
+        const data = await jsonp(`${S.gsUrl}?action=readAll`);
+        setData(fromBackend(data));
+        renderAll();
+      }catch(_){}
       setSync('error','Write failed');
-      toast('Write failed — ' + err.message);
+      toast(err.message || 'Write failed');
       return false;
     }finally{
       S.busy = false;
