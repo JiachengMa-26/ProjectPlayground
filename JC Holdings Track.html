@@ -8,151 +8,227 @@
 <title>JC Holdings Track</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=SF+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#07080b;
-  --panel:#101317;
-  --panel2:#141820;
-  --panel3:#191e26;
-  --line:rgba(255,255,255,.08);
-  --line-strong:rgba(255,255,255,.14);
-  --text:#f4f6fb;
-  --muted:#9aa3b3;
-  --faint:#667083;
-  --green:#34c759;
-  --red:#ff453a;
-  --blue:#0a84ff;
-  --blue-soft:rgba(10,132,255,.18);
-  --chip:rgba(255,255,255,.06);
-  --shadow:0 24px 60px rgba(0,0,0,.45);
-  --radius:24px;
-  --radius-sm:16px;
-  --radius-xs:12px;
+  --bg:#060708;
+  --panel:#0d1014;
+  --panel2:#12161c;
+  --panel3:#181d25;
+  --line:rgba(255,255,255,.07);
+  --line-strong:rgba(255,255,255,.12);
+  --text:#eef1f6;
+  --text-bright:#fff;
+  --muted:#8a93a5;
+  --faint:#5c6577;
+  --green:#2dd4a0;
+  --green-dim:rgba(45,212,160,.12);
+  --red:#f0465a;
+  --red-dim:rgba(240,70,90,.12);
+  --blue:#3b8bff;
+  --blue-soft:rgba(59,139,255,.14);
+  --amber:#f5a623;
+  --amber-dim:rgba(245,166,35,.12);
+  --chip-bg:rgba(255,255,255,.05);
+  --shadow:0 20px 50px rgba(0,0,0,.5);
+  --radius:22px;
+  --radius-sm:14px;
+  --radius-xs:10px;
+  --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
 }
-*{box-sizing:border-box}
-html,body{margin:0;padding:0;background:radial-gradient(circle at top,#151a22 0,#0a0d12 35%,#060708 100%);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 body{min-height:100vh;min-height:100dvh}
-button,input,select{font:inherit}
-button{cursor:pointer}
-a{color:inherit}
-::selection{background:rgba(10,132,255,.24)}
-.app{max-width:1280px;margin:0 auto;padding:34px 22px 60px}
-.topbar{display:flex;justify-content:space-between;gap:18px;align-items:flex-end;margin-bottom:26px}
-.title-wrap{display:flex;flex-direction:column;gap:8px}
-.kicker{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}
-.title{font-size:clamp(34px,4vw,56px);line-height:1;font-weight:700;letter-spacing:-.04em}
-.subtitle{font-size:15px;color:var(--muted)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:none}
+a{color:inherit;text-decoration:none}
+::selection{background:rgba(59,139,255,.28)}
+
+/* ── number input: kill spinners ─────────────────────────────── */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type="number"]{-moz-appearance:textfield}
+
+/* ── layout ──────────────────────────────────────────────────── */
+.app{max-width:1320px;margin:0 auto;padding:32px 24px 60px}
+.topbar{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin-bottom:28px}
+.title-wrap{display:flex;flex-direction:column;gap:6px}
+.kicker{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);font-weight:600}
+.title{font-size:clamp(32px,4vw,52px);line-height:1;font-weight:800;letter-spacing:-.045em;color:var(--text-bright)}
+.subtitle{font-size:14px;color:var(--muted);font-weight:400}
 .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-.badge{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:999px;color:var(--muted);font-size:13px}
-.dot{width:8px;height:8px;border-radius:50%;background:#5f6675;box-shadow:0 0 0 4px rgba(255,255,255,.03)}
-.dot.reading,.dot.writing,.dot.verifying{background:#ffd60a;animation:pulse 1.2s infinite}
+
+/* ── badge ────────────────────────────────────────────────────── */
+.badge{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border:1px solid var(--line);background:rgba(255,255,255,.025);border-radius:999px;color:var(--muted);font-size:12px;font-weight:500}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.dot.reading,.dot.writing,.dot.verifying{background:var(--amber);animation:pulse 1.2s infinite}
 .dot.ok{background:var(--green)}
 .dot.error{background:var(--red)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-.btn{border:none;border-radius:999px;padding:12px 18px;background:rgba(255,255,255,.07);color:var(--text);font-weight:600;transition:.2s transform,.2s background,.2s opacity}
-.btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.11)}
-.btn.primary{background:linear-gradient(180deg,#2296ff,#0a84ff);box-shadow:0 16px 34px rgba(10,132,255,.24)}
-.btn.ghost{background:rgba(255,255,255,.04);border:1px solid var(--line)}
-.btn.danger{background:rgba(255,69,58,.15);color:#ffd1cc}
-.btn:disabled{opacity:.45;cursor:default;transform:none}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
-.card{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.035));backdrop-filter:blur(20px);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── buttons ──────────────────────────────────────────────────── */
+.btn{border-radius:999px;padding:11px 18px;background:rgba(255,255,255,.06);color:var(--text);font-weight:600;font-size:13px;transition:.18s ease;letter-spacing:-.01em}
+.btn:hover{background:rgba(255,255,255,.1);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.primary{background:var(--blue);color:#fff;box-shadow:0 8px 24px rgba(59,139,255,.25)}
+.btn.primary:hover{background:#4d97ff;box-shadow:0 12px 32px rgba(59,139,255,.32)}
+.btn.ghost{background:transparent;border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--line-strong);background:rgba(255,255,255,.04)}
+.btn:disabled{opacity:.4;cursor:default;transform:none!important}
+
+/* ── KPI grid ─────────────────────────────────────────────────── */
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.025));backdrop-filter:blur(20px);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
 .kpi{padding:20px 22px}
-.kpi-label{font-size:13px;color:var(--muted);margin-bottom:8px}
-.kpi-value{font-size:32px;font-weight:700;letter-spacing:-.04em}
-.kpi-sub{margin-top:8px;font-size:13px;color:var(--faint)}
-.layout{display:grid;grid-template-columns:340px 1fr;gap:18px}
+.kpi-label{font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:500;letter-spacing:.02em}
+.kpi-value{font-size:30px;font-weight:700;letter-spacing:-.04em;color:var(--text-bright)}
+.kpi-sub{margin-top:8px;font-size:12px;color:var(--faint);font-weight:400}
+
+/* ── 2-col layout ─────────────────────────────────────────────── */
+.layout{display:grid;grid-template-columns:320px 1fr;gap:16px}
 .side{padding:22px}
-.side-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
-.side-title{font-size:18px;font-weight:700}
-.side-sub{font-size:13px;color:var(--muted)}
-.ring-wrap{display:flex;justify-content:center;align-items:center;padding:8px 0 22px}
-.legend{display:flex;flex-direction:column;gap:10px}
+.side-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.side-title{font-size:17px;font-weight:700;color:var(--text-bright)}
+.side-sub{font-size:12px;color:var(--muted)}
+.ring-wrap{display:flex;justify-content:center;align-items:center;padding:4px 0 20px}
+.legend{display:flex;flex-direction:column;gap:9px}
 .legend-row{display:flex;justify-content:space-between;gap:12px;align-items:center}
-.legend-left{display:flex;align-items:center;gap:10px;min-width:0}
-.legend-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
-.legend-name{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.legend-pct{font-size:13px;color:var(--muted)}
+.legend-left{display:flex;align-items:center;gap:9px;min-width:0}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.legend-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.legend-pct{font-size:12px;color:var(--muted);font-family:var(--mono);font-weight:500}
+
+/* ── main table area ──────────────────────────────────────────── */
 .main{padding:18px}
-.toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
-.search{flex:1 1 320px;position:relative}
-.search input{width:100%;border:none;border-radius:18px;background:rgba(255,255,255,.06);padding:14px 44px 14px 16px;color:var(--text);outline:none;border:1px solid transparent;transition:.2s border-color,.2s background}
-.search input:focus{background:rgba(255,255,255,.075);border-color:rgba(255,255,255,.1)}
-.search .clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:var(--muted);font-size:18px;padding:6px 8px;border-radius:10px}
-.toolbar-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.segmented,.sorts{display:flex;gap:8px;flex-wrap:wrap}
-.pill{border:none;border-radius:999px;padding:10px 14px;background:rgba(255,255,255,.05);color:var(--muted);font-size:13px;font-weight:600}
-.pill.on{background:var(--blue-soft);color:#bdddff;box-shadow:inset 0 0 0 1px rgba(10,132,255,.35)}
-.table{border:1px solid var(--line);border-radius:22px;overflow:hidden;background:rgba(255,255,255,.025)}
-.thead,.row{display:grid;grid-template-columns:104px 1.3fr 86px 110px 128px 100px 190px;align-items:center}
-.thead{padding:14px 18px;background:rgba(255,255,255,.035);border-bottom:1px solid var(--line)}
-.thead div{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.02em}
-.row{padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.05)}
+.toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.search{flex:1 1 280px;position:relative}
+.search input{width:100%;border:none;border-radius:var(--radius-sm);background:rgba(255,255,255,.05);padding:12px 40px 12px 14px;color:var(--text);outline:none;border:1px solid transparent;transition:.2s;font-size:13px}
+.search input::placeholder{color:var(--faint)}
+.search input:focus{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1)}
+.search .clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;color:var(--muted);font-size:16px;padding:4px 6px;border-radius:8px}
+.toolbar-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.segmented,.sorts{display:flex;gap:6px;flex-wrap:wrap}
+.pill{border-radius:999px;padding:9px 13px;background:rgba(255,255,255,.04);color:var(--muted);font-size:12px;font-weight:600;transition:.15s;letter-spacing:-.01em}
+.pill:hover{background:rgba(255,255,255,.07)}
+.pill.on{background:var(--blue-soft);color:#a5ccff;box-shadow:inset 0 0 0 1px rgba(59,139,255,.3)}
+
+/* ── table ────────────────────────────────────────────────────── */
+.table{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:rgba(255,255,255,.018)}
+.thead,.row{display:grid;grid-template-columns:90px 1.4fr 72px 100px 110px 26px 1fr 140px;align-items:center}
+.thead{padding:12px 18px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--line)}
+.thead div{font-size:11px;color:var(--faint);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.row{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.04);transition:.15s background}
 .row:last-child{border-bottom:none}
-.sym{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-weight:600;font-size:15px}
-.name{display:flex;flex-direction:column;gap:6px;min-width:0}
-.name-main{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.meta-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,.05);border-radius:999px;font-size:12px;color:var(--muted);width:max-content;max-width:100%}
-.val{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:14px;text-align:right}
-.weight{display:flex;flex-direction:column;gap:8px}
-.weight-line{height:7px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
-.weight-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#61b2ff,#0a84ff)}
-.weight-label{font-size:12px;color:var(--muted);text-align:right}
-.row-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
-.icon-btn{border:none;border-radius:999px;padding:9px 12px;background:rgba(255,255,255,.06);color:var(--text);font-size:12px;font-weight:600}
-.icon-btn.sell{background:rgba(255,69,58,.12);color:#ffc3be}
-.icon-btn.exec{background:rgba(52,199,89,.13);color:#d5ffe0}
-.empty{padding:50px 20px;text-align:center;color:var(--muted);font-size:15px}
+.row:hover{background:rgba(255,255,255,.025)}
+
+.sym{font-family:var(--mono);font-weight:600;font-size:14px;color:var(--text-bright)}
+.name{display:flex;flex-direction:column;gap:5px;min-width:0}
+.name-main{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400}
+
+/* ── status badges ────────────────────────────────────────────── */
+.status-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;width:max-content;max-width:100%;letter-spacing:.01em}
+.status-badge.active{background:var(--green-dim);color:var(--green)}
+.status-badge.gtc{background:var(--amber-dim);color:var(--amber)}
+.status-badge.sold-badge{background:var(--red-dim);color:var(--red)}
+.status-badge.default{background:var(--chip-bg);color:var(--muted)}
+
+.val{font-family:var(--mono);font-size:13px;text-align:right;font-weight:500}
+
+/* ── weight column — spacer col gives visual breathing room ──── */
+.weight{display:flex;flex-direction:column;gap:6px;padding-left:4px}
+.weight-line{height:6px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
+.weight-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#5ea0ff,var(--blue))}
+.weight-label{font-size:11px;color:var(--muted);text-align:right;font-family:var(--mono)}
+
+.row-actions{display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.icon-btn{border-radius:999px;padding:7px 12px;background:rgba(255,255,255,.05);color:var(--text);font-size:11px;font-weight:600;transition:.15s;letter-spacing:-.01em}
+.icon-btn:hover{background:rgba(255,255,255,.09)}
+.icon-btn.sell{background:var(--red-dim);color:#ffb0b8}
+.icon-btn.sell:hover{background:rgba(240,70,90,.2)}
+.icon-btn.exec{background:var(--green-dim);color:#b8ffe0}
+.icon-btn.exec:hover{background:rgba(45,212,160,.2)}
+
+.empty{padding:44px 20px;text-align:center;color:var(--faint);font-size:14px}
+
+/* ── mobile cards ─────────────────────────────────────────────── */
 .cards{display:none}
-.mobile-card{padding:16px;border-bottom:1px solid rgba(255,255,255,.05)}
+.mobile-card{padding:16px;border-bottom:1px solid rgba(255,255,255,.04)}
 .mobile-card:last-child{border-bottom:none}
 .mobile-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}
-.mobile-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
-.mobile-stat{background:rgba(255,255,255,.04);border-radius:16px;padding:12px}
-.mobile-stat-label{font-size:11px;color:var(--muted);margin-bottom:6px}
-.mobile-stat-value{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-size:13px}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(18px);display:none;align-items:flex-end;justify-content:flex-end;padding:0;z-index:50}
+.mobile-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.mobile-stat{background:rgba(255,255,255,.035);border-radius:var(--radius-sm);padding:11px}
+.mobile-stat-label{font-size:10px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.mobile-stat-value{font-family:var(--mono);font-size:13px;font-weight:500}
+
+/* ── slide-over panel ─────────────────────────────────────────── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(14px);display:none;align-items:flex-end;justify-content:flex-end;z-index:50}
 .overlay.open{display:flex}
-.sheet{width:min(460px,100vw);height:100vh;height:100dvh;background:linear-gradient(180deg,#11151b,#0c0f14);border-left:1px solid var(--line-strong);box-shadow:var(--shadow);display:flex;flex-direction:column}
-.sheet-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding:24px 22px 18px;border-bottom:1px solid var(--line)}
-.sheet-title{font-size:28px;font-weight:700;letter-spacing:-.04em}
-.sheet-sub{font-size:13px;color:var(--muted);margin-top:6px}
-.sheet-close{border:none;background:rgba(255,255,255,.06);color:var(--text);width:38px;height:38px;border-radius:999px;font-size:18px}
-.sheet-body{padding:20px 22px 24px;overflow:auto;display:flex;flex-direction:column;gap:16px}
-.field{display:flex;flex-direction:column;gap:8px}
-.field label{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.02em}
-.field input,.field select,.field textarea{width:100%;border:none;background:rgba(255,255,255,.06);border-radius:16px;padding:14px 15px;color:var(--text);outline:none;border:1px solid transparent}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(255,255,255,.1)}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.hint{font-size:12px;color:var(--faint)}
-.summary{display:flex;flex-direction:column;gap:10px;background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:18px;padding:14px 16px}
-.summary-row{display:flex;justify-content:space-between;gap:12px;font-size:14px}
-.summary-row strong{font-size:15px}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{border:none;border-radius:999px;padding:10px 12px;background:rgba(255,255,255,.06);color:var(--muted);font-size:12px;font-weight:600}
-.chip.on{background:var(--blue-soft);color:#bdddff}
-.footer-note{font-size:12px;color:var(--faint);line-height:1.5}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);padding:12px 16px;background:rgba(18,20,26,.94);color:var(--text);border:1px solid var(--line-strong);border-radius:999px;backdrop-filter:blur(18px);box-shadow:var(--shadow);display:none;z-index:60;font-size:13px}
+.sheet{width:min(440px,100vw);height:100vh;height:100dvh;background:linear-gradient(180deg,#10131a,#0a0d12);border-left:1px solid var(--line-strong);box-shadow:var(--shadow);display:flex;flex-direction:column}
+.sheet-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding:22px 20px 16px;border-bottom:1px solid var(--line)}
+.sheet-title{font-size:24px;font-weight:700;letter-spacing:-.04em;color:var(--text-bright)}
+.sheet-sub{font-size:12px;color:var(--muted);margin-top:5px}
+.sheet-close{background:rgba(255,255,255,.06);color:var(--text);width:34px;height:34px;border-radius:999px;font-size:16px;display:flex;align-items:center;justify-content:center;transition:.15s}
+.sheet-close:hover{background:rgba(255,255,255,.1)}
+.sheet-body{padding:18px 20px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;flex:1}
+
+/* ── form fields ──────────────────────────────────────────────── */
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select,.field textarea{width:100%;border:none;background:rgba(255,255,255,.06);border-radius:var(--radius-xs);padding:12px 14px;color:var(--text);outline:none;border:1px solid transparent;font-size:14px;transition:.18s}
+.field input::placeholder{color:var(--faint)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(59,139,255,.35);background:rgba(255,255,255,.07)}
+
+/* ── select dropdown fix for dark theme ──────────────────────── */
+.field select{
+  -webkit-appearance:none;-moz-appearance:none;appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%238a93a5' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:36px
+}
+.field select option{background:#181d25;color:var(--text)}
+
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:11px;color:var(--faint);line-height:1.45}
+
+/* ── summary card ─────────────────────────────────────────────── */
+.summary{display:flex;flex-direction:column;gap:9px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:var(--radius-sm);padding:13px 15px}
+.summary-row{display:flex;justify-content:space-between;gap:12px;font-size:13px}
+.summary-row strong{font-size:14px;font-weight:600;color:var(--text-bright)}
+
+/* ── chips (quick-fill) ───────────────────────────────────────── */
+.chips-wrap{position:relative}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips.collapsed{max-height:108px;overflow:hidden}
+.chip{border-radius:999px;padding:8px 12px;background:rgba(255,255,255,.05);color:var(--muted);font-size:12px;font-weight:600;transition:.15s;font-family:var(--mono);letter-spacing:.01em}
+.chip:hover{background:rgba(255,255,255,.08)}
+.chip.on{background:var(--blue-soft);color:#a5ccff;box-shadow:inset 0 0 0 1px rgba(59,139,255,.3)}
+.chip-expand{border-radius:999px;padding:8px 12px;background:rgba(255,255,255,.08);color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.05em}
+.chip-expand:hover{background:rgba(255,255,255,.12);color:var(--text)}
+
+.footer-note{font-size:11px;color:var(--faint);line-height:1.5}
+
+/* ── toast ────────────────────────────────────────────────────── */
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);padding:11px 18px;background:rgba(14,16,22,.92);color:var(--text);border:1px solid var(--line-strong);border-radius:999px;backdrop-filter:blur(16px);box-shadow:var(--shadow);display:none;z-index:60;font-size:13px;font-weight:500}
 .toast.show{display:block}
-@media (max-width:1100px){
+
+/* ── responsive ───────────────────────────────────────────────── */
+@media(max-width:1100px){
   .layout{grid-template-columns:1fr}
   .side{order:2}
 }
-@media (max-width:900px){
+@media(max-width:900px){
   .grid{grid-template-columns:repeat(2,1fr)}
   .thead,.row{display:none}
   .cards{display:block}
-  .sheet{width:100%;height:min(92vh,92dvh);border-left:none;border-top:1px solid var(--line-strong);border-radius:28px 28px 0 0}
+  .sheet{width:100%;height:min(92vh,92dvh);border-left:none;border-top:1px solid var(--line-strong);border-radius:24px 24px 0 0}
   .overlay{align-items:flex-end}
 }
-@media (max-width:620px){
-  .app{padding:22px 14px 44px}
+@media(max-width:620px){
+  .app{padding:20px 14px 44px}
   .grid{grid-template-columns:1fr 1fr}
   .kpi{padding:16px}
-  .kpi-value{font-size:25px}
-  .topbar{align-items:flex-start}
-  .actions{justify-content:flex-start}
+  .kpi-value{font-size:24px}
+  .topbar{flex-direction:column;align-items:flex-start;gap:14px}
+  .actions{justify-content:flex-start;width:100%}
   .toolbar-right{width:100%}
   .row2{grid-template-columns:1fr}
 }
@@ -167,7 +243,8 @@ a{color:inherit}
   const DEFAULT_GS_URL = 'https://script.google.com/macros/s/AKfycbzxoWOjwTd_k_ThgrA50WT-NTYncyQv6TbAr-XRDMxI0L4YRLhRRjF3kEDLfJW52Kk/exec';
   const LS_STATE = 'jc-holdings-live-cache-v1';
   const LS_URL = 'jc-holdings-gs-url-v1';
-  const COLORS = ['#0A84FF','#34C759','#BF5AF2','#64D2FF','#FF9F0A','#FF375F','#5E5CE6','#30D158','#FFD60A','#AC8E68','#FF453A','#7D7AFF'];
+  const COLORS = ['#3B8BFF','#2DD4A0','#A87BFF','#50C8F0','#F5A623','#F0465A','#6366F1','#34D399','#FACC15','#C49A6C','#FB7185','#818CF8'];
+  const MAX_CHIPS_COLLAPSED = 9;
 
   const SAMPLE_ROWS = [
     ['Current Holding','MSFT','Microsoft Corp',2,786.66,393.33,'Active'],
@@ -189,274 +266,108 @@ a{color:inherit}
   ];
 
   const S = {
-    h: [],
-    g: [],
-    s: [],
-    tab: 'holdings',
-    q: '',
-    sk: 'totalCost',
-    sd: 'desc',
-    gsUrl: localStorage.getItem(LS_URL) || DEFAULT_GS_URL,
-    syncState: 'idle',
-    syncLabel: 'Ready',
-    panel: null,
-    panelData: null,
-    form: {},
-    busy: false,
-    lastLoadedAt: null
+    h:[],g:[],s:[],
+    tab:'holdings',q:'',sk:'totalCost',sd:'desc',
+    gsUrl:localStorage.getItem(LS_URL)||DEFAULT_GS_URL,
+    syncState:'idle',syncLabel:'Ready',
+    panel:null,panelData:null,form:{},
+    busy:false,lastLoadedAt:null,
+    chipsExpanded:false
   };
 
-  const $ = (sel, root = document) => root.querySelector(sel);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-  const money = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(n || 0));
-  const pct = n => `${(Number(n || 0)).toFixed(1)}%`;
-  const isoDate = d => {
-    const dt = d ? new Date(d) : new Date();
-    const year = dt.getFullYear();
-    const month = String(dt.getMonth() + 1).padStart(2,'0');
-    const day = String(dt.getDate()).padStart(2,'0');
-    return `${year}-${month}-${day}`;
-  };
-  const prettyDate = () => new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
-  const uid = () => Math.random().toString(36).slice(2,10);
-  const round2 = n => Math.round((Number(n || 0) + Number.EPSILON) * 100) / 100;
+  const $=(sel,root=document)=>root.querySelector(sel);
+  const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const money=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(n||0));
+  const pct=n=>`${(Number(n||0)).toFixed(1)}%`;
+  const isoDate=d=>{const dt=d?new Date(d):new Date();return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`};
+  const prettyDate=()=>new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  const uid=()=>Math.random().toString(36).slice(2,10);
+  const round2=n=>Math.round((Number(n||0)+Number.EPSILON)*100)/100;
+  const escapeHtml=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 
-  function setSync(state, label){
-    S.syncState = state;
-    S.syncLabel = label;
-    const badge = $('#sync-badge');
-    if (!badge) return;
-    const dot = badge.querySelector('.dot');
-    const text = badge.querySelector('.badge-text');
-    dot.className = `dot ${state === 'idle' ? '' : state}`;
-    if (state === 'idle') dot.className = 'dot';
-    text.textContent = label;
+  function setSync(state,label){
+    S.syncState=state;S.syncLabel=label;
+    const badge=$('#sync-badge');if(!badge)return;
+    badge.querySelector('.dot').className=`dot ${state==='idle'?'':state}`;
+    badge.querySelector('.badge-text').textContent=label;
   }
-
   function toast(msg){
-    const el = $('#toast');
-    el.textContent = msg;
-    el.classList.add('show');
-    clearTimeout(toast._t);
-    toast._t = setTimeout(() => el.classList.remove('show'), 2400);
+    const el=$('#toast');el.textContent=msg;el.classList.add('show');
+    clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),2600);
   }
+  function statusColor(v){return v>=0?'var(--green)':'var(--red)'}
 
-  function statusClass(v){
-    return v >= 0 ? 'var(--green)' : 'var(--red)';
-  }
-
+  /* ── data helpers ────────────────────────────────────────────── */
   function bucketOfLabel(label){
-    const t = String(label || '').toLowerCase();
-    if (t.includes('gtc')) return 'gtc';
-    if (t.includes('sold')) return 'sold';
-    return 'holding';
+    const t=String(label||'').toLowerCase();
+    if(t.includes('gtc'))return'gtc';if(t.includes('sold'))return'sold';return'holding';
   }
-
   function parseSoldStatus(status){
-    const str = String(status || '');
-    const priceMatch = str.match(/sold\s*@\s*\$?([0-9]+(?:\.[0-9]+)?)/i);
-    const dateMatch = str.match(/on\s+(\d{4}-\d{2}-\d{2})/i);
-    return {
-      soldPrice: priceMatch ? Number(priceMatch[1]) : 0,
-      soldDate: dateMatch ? dateMatch[1] : ''
-    };
+    const s=String(status||'');
+    const p=s.match(/sold\s*@\s*\$?([0-9]+(?:\.[0-9]+)?)/i);
+    const d=s.match(/on\s+(\d{4}-\d{2}-\d{2})/i);
+    return{soldPrice:p?Number(p[1]):0,soldDate:d?d[1]:''};
   }
-
-  function fromSheetRow(row, rowNumber){
-    const bucketLabel = row[0] || '';
-    const bucket = bucketOfLabel(bucketLabel);
-    const base = {
-      rowNumber: rowNumber || null,
-      bucket,
-      bucketLabel,
-      symbol: String(row[1] || '').trim().toUpperCase(),
-      name: String(row[2] || '').trim(),
-      shares: Number(row[3] || 0),
-      totalCost: round2(row[4] || 0),
-      avgCost: round2(row[5] || 0),
-      status: String(row[6] || '').trim()
-    };
-    if (bucket === 'sold') {
-      const extra = parseSoldStatus(base.status);
-      base.soldPrice = round2(extra.soldPrice || 0);
-      base.soldDate = extra.soldDate || '';
-    }
+  function fromSheetRow(row,rn){
+    const bl=row[0]||'',bk=bucketOfLabel(bl);
+    const base={rowNumber:rn||null,bucket:bk,bucketLabel:bl,symbol:String(row[1]||'').trim().toUpperCase(),name:String(row[2]||'').trim(),shares:Number(row[3]||0),totalCost:round2(row[4]||0),avgCost:round2(row[5]||0),status:String(row[6]||'').trim()};
+    if(bk==='sold'){const ex=parseSoldStatus(base.status);base.soldPrice=round2(ex.soldPrice||0);base.soldDate=ex.soldDate||'';}
     return base;
   }
-
   function fromBackend(data){
-    const holdings = (data.holdings || []).map(x => ({
-      rowNumber: x.rowNumber ?? null,
-      bucket: 'holding',
-      bucketLabel: x.bucketLabel || 'Current Holding',
-      symbol: String(x.symbol || '').trim().toUpperCase(),
-      name: String(x.name || '').trim(),
-      shares: Number(x.shares || 0),
-      totalCost: round2(x.totalCost || 0),
-      avgCost: round2(x.avgCost || 0),
-      status: String(x.status || 'Active')
-    }));
-    const gtc = (data.gtc || []).map(x => ({
-      rowNumber: x.rowNumber ?? null,
-      bucket: 'gtc',
-      bucketLabel: x.bucketLabel || 'GTC Area',
-      symbol: String(x.symbol || '').trim().toUpperCase(),
-      name: String(x.name || '').trim(),
-      shares: Number(x.shares || 0),
-      totalCost: round2(x.totalCost || 0),
-      avgCost: round2(x.avgCost || 0),
-      status: String(x.status || '180-day tentative area')
-    }));
-    const sold = (data.sold || []).map(x => ({
-      rowNumber: x.rowNumber ?? null,
-      bucket: 'sold',
-      bucketLabel: x.bucketLabel || 'Sold',
-      symbol: String(x.symbol || '').trim().toUpperCase(),
-      name: String(x.name || '').trim(),
-      shares: Number(x.shares || 0),
-      totalCost: round2(x.totalCost || 0),
-      avgCost: round2(x.avgCost || 0),
-      status: String(x.status || ''),
-      soldPrice: round2(x.soldPrice || parseSoldStatus(x.status || '').soldPrice || 0),
-      soldDate: String(x.soldDate || parseSoldStatus(x.status || '').soldDate || '')
-    }));
-    return {h: holdings, g: gtc, s: sold};
+    const mk=(arr,bk,bl,defSt)=>(arr||[]).map(x=>({rowNumber:x.rowNumber??null,bucket:bk,bucketLabel:x.bucketLabel||bl,symbol:String(x.symbol||'').trim().toUpperCase(),name:String(x.name||'').trim(),shares:Number(x.shares||0),totalCost:round2(x.totalCost||0),avgCost:round2(x.avgCost||0),status:String(x.status||defSt),...(bk==='sold'?{soldPrice:round2(x.soldPrice||parseSoldStatus(x.status||'').soldPrice||0),soldDate:String(x.soldDate||parseSoldStatus(x.status||'').soldDate||'')}:{})}));
+    return{h:mk(data.holdings,'holding','Current Holding','Active'),g:mk(data.gtc,'gtc','GTC Area','180-day tentative area'),s:mk(data.sold,'sold','Sold','')};
   }
-
   function loadSample(){
-    const items = SAMPLE_ROWS.map((row, idx) => fromSheetRow(row, idx + 2));
-    S.h = items.filter(x => x.bucket === 'holding');
-    S.g = items.filter(x => x.bucket === 'gtc');
-    S.s = items.filter(x => x.bucket === 'sold');
-    persistLocal();
+    const items=SAMPLE_ROWS.map((r,i)=>fromSheetRow(r,i+2));
+    S.h=items.filter(x=>x.bucket==='holding');S.g=items.filter(x=>x.bucket==='gtc');S.s=items.filter(x=>x.bucket==='sold');persistLocal();
   }
-
-  function persistLocal(){
-    const payload = {
-      h: S.h,
-      g: S.g,
-      s: S.s,
-      lastLoadedAt: S.lastLoadedAt
-    };
-    localStorage.setItem(LS_STATE, JSON.stringify(payload));
-    localStorage.setItem(LS_URL, S.gsUrl || '');
-  }
-
-  function restoreLocal(){
-    try{
-      const raw = JSON.parse(localStorage.getItem(LS_STATE) || 'null');
-      if (raw){
-        S.h = raw.h || [];
-        S.g = raw.g || [];
-        S.s = raw.s || [];
-        S.lastLoadedAt = raw.lastLoadedAt || null;
-        return true;
-      }
-    }catch(_){}
-    return false;
-  }
-
+  function persistLocal(){localStorage.setItem(LS_STATE,JSON.stringify({h:S.h,g:S.g,s:S.s,lastLoadedAt:S.lastLoadedAt}));localStorage.setItem(LS_URL,S.gsUrl||'')}
+  function restoreLocal(){try{const r=JSON.parse(localStorage.getItem(LS_STATE)||'null');if(r){S.h=r.h||[];S.g=r.g||[];S.s=r.s||[];S.lastLoadedAt=r.lastLoadedAt||null;return true}}catch(_){}return false}
   function stats(){
-    const invested = S.h.reduce((a,x) => a + Number(x.totalCost || 0), 0);
-    const gtc = S.g.reduce((a,x) => a + Number(x.totalCost || 0), 0);
-    const costBasisSold = S.s.reduce((a,x) => a + Number(x.totalCost || 0), 0);
-    const proceeds = S.s.reduce((a,x) => a + Number(x.shares || 0) * Number(x.soldPrice || 0), 0);
-    return {
-      invested: round2(invested),
-      gtc: round2(gtc),
-      proceeds: round2(proceeds),
-      realized: round2(proceeds - costBasisSold),
-      totalCapital: round2(invested + gtc)
-    };
+    const inv=S.h.reduce((a,x)=>a+Number(x.totalCost||0),0);
+    const gtc=S.g.reduce((a,x)=>a+Number(x.totalCost||0),0);
+    const cb=S.s.reduce((a,x)=>a+Number(x.totalCost||0),0);
+    const pr=S.s.reduce((a,x)=>a+Number(x.shares||0)*Number(x.soldPrice||0),0);
+    return{invested:round2(inv),gtc:round2(gtc),proceeds:round2(pr),realized:round2(pr-cb),totalCapital:round2(inv+gtc)};
   }
-
-  function allSymbols(){
-    const map = new Map();
-    [...S.h, ...S.g].forEach(item => {
-      if (!map.has(item.symbol)) map.set(item.symbol, item.name);
-    });
-    return Array.from(map.entries()).map(([symbol,name]) => ({symbol,name}));
-  }
-
+  function allSymbols(){const m=new Map();[...S.h,...S.g].forEach(i=>{if(!m.has(i.symbol))m.set(i.symbol,i.name)});return Array.from(m.entries()).map(([s,n])=>({symbol:s,name:n}))}
   function currentList(){
-    const base = S.tab === 'holdings' ? S.h : S.tab === 'gtc' ? S.g : S.s;
-    const q = S.q.trim().toLowerCase();
-    let list = q ? base.filter(x =>
-      String(x.symbol).toLowerCase().includes(q) ||
-      String(x.name).toLowerCase().includes(q) ||
-      String(x.status || '').toLowerCase().includes(q)
-    ) : [...base];
-    const dir = S.sd === 'desc' ? -1 : 1;
-    list.sort((a,b) => {
-      if (S.sk === 'symbol') return dir * a.symbol.localeCompare(b.symbol);
-      return dir * ((Number(a[S.sk] || 0)) - (Number(b[S.sk] || 0)));
-    });
+    const base=S.tab==='holdings'?S.h:S.tab==='gtc'?S.g:S.s;
+    const q=S.q.trim().toLowerCase();
+    let list=q?base.filter(x=>String(x.symbol).toLowerCase().includes(q)||String(x.name).toLowerCase().includes(q)||String(x.status||'').toLowerCase().includes(q)):[...base];
+    const dir=S.sd==='desc'?-1:1;
+    list.sort((a,b)=>S.sk==='symbol'?dir*a.symbol.localeCompare(b.symbol):dir*(Number(a[S.sk]||0)-Number(b[S.sk]||0)));
     return list;
   }
+  function listTotal(){return(S.tab==='holdings'?S.h:S.tab==='gtc'?S.g:S.s).reduce((a,x)=>a+Number(x.totalCost||0),0)}
+  function setData(d){S.h=d.h||[];S.g=d.g||[];S.s=d.s||[];S.lastLoadedAt=new Date().toISOString();persistLocal()}
 
-  function listTotal(){
-    const list = S.tab === 'holdings' ? S.h : S.tab === 'gtc' ? S.g : S.s;
-    return list.reduce((a,x) => a + Number(x.totalCost || 0), 0);
+  /* ── ring chart ──────────────────────────────────────────────── */
+  function ringSVG(items,total){
+    const cx=94,cy=94,r=72,w=17;
+    if(!total)return`<svg width="188" height="188" viewBox="0 0 188 188"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="${w}"/><text x="94" y="90" text-anchor="middle" fill="var(--text-bright)" style="font:700 26px Inter">$0</text><text x="94" y="112" text-anchor="middle" fill="var(--muted)" style="font:500 11px Inter">No holdings</text></svg>`;
+    let start=-Math.PI/2;
+    const paths=items.map((item,i)=>{const sl=(item.value/total)*Math.PI*2,end=start+sl,lg=sl>Math.PI?1:0,x1=cx+r*Math.cos(start),y1=cy+r*Math.sin(start),x2=cx+r*Math.cos(end),y2=cy+r*Math.sin(end),d=`M ${x1} ${y1} A ${r} ${r} 0 ${lg} 1 ${x2} ${y2}`,out=`<path d="${d}" fill="none" stroke="${COLORS[i%COLORS.length]}" stroke-width="${w}" stroke-linecap="round"/>`;start=end;return out}).join('');
+    return`<svg width="188" height="188" viewBox="0 0 188 188"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="${w}"/>${paths}<text x="94" y="86" text-anchor="middle" fill="var(--text-bright)" style="font:700 22px Inter">${money(total).replace('.00','')}</text><text x="94" y="108" text-anchor="middle" fill="var(--muted)" style="font:500 11px Inter">Cost basis</text></svg>`;
   }
 
-  function setData(data){
-    S.h = data.h || [];
-    S.g = data.g || [];
-    S.s = data.s || [];
-    S.lastLoadedAt = new Date().toISOString();
-    persistLocal();
+  /* ── status badge helper ─────────────────────────────────────── */
+  function statusBadge(item){
+    const s=String(item.status||'').toLowerCase();
+    if(item.bucket==='sold')return`<span class="status-badge sold-badge">${escapeHtml(item.status)||'Sold'}</span>`;
+    if(s.includes('active'))return`<span class="status-badge active">Active</span>`;
+    if(s.includes('tentative')||s.includes('gtc'))return`<span class="status-badge gtc">180d Tentative</span>`;
+    return`<span class="status-badge default">${escapeHtml(item.status)||'—'}</span>`;
   }
 
-  function normalizeBucketLabel(bucket){
-    if (bucket === 'gtc') return 'GTC Area';
-    if (bucket === 'sold') return 'Sold';
-    return 'Current Holding';
-  }
-
-  function statusForBucket(bucket, windowText){
-    if (bucket === 'gtc') return windowText || '180-day tentative area';
-    if (bucket === 'sold') return windowText || '';
-    return 'Active';
-  }
-
-  function ringSVG(items, total){
-    if (!total) {
-      return `<svg width="188" height="188" viewBox="0 0 188 188" aria-hidden="true">
-        <circle cx="94" cy="94" r="72" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="18"></circle>
-        <text x="94" y="90" text-anchor="middle" fill="var(--text)" style="font:700 28px Inter, sans-serif">$0</text>
-        <text x="94" y="114" text-anchor="middle" fill="var(--muted)" style="font:500 12px Inter, sans-serif">No holdings</text>
-      </svg>`;
-    }
-    const cx = 94, cy = 94, r = 72, w = 18;
-    let start = -Math.PI / 2;
-    const paths = items.map((item, i) => {
-      const slice = (item.value / total) * Math.PI * 2;
-      const end = start + slice;
-      const large = slice > Math.PI ? 1 : 0;
-      const x1 = cx + r * Math.cos(start);
-      const y1 = cy + r * Math.sin(start);
-      const x2 = cx + r * Math.cos(end);
-      const y2 = cy + r * Math.sin(end);
-      const d = `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
-      const out = `<path d="${d}" fill="none" stroke="${COLORS[i % COLORS.length]}" stroke-width="${w}" stroke-linecap="round"></path>`;
-      start = end;
-      return out;
-    }).join('');
-    return `<svg width="188" height="188" viewBox="0 0 188 188" aria-hidden="true">
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="${w}"></circle>
-      ${paths}
-      <text x="94" y="88" text-anchor="middle" fill="var(--text)" style="font:700 24px Inter, sans-serif">${money(total).replace('.00','')}</text>
-      <text x="94" y="112" text-anchor="middle" fill="var(--muted)" style="font:500 12px Inter, sans-serif">Current holdings</text>
-    </svg>`;
-  }
-
+  /* ── shell ───────────────────────────────────────────────────── */
   function buildShell(){
-    const root = $('#app');
-    root.innerHTML = `
+    $('#app').innerHTML=`
       <header class="topbar">
         <div class="title-wrap">
-          <div class="kicker">Stocks</div>
-          <div class="title">Portfolio</div>
+          <div class="kicker">Portfolio</div>
+          <div class="title">Holdings</div>
           <div class="subtitle" id="header-date">${prettyDate()}</div>
         </div>
         <div class="actions">
@@ -469,21 +380,13 @@ a{color:inherit}
       <section class="grid" id="kpi-grid"></section>
       <section class="layout">
         <aside class="card side">
-          <div class="side-head">
-            <div>
-              <div class="side-title">My Symbols</div>
-              <div class="side-sub">Visual weight by cost basis</div>
-            </div>
-          </div>
+          <div class="side-head"><div><div class="side-title">Allocation</div><div class="side-sub">By cost basis</div></div></div>
           <div class="ring-wrap" id="ring"></div>
           <div class="legend" id="legend"></div>
         </aside>
         <main class="card main">
           <div class="toolbar">
-            <div class="search">
-              <input id="search-input" placeholder="Search symbols, names, status">
-              <button class="clear" id="search-clear" aria-label="Clear">×</button>
-            </div>
+            <div class="search"><input id="search-input" placeholder="Search ticker, name, status…"><button class="clear" id="search-clear">×</button></div>
             <div class="toolbar-right">
               <div class="segmented" id="tabs"></div>
               <div class="sorts" id="sorts"></div>
@@ -491,716 +394,326 @@ a{color:inherit}
           </div>
           <div class="table">
             <div class="thead">
-              <div>Symbol</div>
-              <div>Name</div>
-              <div style="text-align:right">Shares</div>
-              <div style="text-align:right">Avg Cost</div>
-              <div style="text-align:right">Total Cost</div>
-              <div style="text-align:right">Weight</div>
-              <div style="text-align:right">Actions</div>
+              <div>Ticker</div><div>Name</div><div style="text-align:right">Shares</div><div style="text-align:right">Avg Cost</div><div style="text-align:right">Total</div><div></div><div style="text-align:right">Weight</div><div style="text-align:right">Actions</div>
             </div>
             <div id="rows"></div>
             <div class="cards" id="cards"></div>
           </div>
         </main>
-      </section>
-    `;
-    $('#refresh-btn').addEventListener('click', () => refreshFromSheet(true));
-    $('#settings-btn').addEventListener('click', openSettings);
-    $('#new-btn').addEventListener('click', () => openAdd({}));
-    $('#search-input').addEventListener('input', e => { S.q = e.target.value; renderList(); });
-    $('#search-clear').addEventListener('click', () => { S.q = ''; $('#search-input').value = ''; renderList(); });
+      </section>`;
+    $('#refresh-btn').onclick=()=>refreshFromSheet(true);
+    $('#settings-btn').onclick=openSettings;
+    $('#new-btn').onclick=()=>openAdd({});
+    $('#search-input').oninput=e=>{S.q=e.target.value;renderList()};
+    $('#search-clear').onclick=()=>{S.q='';$('#search-input').value='';renderList()};
   }
 
+  /* ── render functions ────────────────────────────────────────── */
   function renderKPIs(){
-    const v = stats();
-    $('#kpi-grid').innerHTML = `
-      <div class="card kpi">
-        <div class="kpi-label">Invested</div>
-        <div class="kpi-value">${money(v.invested)}</div>
-        <div class="kpi-sub">${S.h.length} live positions</div>
-      </div>
-      <div class="card kpi">
-        <div class="kpi-label">GTC Pending</div>
-        <div class="kpi-value">${money(v.gtc)}</div>
-        <div class="kpi-sub">${S.g.length} staged orders</div>
-      </div>
-      <div class="card kpi">
-        <div class="kpi-label">Realized P&L</div>
-        <div class="kpi-value" style="color:${statusClass(v.realized)}">${S.s.length ? money(v.realized) : '—'}</div>
-        <div class="kpi-sub">${S.s.length} sold lots</div>
-      </div>
-      <div class="card kpi">
-        <div class="kpi-label">Total Capital</div>
-        <div class="kpi-value">${money(v.totalCapital)}</div>
-        <div class="kpi-sub">${S.h.length + S.g.length} total entries</div>
-      </div>
-    `;
+    const v=stats();
+    $('#kpi-grid').innerHTML=`
+      <div class="card kpi"><div class="kpi-label">Invested</div><div class="kpi-value">${money(v.invested)}</div><div class="kpi-sub">${S.h.length} positions</div></div>
+      <div class="card kpi"><div class="kpi-label">GTC Pending</div><div class="kpi-value">${money(v.gtc)}</div><div class="kpi-sub">${S.g.length} staged</div></div>
+      <div class="card kpi"><div class="kpi-label">Realized P&L</div><div class="kpi-value" style="color:${statusColor(v.realized)}">${S.s.length?money(v.realized):'—'}</div><div class="kpi-sub">${S.s.length} sold</div></div>
+      <div class="card kpi"><div class="kpi-label">Total Capital</div><div class="kpi-value">${money(v.totalCapital)}</div><div class="kpi-sub">${S.h.length+S.g.length} total</div></div>`;
   }
 
   function renderSide(){
-    const map = new Map();
-    S.h.forEach(x => map.set(x.symbol, (map.get(x.symbol) || 0) + Number(x.totalCost || 0)));
-    const items = Array.from(map.entries()).map(([symbol,value]) => ({symbol, value})).sort((a,b) => b.value - a.value);
-    const total = items.reduce((a,x) => a + x.value, 0);
-    $('#ring').innerHTML = ringSVG(items, total);
-    $('#legend').innerHTML = items.length ? items.map((item, idx) => `
-      <div class="legend-row">
-        <div class="legend-left">
-          <span class="legend-dot" style="background:${COLORS[idx % COLORS.length]}"></span>
-          <span class="legend-name">${item.symbol}</span>
-        </div>
-        <span class="legend-pct">${pct(total ? item.value / total * 100 : 0)}</span>
-      </div>
-    `).join('') : `<div class="empty" style="padding:10px 0 0;text-align:left">No holdings yet.</div>`;
+    const map=new Map();S.h.forEach(x=>map.set(x.symbol,(map.get(x.symbol)||0)+Number(x.totalCost||0)));
+    const items=Array.from(map.entries()).map(([s,v])=>({symbol:s,value:v})).sort((a,b)=>b.value-a.value);
+    const total=items.reduce((a,x)=>a+x.value,0);
+    $('#ring').innerHTML=ringSVG(items,total);
+    $('#legend').innerHTML=items.length?items.map((it,i)=>`<div class="legend-row"><div class="legend-left"><span class="legend-dot" style="background:${COLORS[i%COLORS.length]}"></span><span class="legend-name">${it.symbol}</span></div><span class="legend-pct">${pct(total?it.value/total*100:0)}</span></div>`).join(''):'<div class="empty" style="padding:8px 0;text-align:left">No holdings yet.</div>';
   }
 
   function renderTabs(){
-    const tabs = [
-      ['holdings','Holdings',S.h.length],
-      ['gtc','GTC',S.g.length],
-      ['sold','Sold',S.s.length]
-    ];
-    $('#tabs').innerHTML = tabs.map(([key,label,count]) =>
-      `<button class="pill ${S.tab === key ? 'on' : ''}" data-tab="${key}">${label} · ${count}</button>`
-    ).join('');
-    $$('#tabs .pill').forEach(btn => btn.addEventListener('click', () => { S.tab = btn.dataset.tab; renderList(); renderTabs(); }));
+    const tabs=[['holdings','Holdings',S.h.length],['gtc','GTC',S.g.length],['sold','Sold',S.s.length]];
+    $('#tabs').innerHTML=tabs.map(([k,l,c])=>`<button class="pill ${S.tab===k?'on':''}" data-tab="${k}">${l} · ${c}</button>`).join('');
+    $$('#tabs .pill').forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;renderList();renderTabs()});
   }
-
   function renderSorts(){
-    const sorts = [
-      ['totalCost','Total'],
-      ['avgCost','Avg'],
-      ['shares','Shares'],
-      ['symbol','Ticker']
-    ];
-    $('#sorts').innerHTML = sorts.map(([key,label]) =>
-      `<button class="pill ${S.sk === key ? 'on' : ''}" data-sort="${key}">${label}${S.sk === key ? (S.sd === 'desc' ? ' ↓' : ' ↑') : ''}</button>`
-    ).join('');
-    $$('#sorts .pill').forEach(btn => btn.addEventListener('click', () => {
-      const key = btn.dataset.sort;
-      if (S.sk === key) S.sd = S.sd === 'desc' ? 'asc' : 'desc';
-      else { S.sk = key; S.sd = 'desc'; }
-      renderSorts();
-      renderList();
-    }));
+    const sorts=[['totalCost','Total'],['avgCost','Avg'],['shares','Shares'],['symbol','Ticker']];
+    $('#sorts').innerHTML=sorts.map(([k,l])=>`<button class="pill ${S.sk===k?'on':''}" data-sort="${k}">${l}${S.sk===k?(S.sd==='desc'?' ↓':' ↑'):''}</button>`).join('');
+    $$('#sorts .pill').forEach(b=>b.onclick=()=>{if(S.sk===b.dataset.sort)S.sd=S.sd==='desc'?'asc':'desc';else{S.sk=b.dataset.sort;S.sd='desc'}renderSorts();renderList()});
   }
 
   function rowActions(item){
-    const parts = [];
-    if (item.bucket === 'holding') parts.push(`<button class="icon-btn sell" data-action="sell" data-row="${item.rowNumber}">Sell</button>`);
-    if (item.bucket === 'gtc') parts.push(`<button class="icon-btn exec" data-action="exec" data-row="${item.rowNumber}">Execute</button>`);
-    parts.push(`<button class="icon-btn" data-action="remove" data-row="${item.rowNumber}">Delete</button>`);
-    return parts.join('');
-  }
-
-  function statusMeta(item){
-    if (item.bucket === 'sold') {
-      return item.status || `Sold`;
-    }
-    return item.status || (item.bucket === 'gtc' ? 'Pending' : 'Active');
+    const p=[];
+    if(item.bucket==='holding')p.push(`<button class="icon-btn sell" data-action="sell" data-row="${item.rowNumber}">Sell</button>`);
+    if(item.bucket==='gtc')p.push(`<button class="icon-btn exec" data-action="exec" data-row="${item.rowNumber}">Execute</button>`);
+    p.push(`<button class="icon-btn" data-action="remove" data-row="${item.rowNumber}">Delete</button>`);
+    return p.join('');
   }
 
   function renderList(){
-    const rows = currentList();
-    const total = listTotal();
-    const rowWrap = $('#rows');
-    const cardWrap = $('#cards');
-
-    if (!rows.length){
-      const label = S.tab === 'sold' ? 'No sold positions yet.' : S.tab === 'gtc' ? 'No GTC entries yet.' : 'No holdings match that search.';
-      rowWrap.innerHTML = `<div class="empty">${label}</div>`;
-      cardWrap.innerHTML = '';
-      return;
+    const rows=currentList(),total=listTotal(),rowW=$('#rows'),cardW=$('#cards');
+    if(!rows.length){
+      const l=S.tab==='sold'?'No sold positions yet.':S.tab==='gtc'?'No GTC entries.':'No matches.';
+      rowW.innerHTML=`<div class="empty">${l}</div>`;cardW.innerHTML='';return;
     }
-
-    rowWrap.innerHTML = rows.map(item => {
-      const weight = total ? item.totalCost / total * 100 : 0;
-      return `
-        <div class="row">
-          <div class="sym">${item.symbol}</div>
-          <div class="name">
-            <div class="name-main">${item.name || item.symbol}</div>
-            <div class="meta-chip">${statusMeta(item)}</div>
-          </div>
-          <div class="val">${Number(item.shares || 0)}</div>
-          <div class="val">${money(item.avgCost)}</div>
-          <div class="val">${money(item.totalCost)}</div>
-          <div class="weight">
-            <div class="weight-line"><div class="weight-fill" style="width:${Math.max(4, Math.min(weight,100))}%"></div></div>
-            <div class="weight-label">${pct(weight)}</div>
-          </div>
-          <div class="row-actions">${rowActions(item)}</div>
-        </div>
-      `;
+    rowW.innerHTML=rows.map(item=>{
+      const w=total?item.totalCost/total*100:0;
+      return`<div class="row">
+        <div class="sym">${item.symbol}</div>
+        <div class="name"><div class="name-main">${item.name||item.symbol}</div>${statusBadge(item)}</div>
+        <div class="val">${Number(item.shares||0)}</div>
+        <div class="val">${money(item.avgCost)}</div>
+        <div class="val">${money(item.totalCost)}</div>
+        <div></div>
+        <div class="weight"><div class="weight-line"><div class="weight-fill" style="width:${Math.max(4,Math.min(w,100))}%"></div></div><div class="weight-label">${pct(w)}</div></div>
+        <div class="row-actions">${rowActions(item)}</div>
+      </div>`;
     }).join('');
-
-    cardWrap.innerHTML = rows.map(item => {
-      const weight = total ? item.totalCost / total * 100 : 0;
-      return `
-        <div class="mobile-card">
-          <div class="mobile-top">
-            <div>
-              <div class="sym">${item.symbol}</div>
-              <div class="name-main" style="margin-top:4px">${item.name || item.symbol}</div>
-              <div class="meta-chip" style="margin-top:8px">${statusMeta(item)}</div>
-            </div>
-          </div>
-          <div class="mobile-grid">
-            <div class="mobile-stat"><div class="mobile-stat-label">Shares</div><div class="mobile-stat-value">${Number(item.shares || 0)}</div></div>
-            <div class="mobile-stat"><div class="mobile-stat-label">Avg Cost</div><div class="mobile-stat-value">${money(item.avgCost)}</div></div>
-            <div class="mobile-stat"><div class="mobile-stat-label">Total Cost</div><div class="mobile-stat-value">${money(item.totalCost)}</div></div>
-            <div class="mobile-stat"><div class="mobile-stat-label">Weight</div><div class="mobile-stat-value">${pct(weight)}</div></div>
-          </div>
-          <div class="row-actions">${rowActions(item)}</div>
+    cardW.innerHTML=rows.map(item=>{
+      const w=total?item.totalCost/total*100:0;
+      return`<div class="mobile-card">
+        <div class="mobile-top"><div><div class="sym">${item.symbol}</div><div class="name-main" style="margin-top:4px">${item.name||item.symbol}</div><div style="margin-top:6px">${statusBadge(item)}</div></div></div>
+        <div class="mobile-grid">
+          <div class="mobile-stat"><div class="mobile-stat-label">Shares</div><div class="mobile-stat-value">${Number(item.shares||0)}</div></div>
+          <div class="mobile-stat"><div class="mobile-stat-label">Avg Cost</div><div class="mobile-stat-value">${money(item.avgCost)}</div></div>
+          <div class="mobile-stat"><div class="mobile-stat-label">Total</div><div class="mobile-stat-value">${money(item.totalCost)}</div></div>
+          <div class="mobile-stat"><div class="mobile-stat-label">Weight</div><div class="mobile-stat-value">${pct(w)}</div></div>
         </div>
-      `;
+        <div class="row-actions">${rowActions(item)}</div>
+      </div>`;
     }).join('');
-
-    $$('[data-action="sell"]').forEach(btn => btn.addEventListener('click', () => {
-      const item = S.h.find(x => String(x.rowNumber) === btn.dataset.row);
-      if (item) openSell(item);
-    }));
-    $$('[data-action="exec"]').forEach(btn => btn.addEventListener('click', () => {
-      const item = S.g.find(x => String(x.rowNumber) === btn.dataset.row);
-      if (item) openExec(item);
-    }));
-    $$('[data-action="remove"]').forEach(btn => btn.addEventListener('click', () => {
-      const all = [...S.h, ...S.g, ...S.s];
-      const item = all.find(x => String(x.rowNumber) === btn.dataset.row);
-      if (item) confirmRemove(item);
-    }));
+    bindRowActions();
+  }
+  function bindRowActions(){
+    $$('[data-action="sell"]').forEach(b=>b.onclick=()=>{const i=S.h.find(x=>String(x.rowNumber)===b.dataset.row);if(i)openSell(i)});
+    $$('[data-action="exec"]').forEach(b=>b.onclick=()=>{const i=S.g.find(x=>String(x.rowNumber)===b.dataset.row);if(i)openExec(i)});
+    $$('[data-action="remove"]').forEach(b=>b.onclick=()=>{const i=[...S.h,...S.g,...S.s].find(x=>String(x.rowNumber)===b.dataset.row);if(i)confirmRemove(i)});
   }
 
   function renderAll(){
-    if (!$('#app').children.length) buildShell();
-    $('#header-date').textContent = prettyDate();
-    renderKPIs();
-    renderSide();
-    renderTabs();
-    renderSorts();
-    $('#search-input').value = S.q;
-    renderList();
-    setSync(S.syncState, S.syncLabel);
+    if(!$('#app').children.length)buildShell();
+    $('#header-date').textContent=prettyDate();
+    renderKPIs();renderSide();renderTabs();renderSorts();
+    $('#search-input').value=S.q;
+    renderList();setSync(S.syncState,S.syncLabel);
   }
 
-  function setPanel(kind, data){
-    S.panel = kind;
-    S.panelData = data || null;
-    if (kind === 'add') {
-      S.form = {
-        symbol: data?.symbol || '',
-        name: data?.name || '',
-        shares: '',
-        cost: '',
-        bucket: 'holding',
-        windowText: '180-day tentative area'
-      };
+  /* ── panel system ────────────────────────────────────────────── */
+  function setPanel(kind,data){
+    S.panel=kind;S.panelData=data||null;S.chipsExpanded=false;
+    if(kind==='add'){
+      const bk=data?.bucket||'holding';
+      S.form={symbol:data?.symbol||'',name:data?.name||'',shares:'',cost:'',bucket:bk,status:bk==='gtc'?'180-day tentative area':'Active'};
     }
-    if (kind === 'sell') {
-      S.form = {
-        shares: String(data.shares),
-        price: '',
-        soldDate: isoDate()
-      };
-    }
-    if (kind === 'exec') {
-      S.form = {
-        fillPrice: String(data.avgCost || ''),
-        fillDate: isoDate()
-      };
-    }
-    if (kind === 'settings') {
-      S.form = {
-        gsUrl: S.gsUrl || '',
-      };
-    }
+    if(kind==='sell')S.form={shares:String(data.shares),price:'',soldDate:isoDate()};
+    if(kind==='exec')S.form={fillPrice:String(data.avgCost||''),fillDate:isoDate()};
+    if(kind==='settings')S.form={gsUrl:S.gsUrl||''};
     renderPanel();
   }
-
-  function closePanel(){
-    S.panel = null;
-    S.panelData = null;
-    S.form = {};
-    renderPanel();
+  function closePanel(){S.panel=null;S.panelData=null;S.form={};renderPanel()}
+  function panelShell(title,sub,body){
+    const ov=$('#overlay');
+    ov.innerHTML=`<div class="sheet"><div class="sheet-head"><div><div class="sheet-title">${title}</div><div class="sheet-sub">${sub}</div></div><button class="sheet-close" id="panel-close">×</button></div><div class="sheet-body">${body}</div></div>`;
+    ov.classList.add('open');
+    ov.addEventListener('click',e=>{if(e.target===ov)closePanel()},{once:true});
+    $('#panel-close').onclick=closePanel;
   }
-
-  function panelShell(title, sub, body){
-    const overlay = $('#overlay');
-    overlay.innerHTML = `
-      <div class="sheet" role="dialog" aria-modal="true">
-        <div class="sheet-head">
-          <div>
-            <div class="sheet-title">${title}</div>
-            <div class="sheet-sub">${sub}</div>
-          </div>
-          <button class="sheet-close" id="panel-close">×</button>
-        </div>
-        <div class="sheet-body">${body}</div>
-      </div>
-    `;
-    overlay.classList.add('open');
-    overlay.addEventListener('click', e => { if (e.target === overlay) closePanel(); }, {once:true});
-    $('#panel-close').addEventListener('click', closePanel);
-  }
+  function openAdd(pf){setPanel('add',pf||{})}
+  function openSell(item){setPanel('sell',item)}
+  function openExec(item){setPanel('exec',item)}
+  function openSettings(){setPanel('settings',null)}
 
   function renderPanel(){
-    const overlay = $('#overlay');
-    if (!S.panel){
-      overlay.classList.remove('open');
-      overlay.innerHTML = '';
+    const ov=$('#overlay');
+    if(!S.panel){ov.classList.remove('open');ov.innerHTML='';return}
+
+    if(S.panel==='settings'){
+      panelShell('Settings','Connection & cache',`
+        <div class="field"><label>Apps Script URL</label><input id="set-url" value="${escapeHtml(S.form.gsUrl||'')}" placeholder="https://script.google.com/macros/s/…/exec"><div class="hint">JSONP for reads, dual-path (JSONP GET + fetch POST fallback) for writes.</div></div>
+        <div class="row2"><button class="btn ghost" id="test-read-btn">Test Read</button><button class="btn primary" id="save-url-btn">Save URL</button></div>
+        <div class="summary"><div class="summary-row"><span>Holdings</span><strong>${S.h.length}</strong></div><div class="summary-row"><span>GTC</span><strong>${S.g.length}</strong></div><div class="summary-row"><span>Sold</span><strong>${S.s.length}</strong></div></div>
+        <button class="btn ghost" id="load-sample-btn">Load Sample Data</button>`);
+      $('#set-url').oninput=e=>{S.form.gsUrl=e.target.value};
+      $('#save-url-btn').onclick=()=>{S.gsUrl=(S.form.gsUrl||'').trim();localStorage.setItem(LS_URL,S.gsUrl);toast('Saved');closePanel()};
+      $('#test-read-btn').onclick=async()=>{const c=(S.form.gsUrl||'').trim();if(!c)return toast('Paste a URL first');const p=S.gsUrl;S.gsUrl=c;const ok=await refreshFromSheet(false);if(!ok)S.gsUrl=p;else toast('Read OK')};
+      $('#load-sample-btn').onclick=()=>{loadSample();renderAll();toast('Loaded sample data')};
       return;
     }
 
-    if (S.panel === 'settings'){
-      panelShell('Settings','Google Sheets connection and cache', `
-        <div class="field">
-          <label>Apps Script Web App URL</label>
-          <input id="set-url" value="${escapeHtml(S.form.gsUrl || '')}" placeholder="https://script.google.com/macros/s/.../exec">
-          <div class="hint">Paste the deployed Web App URL here. The dashboard uses JSONP for both reads and writes — no hidden iframes or form POSTs.</div>
-        </div>
-        <div class="row2">
-          <button class="btn ghost" id="test-read-btn">Test Read</button>
-          <button class="btn primary" id="save-url-btn">Save URL</button>
-        </div>
-        <div class="summary">
-          <div class="summary-row"><span>Cached holdings</span><strong>${S.h.length}</strong></div>
-          <div class="summary-row"><span>Cached GTC</span><strong>${S.g.length}</strong></div>
-          <div class="summary-row"><span>Cached sold lots</span><strong>${S.s.length}</strong></div>
-        </div>
-        <button class="btn ghost" id="load-sample-btn">Use Sample Data</button>
-        <div class="footer-note">All reads and writes go through JSONP (script-tag injection), which avoids cross-origin POST issues entirely. After a write, the dashboard reads the sheet back to verify.</div>
-      `);
-      $('#set-url').addEventListener('input', e => { S.form.gsUrl = e.target.value; });
-      $('#save-url-btn').addEventListener('click', () => {
-        S.gsUrl = (S.form.gsUrl || '').trim();
-        localStorage.setItem(LS_URL, S.gsUrl);
-        toast('Saved');
-        closePanel();
-      });
-      $('#test-read-btn').addEventListener('click', async () => {
-        const candidate = (S.form.gsUrl || '').trim();
-        if (!candidate) return toast('Paste a URL first');
-        const prev = S.gsUrl;
-        S.gsUrl = candidate;
-        const ok = await refreshFromSheet(false);
-        if (!ok) S.gsUrl = prev;
-      });
-      $('#load-sample-btn').addEventListener('click', () => {
-        loadSample();
-        renderAll();
-        toast('Loaded sample data');
-      });
-      return;
-    }
+    if(S.panel==='add'){
+      const shares=Number(S.form.shares||0);
+      const costPerShare=Number(S.form.cost||0);
+      const totalCost=(shares>0&&costPerShare>0)?money(round2(shares*costPerShare)):'—';
+      const symbols=allSymbols();
+      const needExpand=symbols.length>MAX_CHIPS_COLLAPSED;
+      const visibleSyms=S.chipsExpanded?symbols:symbols.slice(0,MAX_CHIPS_COLLAPSED);
 
-    if (S.panel === 'add'){
-      const avg = (Number(S.form.shares || 0) > 0 && Number(S.form.cost || 0) > 0) ? money(Number(S.form.cost) / Number(S.form.shares)) : '—';
-      const symbols = allSymbols();
-      panelShell('New Position','Add a live holding or a GTC entry', `
-        ${symbols.length ? `
-          <div class="field">
-            <label>Quick fill from portfolio</label>
-            <div class="chips" id="quick-chips">${symbols.map(sym => `<button class="chip ${S.form.symbol === sym.symbol ? 'on' : ''}" data-chip="${sym.symbol}">${sym.symbol}</button>`).join('')}</div>
-          </div>` : ''}
+      panelShell('New Position','Add a holding or GTC entry',`
+        ${symbols.length?`<div class="field"><label>Quick Fill</label><div class="chips-wrap"><div class="chips${!S.chipsExpanded&&needExpand?' collapsed':''}" id="quick-chips">${visibleSyms.map(sym=>`<button class="chip ${S.form.symbol===sym.symbol?'on':''}" data-chip="${sym.symbol}">${sym.symbol}</button>`).join('')}${needExpand&&!S.chipsExpanded?`<button class="chip-expand" id="chips-more">… +${symbols.length-MAX_CHIPS_COLLAPSED}</button>`:''}</div></div></div>`:''}
         <div class="row2">
-          <div class="field">
-            <label>Bucket</label>
-            <select id="add-bucket">
-              <option value="holding" ${S.form.bucket === 'holding' ? 'selected' : ''}>Current Holding</option>
-              <option value="gtc" ${S.form.bucket === 'gtc' ? 'selected' : ''}>GTC Area</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Window / Status</label>
-            <input id="add-window" value="${escapeHtml(S.form.windowText || '')}" placeholder="180-day tentative area">
-          </div>
+          <div class="field"><label>Bucket</label><select id="add-bucket"><option value="holding" ${S.form.bucket==='holding'?'selected':''}>Current Holding</option><option value="gtc" ${S.form.bucket==='gtc'?'selected':''}>GTC Area</option></select></div>
+          <div class="field"><label>Status</label><select id="add-status"><option value="Active" ${S.form.status==='Active'?'selected':''}>Active</option><option value="180-day tentative area" ${S.form.status==='180-day tentative area'?'selected':''}>180-day tentative area</option></select></div>
         </div>
         <div class="row2">
-          <div class="field">
-            <label>Symbol</label>
-            <input id="add-symbol" value="${escapeHtml(S.form.symbol || '')}" placeholder="MSFT">
-          </div>
-          <div class="field">
-            <label>Name</label>
-            <input id="add-name" value="${escapeHtml(S.form.name || '')}" placeholder="Microsoft Corp">
-          </div>
+          <div class="field"><label>Ticker</label><input id="add-symbol" value="${escapeHtml(S.form.symbol||'')}" placeholder="MSFT"></div>
+          <div class="field"><label>Name</label><input id="add-name" value="${escapeHtml(S.form.name||'')}" placeholder="Microsoft Corp"></div>
         </div>
         <div class="row2">
-          <div class="field">
-            <label>Shares</label>
-            <input id="add-shares" type="number" step="0.0001" value="${escapeHtml(S.form.shares || '')}" placeholder="0">
-          </div>
-          <div class="field">
-            <label>Total Cost</label>
-            <input id="add-cost" type="number" step="0.01" value="${escapeHtml(S.form.cost || '')}" placeholder="0.00">
-          </div>
+          <div class="field"><label>Shares</label><input id="add-shares" type="number" inputmode="decimal" step="any" value="${escapeHtml(S.form.shares||'')}" placeholder="0"></div>
+          <div class="field"><label>Cost Per Share</label><input id="add-cost" type="number" inputmode="decimal" step="any" value="${escapeHtml(S.form.cost||'')}" placeholder="0.00"></div>
         </div>
-        <div class="summary">
-          <div class="summary-row"><span>Avg cost / share</span><strong>${avg}</strong></div>
-        </div>
-        <button class="btn primary" id="add-submit-btn">Add Position</button>
-      `);
+        <div class="summary"><div class="summary-row"><span>Total Cost</span><strong>${totalCost}</strong></div></div>
+        <button class="btn primary" id="add-submit-btn">Add Position</button>`);
       bindAddPanel();
       return;
     }
 
-    if (S.panel === 'sell'){
-      const item = S.panelData;
-      const shares = Number(S.form.shares || 0);
-      const price = Number(S.form.price || 0);
-      const proceeds = round2(shares * price);
-      const basis = round2(shares * Number(item.avgCost || 0));
-      const pnl = round2(proceeds - basis);
-      panelShell(`Sell ${escapeHtml(item.symbol)}`,'Move part or all of this lot to Sold', `
-        <div class="field">
-          <label>Lot</label>
-          <div class="summary">
-            <div class="summary-row"><span>Current shares</span><strong>${item.shares}</strong></div>
-            <div class="summary-row"><span>Avg cost</span><strong>${money(item.avgCost)}</strong></div>
-            <div class="summary-row"><span>Total cost</span><strong>${money(item.totalCost)}</strong></div>
-          </div>
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label>Shares to sell</label>
-            <input id="sell-shares" type="number" step="0.0001" value="${escapeHtml(S.form.shares || '')}">
-          </div>
-          <div class="field">
-            <label>Sold price / share</label>
-            <input id="sell-price" type="number" step="0.01" value="${escapeHtml(S.form.price || '')}" placeholder="0.00">
-          </div>
-        </div>
-        <div class="field">
-          <label>Sold date</label>
-          <input id="sell-date" type="date" value="${escapeHtml(S.form.soldDate || isoDate())}">
-        </div>
-        <div class="summary">
-          <div class="summary-row"><span>Proceeds</span><strong>${money(proceeds)}</strong></div>
-          <div class="summary-row"><span>Cost basis</span><strong>${money(basis)}</strong></div>
-          <div class="summary-row"><span>P&L</span><strong style="color:${statusClass(pnl)}">${money(pnl)}</strong></div>
-        </div>
-        <button class="btn primary" id="sell-submit-btn" ${price > 0 && shares > 0 && shares <= item.shares ? '' : 'disabled'}>Confirm Sale</button>
-      `);
-      bindSellPanel();
-      return;
+    if(S.panel==='sell'){
+      const item=S.panelData,sh=Number(S.form.shares||0),pr=Number(S.form.price||0);
+      const proceeds=round2(sh*pr),basis=round2(sh*Number(item.avgCost||0)),pnl=round2(proceeds-basis);
+      panelShell(`Sell ${escapeHtml(item.symbol)}`,'Record a sale',`
+        <div class="summary"><div class="summary-row"><span>Shares held</span><strong>${item.shares}</strong></div><div class="summary-row"><span>Avg cost</span><strong>${money(item.avgCost)}</strong></div><div class="summary-row"><span>Lot cost</span><strong>${money(item.totalCost)}</strong></div></div>
+        <div class="row2"><div class="field"><label>Shares to sell</label><input id="sell-shares" type="number" inputmode="decimal" step="any" value="${escapeHtml(S.form.shares||'')}"></div><div class="field"><label>Sold price / share</label><input id="sell-price" type="number" inputmode="decimal" step="any" value="${escapeHtml(S.form.price||'')}" placeholder="0.00"></div></div>
+        <div class="field"><label>Date</label><input id="sell-date" type="date" value="${escapeHtml(S.form.soldDate||isoDate())}"></div>
+        <div class="summary"><div class="summary-row"><span>Proceeds</span><strong>${money(proceeds)}</strong></div><div class="summary-row"><span>Basis</span><strong>${money(basis)}</strong></div><div class="summary-row"><span>P&L</span><strong style="color:${statusColor(pnl)}">${money(pnl)}</strong></div></div>
+        <button class="btn primary" id="sell-submit-btn" ${pr>0&&sh>0&&sh<=item.shares?'':'disabled'}>Confirm Sale</button>`);
+      bindSellPanel();return;
     }
 
-    if (S.panel === 'exec'){
-      const item = S.panelData;
-      const fill = Number(S.form.fillPrice || 0);
-      panelShell(`Execute ${escapeHtml(item.symbol)}`,'Move this staged GTC entry into current holdings', `
-        <div class="summary">
-          <div class="summary-row"><span>Shares</span><strong>${item.shares}</strong></div>
-          <div class="summary-row"><span>Current listed avg</span><strong>${money(item.avgCost)}</strong></div>
-        </div>
-        <div class="row2">
-          <div class="field">
-            <label>Fill price / share</label>
-            <input id="exec-price" type="number" step="0.01" value="${escapeHtml(S.form.fillPrice || '')}">
-          </div>
-          <div class="field">
-            <label>Filled date</label>
-            <input id="exec-date" type="date" value="${escapeHtml(S.form.fillDate || isoDate())}">
-          </div>
-        </div>
-        <div class="summary">
-          <div class="summary-row"><span>New lot cost</span><strong>${money(item.shares * fill)}</strong></div>
-        </div>
-        <button class="btn primary" id="exec-submit-btn" ${fill > 0 ? '' : 'disabled'}>Execute to Holdings</button>
-      `);
-      bindExecPanel();
-      return;
+    if(S.panel==='exec'){
+      const item=S.panelData,fill=Number(S.form.fillPrice||0);
+      panelShell(`Execute ${escapeHtml(item.symbol)}`,'Move GTC → Holdings',`
+        <div class="summary"><div class="summary-row"><span>Shares</span><strong>${item.shares}</strong></div><div class="summary-row"><span>Listed avg</span><strong>${money(item.avgCost)}</strong></div></div>
+        <div class="row2"><div class="field"><label>Fill price / share</label><input id="exec-price" type="number" inputmode="decimal" step="any" value="${escapeHtml(S.form.fillPrice||'')}"></div><div class="field"><label>Fill date</label><input id="exec-date" type="date" value="${escapeHtml(S.form.fillDate||isoDate())}"></div></div>
+        <div class="summary"><div class="summary-row"><span>New lot cost</span><strong>${money(item.shares*fill)}</strong></div></div>
+        <button class="btn primary" id="exec-submit-btn" ${fill>0?'':'disabled'}>Execute</button>`);
+      bindExecPanel();return;
     }
   }
 
   function bindAddPanel(){
-    const symbols = allSymbols();
-    $$('#quick-chips .chip').forEach(chip => chip.addEventListener('click', () => {
-      const found = symbols.find(x => x.symbol === chip.dataset.chip);
-      S.form.symbol = found?.symbol || chip.dataset.chip;
-      S.form.name = found?.name || '';
-      renderPanel();
-    }));
-    $('#add-bucket').addEventListener('change', e => { S.form.bucket = e.target.value; });
-    $('#add-window').addEventListener('input', e => { S.form.windowText = e.target.value; });
-    $('#add-symbol').addEventListener('input', e => { S.form.symbol = e.target.value.toUpperCase(); });
-    $('#add-name').addEventListener('input', e => { S.form.name = e.target.value; });
-    $('#add-shares').addEventListener('input', e => { S.form.shares = e.target.value; renderPanel(); });
-    $('#add-cost').addEventListener('input', e => { S.form.cost = e.target.value; renderPanel(); });
-    $('#add-submit-btn').addEventListener('click', submitAdd);
+    const symbols=allSymbols();
+    $$('#quick-chips .chip').forEach(c=>c.onclick=()=>{const f=symbols.find(x=>x.symbol===c.dataset.chip);S.form.symbol=f?.symbol||c.dataset.chip;S.form.name=f?.name||'';renderPanel()});
+    const moreBtn=$('#chips-more');
+    if(moreBtn)moreBtn.onclick=()=>{S.chipsExpanded=true;renderPanel()};
+    $('#add-bucket').onchange=e=>{S.form.bucket=e.target.value;S.form.status=e.target.value==='gtc'?'180-day tentative area':'Active';renderPanel()};
+    $('#add-status').onchange=e=>{S.form.status=e.target.value};
+    $('#add-symbol').oninput=e=>{S.form.symbol=e.target.value.toUpperCase()};
+    $('#add-name').oninput=e=>{S.form.name=e.target.value};
+    $('#add-shares').oninput=e=>{S.form.shares=e.target.value;renderPanel()};
+    $('#add-cost').oninput=e=>{S.form.cost=e.target.value;renderPanel()};
+    $('#add-submit-btn').onclick=submitAdd;
   }
-
   function bindSellPanel(){
-    $('#sell-shares').addEventListener('input', e => { S.form.shares = e.target.value; renderPanel(); });
-    $('#sell-price').addEventListener('input', e => { S.form.price = e.target.value; renderPanel(); });
-    $('#sell-date').addEventListener('input', e => { S.form.soldDate = e.target.value; });
-    const btn = $('#sell-submit-btn');
-    if (btn) btn.addEventListener('click', submitSell);
+    $('#sell-shares').oninput=e=>{S.form.shares=e.target.value;renderPanel()};
+    $('#sell-price').oninput=e=>{S.form.price=e.target.value;renderPanel()};
+    $('#sell-date').oninput=e=>{S.form.soldDate=e.target.value};
+    const b=$('#sell-submit-btn');if(b)b.onclick=submitSell;
   }
-
   function bindExecPanel(){
-    $('#exec-price').addEventListener('input', e => { S.form.fillPrice = e.target.value; renderPanel(); });
-    $('#exec-date').addEventListener('input', e => { S.form.fillDate = e.target.value; });
-    const btn = $('#exec-submit-btn');
-    if (btn) btn.addEventListener('click', submitExec);
+    $('#exec-price').oninput=e=>{S.form.fillPrice=e.target.value;renderPanel()};
+    $('#exec-date').oninput=e=>{S.form.fillDate=e.target.value};
+    const b=$('#exec-submit-btn');if(b)b.onclick=submitExec;
   }
 
-  function openAdd(prefill){ setPanel('add', prefill || {}); }
-  function openSell(item){ setPanel('sell', item); }
-  function openExec(item){ setPanel('exec', item); }
-  function openSettings(){ setPanel('settings', null); }
-
-  function escapeHtml(str){
-    return String(str || '')
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;')
-      .replace(/'/g,'&#39;');
-  }
-
-  /* ─── JSONP transport (used for BOTH reads and writes) ─────────── */
+  /* ── JSONP transport ─────────────────────────────────────────── */
   function jsonp(url){
-    return new Promise((resolve, reject) => {
-      const cb = '__jc_cb_' + uid();
-      const script = document.createElement('script');
-      const sep = url.includes('?') ? '&' : '?';
-      const finalUrl = `${url}${sep}callback=${cb}&_=${Date.now()}`;
-      let done = false;
-      const cleanup = () => {
-        if (script.parentNode) script.parentNode.removeChild(script);
-        try { delete window[cb]; } catch(_) { window[cb] = undefined; }
-      };
-      window[cb] = (data) => {
-        done = true;
-        cleanup();
-        resolve(data);
-      };
-      script.src = finalUrl;
-      script.onerror = () => {
-        if (done) return;
-        cleanup();
-        reject(new Error('JSONP request failed'));
-      };
+    return new Promise((resolve,reject)=>{
+      const cb='__jc_cb_'+uid(),script=document.createElement('script');
+      const sep=url.includes('?')?'&':'?';
+      const finalUrl=`${url}${sep}callback=${cb}&_=${Date.now()}`;
+      let done=false;
+      const cleanup=()=>{if(script.parentNode)script.parentNode.removeChild(script);try{delete window[cb]}catch(_){window[cb]=undefined}};
+      window[cb]=data=>{done=true;cleanup();resolve(data)};
+      script.src=finalUrl;
+      script.onerror=()=>{if(done)return;cleanup();reject(new Error('JSONP request failed'))};
       document.body.appendChild(script);
-      setTimeout(() => {
-        if (done) return;
-        cleanup();
-        reject(new Error('JSONP request timed out'));
-      }, 15000);
+      setTimeout(()=>{if(done)return;cleanup();reject(new Error('JSONP request timed out'))},15000);
     });
   }
 
-  /* ─── write: dual-path (JSONP GET → fetch POST fallback) ────────── */
-
-  function jsonpWrite(action, payload){
-    const encoded = encodeURIComponent(JSON.stringify(payload));
-    return jsonp(`${S.gsUrl}?action=${action}&payload=${encoded}`);
+  /* ── write: dual-path (JSONP GET → fetch POST fallback) ──────── */
+  function jsonpWrite(action,payload){return jsonp(`${S.gsUrl}?action=${action}&payload=${encodeURIComponent(JSON.stringify(payload))}`)}
+  function fetchPostWrite(action,payload){
+    const body=new URLSearchParams();body.append('payload',JSON.stringify(Object.assign({},payload,{action})));
+    return fetch(S.gsUrl,{method:'POST',mode:'no-cors',redirect:'follow',body});
   }
-
-  function fetchPostWrite(action, payload){
-    const outgoing = Object.assign({}, payload, { action });
-    const body = new URLSearchParams();
-    body.append('payload', JSON.stringify(outgoing));
-    return fetch(S.gsUrl, {
-      method: 'POST',
-      mode: 'no-cors',
-      redirect: 'follow',
-      body
-    });
-    // response is opaque with no-cors — that's fine, doPost still runs
-  }
-
-  async function writeToBackend(action, payload){
-    if (!S.gsUrl) throw new Error('No Apps Script URL configured');
-
-    // Path A: try JSONP GET (works if new Code.gs is deployed)
+  async function writeToBackend(action,payload){
+    if(!S.gsUrl)throw new Error('No Apps Script URL configured');
     try{
-      const res = await jsonpWrite(action, payload);
-      if (res && res.ok === true) return 'jsonp-ok';
-      if (res && String(res.error || '').toLowerCase().includes('unknown'))
-        { /* old backend — fall through to POST */ }
-      else if (res && res.ok === false)
-        throw new Error(res.error || 'Backend error');
-      else return 'jsonp-ok';           // no error field → treat as ok
-    }catch(e){
-      // JSONP network / timeout errors also fall through
-      if (e.message && !e.message.includes('JSONP') && !e.message.includes('Unknown'))
-        throw e;
-    }
-
-    // Path B: fetch POST to existing doPost (old Code.gs)
-    await fetchPostWrite(action, payload);
-    return 'post-sent';
+      const res=await jsonpWrite(action,payload);
+      if(res&&res.ok===true)return'jsonp-ok';
+      if(res&&String(res.error||'').toLowerCase().includes('unknown')){}
+      else if(res&&res.ok===false)throw new Error(res.error||'Backend error');
+      else return'jsonp-ok';
+    }catch(e){if(e.message&&!e.message.includes('JSONP')&&!e.message.includes('Unknown'))throw e}
+    await fetchPostWrite(action,payload);
+    return'post-sent';
   }
 
   async function refreshFromSheet(showToast){
-    if (!S.gsUrl) {
-      if (showToast) toast('Set your Apps Script URL first');
-      return false;
-    }
-    try{
-      setSync('reading','Reading sheet');
-      const data = await jsonp(`${S.gsUrl}?action=readAll`);
-      const normalized = fromBackend(data);
-      setData(normalized);
-      renderAll();
-      setSync('ok','Synced');
-      if (showToast) toast('Read successful');
-      return true;
-    }catch(err){
-      setSync('error','Read failed');
-      if (showToast) toast('Read failed — ' + err.message);
-      return false;
-    }
+    if(!S.gsUrl){if(showToast)toast('Set your Apps Script URL first');return false}
+    try{setSync('reading','Reading');const d=await jsonp(`${S.gsUrl}?action=readAll`);setData(fromBackend(d));renderAll();setSync('ok','Synced');if(showToast)toast('Synced');return true}
+    catch(err){setSync('error','Read failed');if(showToast)toast('Read failed');return false}
   }
 
-  /* ─── unified write → verify → update ──────────────────────────── */
-  async function submitWithVerification(action, payload, successText){
-    if (S.busy) return false;
-    S.busy = true;
-
-    // Snapshot current counts so we can detect changes
-    const before = { h: S.h.length, g: S.g.length, s: S.s.length };
-
+  async function submitWithVerification(action,payload,successText){
+    if(S.busy)return false;S.busy=true;
+    const before={h:S.h.length,g:S.g.length,s:S.s.length};
     try{
       setSync('writing','Writing');
-      const method = await writeToBackend(action, payload);
-
-      // Read back to get fresh state with correct rowNumbers
+      const method=await writeToBackend(action,payload);
       setSync('verifying','Verifying');
-
-      // If we used POST (fire-and-forget), poll until the sheet changes
-      const maxAttempts = method === 'post-sent' ? 10 : 3;
-      const delay       = method === 'post-sent' ? 900 : 500;
-      let verified = false;
-
-      for (let i = 0; i < maxAttempts; i++){
+      const maxA=method==='post-sent'?10:3,delay=method==='post-sent'?900:500;
+      let verified=false;
+      for(let i=0;i<maxA;i++){
         await wait(delay);
         try{
-          const data = await jsonp(`${S.gsUrl}?action=readAll`);
-          const fresh = fromBackend(data);
-          const after = { h: fresh.h.length, g: fresh.g.length, s: fresh.s.length };
-          const changed = after.h !== before.h || after.g !== before.g || after.s !== before.s;
-
-          if (method === 'jsonp-ok' || changed){
-            setData(fresh);
-            verified = true;
-            break;
-          }
+          const d=await jsonp(`${S.gsUrl}?action=readAll`);const fresh=fromBackend(d);
+          const after={h:fresh.h.length,g:fresh.g.length,s:fresh.s.length};
+          if(method==='jsonp-ok'||after.h!==before.h||after.g!==before.g||after.s!==before.s){setData(fresh);verified=true;break}
         }catch(_){}
       }
-
-      if (!verified && method === 'jsonp-ok'){
-        // JSONP said ok but readback didn't load — still trust the write
-        verified = true;
-      }
-
-      if (!verified){
-        throw new Error('Sheet did not update — check Apps Script deployment');
-      }
-
-      renderAll();
-      closePanel();
-      setSync('ok','Verified');
-      toast(successText);
-      return true;
+      if(!verified&&method==='jsonp-ok')verified=true;
+      if(!verified)throw new Error('Sheet did not update — check deployment');
+      renderAll();closePanel();setSync('ok','Verified');toast(successText);return true;
     }catch(err){
-      // One final read so the UI isn't stale
-      try{
-        const data = await jsonp(`${S.gsUrl}?action=readAll`);
-        setData(fromBackend(data));
-        renderAll();
-      }catch(_){}
-      setSync('error','Write failed');
-      toast(err.message || 'Write failed');
-      return false;
-    }finally{
-      S.busy = false;
-    }
+      try{setData(fromBackend(await jsonp(`${S.gsUrl}?action=readAll`)));renderAll()}catch(_){}
+      setSync('error','Write failed');toast(err.message||'Write failed');return false;
+    }finally{S.busy=false}
   }
+  function wait(ms){return new Promise(r=>setTimeout(r,ms))}
 
-  function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
-
+  /* ── submit handlers ─────────────────────────────────────────── */
   async function submitAdd(){
-    const symbol = String(S.form.symbol || '').trim().toUpperCase();
-    const name = String(S.form.name || '').trim() || symbol;
-    const shares = Number(S.form.shares || 0);
-    const cost = Number(S.form.cost || 0);
-    const bucket = S.form.bucket || 'holding';
-    const status = statusForBucket(bucket, String(S.form.windowText || '').trim());
-    if (!symbol || shares <= 0 || cost <= 0) return toast('Fill symbol, shares, and total cost');
-
-    await submitWithVerification('add', {
-      bucket,
-      symbol,
-      name,
-      shares: round2(shares),
-      totalCost: round2(cost),
-      avgCost: round2(cost / shares),
-      status
-    }, `${symbol} added`);
+    const symbol=String(S.form.symbol||'').trim().toUpperCase();
+    const name=String(S.form.name||'').trim()||symbol;
+    const shares=Number(S.form.shares||0);
+    const costPerShare=Number(S.form.cost||0);
+    const bucket=S.form.bucket||'holding';
+    const status=S.form.status||(bucket==='gtc'?'180-day tentative area':'Active');
+    if(!symbol||shares<=0||costPerShare<=0)return toast('Fill ticker, shares, and cost per share');
+    await submitWithVerification('add',{bucket,symbol,name,shares:round2(shares),totalCost:round2(shares*costPerShare),avgCost:round2(costPerShare),status},`${symbol} added`);
   }
-
   async function submitSell(){
-    const item = S.panelData;
-    const shares = Number(S.form.shares || 0);
-    const soldPrice = Number(S.form.price || 0);
-    const soldDate = S.form.soldDate || isoDate();
-    if (!item || shares <= 0 || soldPrice <= 0 || shares > item.shares) return toast('Check shares and sold price');
-
-    await submitWithVerification('sell', {
-      rowNumber: item.rowNumber,
-      sharesSold: round2(shares),
-      soldPrice: round2(soldPrice),
-      soldDate
-    }, `${item.symbol} sold`);
+    const item=S.panelData,shares=Number(S.form.shares||0),soldPrice=Number(S.form.price||0),soldDate=S.form.soldDate||isoDate();
+    if(!item||shares<=0||soldPrice<=0||shares>item.shares)return toast('Check shares and sold price');
+    await submitWithVerification('sell',{rowNumber:item.rowNumber,sharesSold:round2(shares),soldPrice:round2(soldPrice),soldDate},`${item.symbol} sold`);
   }
-
   async function submitExec(){
-    const item = S.panelData;
-    const fillPrice = Number(S.form.fillPrice || 0);
-    const fillDate = S.form.fillDate || isoDate();
-    if (!item || fillPrice <= 0) return toast('Enter a fill price');
-
-    await submitWithVerification('execute', {
-      rowNumber: item.rowNumber,
-      fillPrice: round2(fillPrice),
-      fillDate
-    }, `${item.symbol} executed`);
+    const item=S.panelData,fillPrice=Number(S.form.fillPrice||0),fillDate=S.form.fillDate||isoDate();
+    if(!item||fillPrice<=0)return toast('Enter a fill price');
+    await submitWithVerification('execute',{rowNumber:item.rowNumber,fillPrice:round2(fillPrice),fillDate},`${item.symbol} executed`);
   }
-
   async function confirmRemove(item){
-    const label = `${item.symbol} (${item.bucket === 'gtc' ? 'GTC' : item.bucket === 'sold' ? 'Sold' : 'Holding'})`;
-    const ok = window.confirm(`Delete ${label}?`);
-    if (!ok) return;
-
-    await submitWithVerification('remove', {
-      rowNumber: item.rowNumber
-    }, `${item.symbol} deleted`);
+    if(!confirm(`Delete ${item.symbol} (${item.bucket==='gtc'?'GTC':item.bucket==='sold'?'Sold':'Holding'})?`))return;
+    await submitWithVerification('remove',{rowNumber:item.rowNumber},`${item.symbol} deleted`);
   }
 
+  /* ── init ────────────────────────────────────────────────────── */
   async function init(){
-    buildShell();
-    setSync('reading','Reading sheet');
-    const restored = restoreLocal();
-    if (restored) renderAll();
-    const ok = await refreshFromSheet(false);
-    if (!ok && !restored) {
-      loadSample();
-      renderAll();
-      setSync('error','Sample mode');
-    }
-    if (!ok && restored) {
-      setSync('error','Using cache');
-    }
+    buildShell();setSync('reading','Reading');
+    const restored=restoreLocal();if(restored)renderAll();
+    const ok=await refreshFromSheet(false);
+    if(!ok&&!restored){loadSample();renderAll();setSync('error','Sample mode')}
+    if(!ok&&restored)setSync('error','Using cache');
   }
-
-  window.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && S.panel) closePanel();
-  });
-
+  window.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.panel)closePanel()});
   init();
 })();
 </script>
