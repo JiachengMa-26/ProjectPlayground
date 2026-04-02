@@ -595,8 +595,8 @@ input[type="number"]{-moz-appearance:textfield}
     $('#add-status').onchange=e=>{S.form.status=e.target.value};
     $('#add-symbol').oninput=e=>{S.form.symbol=e.target.value.toUpperCase()};
     $('#add-name').oninput=e=>{S.form.name=e.target.value};
-    $('#add-shares').oninput=e=>{S.form.shares=e.target.value;renderPanel()};
-    $('#add-cost').oninput=e=>{S.form.cost=e.target.value;renderPanel()};
+    $('#add-shares').oninput=e=>{S.form.shares=e.target.value};
+    $('#add-cost').oninput=e=>{S.form.cost=e.target.value};
     $('#add-submit-btn').onclick=submitAdd;
   }
   function bindSellPanel(){
