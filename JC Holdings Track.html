@@ -555,7 +555,7 @@ input[type="number"]{-moz-appearance:textfield}
         </div>
         <div class="row2">
           <div class="field"><label>Shares</label><input id="add-shares" type="number" inputmode="decimal" step="any" value="${escapeHtml(S.form.shares||'')}" placeholder="0"></div>
-          <div class="field"><label>Cost Per Share</label><input id="add-cost" type="number" inputmode="decimal" step="any" value="${escapeHtml(S.form.cost||'')}" placeholder="0.00"></div>
+          <div class="field"><label>Cost Per Share</label><input id="add-cost" type="text" inputmode="decimal" value="${escapeHtml(S.form.cost||'')}" placeholder="0.00"></div>
         </div>
         <div class="summary"><div class="summary-row"><span>Total Cost</span><strong>${totalCost}</strong></div></div>
         <button class="btn primary" id="add-submit-btn">Add Position</button>`);
