@@ -557,7 +557,7 @@ input[type="number"]{-moz-appearance:textfield}
           <div class="field"><label>Shares</label><input id="add-shares" type="number" inputmode="decimal" step="any" value="${escapeHtml(S.form.shares||'')}" placeholder="0"></div>
           <div class="field"><label>Cost Per Share</label><input id="add-cost" type="text" inputmode="decimal" value="${escapeHtml(S.form.cost||'')}" placeholder="0.00"></div>
         </div>
-        <div class="summary"><div class="summary-row"><span>Total Cost</span><strong>${totalCost}</strong></div></div>
+        <div class="summary"><div class="summary-row"><span>Total Cost</span><strong id="total-cost">${totalCost}</strong></div></div>
         <button class="btn primary" id="add-submit-btn">Add Position</button>`);
       bindAddPanel();
       return;
@@ -595,9 +595,20 @@ input[type="number"]{-moz-appearance:textfield}
     $('#add-status').onchange=e=>{S.form.status=e.target.value};
     $('#add-symbol').oninput=e=>{S.form.symbol=e.target.value.toUpperCase()};
     $('#add-name').oninput=e=>{S.form.name=e.target.value};
-    $('#add-shares').oninput=e=>{S.form.shares=e.target.value};
-    $('#add-cost').oninput=e=>{S.form.cost=e.target.value};
+    $('#add-shares').oninput = e => {S.form.shares = e.target.value;updateAddSummary();}
+    $('#add-cost').oninput = e => {S.form.cost = e.target.value;updateAddSummary();}
     $('#add-submit-btn').onclick=submitAdd;
+  }
+  function updateAddSummary() {
+  const shares = Number(S.form.shares || 0);
+  const cost = Number(S.form.cost || 0);
+
+  const total = (shares > 0 && cost > 0)
+    ? money(round2(shares * cost))
+    : '—';
+
+  const el = document.getElementById('total-cost');
+  if (el) el.textContent = total;
   }
   function bindSellPanel(){
     $('#sell-shares').oninput=e=>{S.form.shares=e.target.value;renderPanel()};
