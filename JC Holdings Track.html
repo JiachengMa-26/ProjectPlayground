@@ -623,7 +623,7 @@ input[type="number"]{-moz-appearance:textfield}
     if(S.panel==='settings'){
       panelShell('Settings','Connection & cache',`
         <div class="field"><label>Apps Script URL</label><input id="set-url" value="${escapeHtml(S.form.gsUrl||'')}" placeholder="https://script.google.com/macros/s/…/exec"><div class="hint">JSONP for reads, dual-path (JSONP GET + fetch POST fallback) for writes.</div></div>
-        <div class="field"><label>FMP API Key</label><input id="set-fmp" type="password" value="${escapeHtml(S.form.fmpKey||'')}" placeholder="financialmodelingprep.com key"><div class="hint">Required for live price fetching in Holdings view. Free key at financialmodelingprep.com</div></div>
+        <div class="field"><label>FMP API Key</label><input id="set-fmp" type="password" value="${escapeHtml(S.form.fmpKey||'')}" placeholder="financialmodelingprep.com key"><div class="hint">Auto-loaded from your "API Key" sheet (cell A1) at startup. Set manually here as a fallback.</div></div>
         <div class="row2"><button class="btn ghost" id="test-read-btn">Test Read</button><button class="btn primary" id="save-url-btn">Save</button></div>
         <div class="summary"><div class="summary-row"><span>Holdings</span><strong>${S.h.length}</strong></div><div class="summary-row"><span>GTC</span><strong>${S.g.length}</strong></div><div class="summary-row"><span>Sold</span><strong>${S.s.length}</strong></div></div>
         <button class="btn ghost" id="load-sample-btn">Load Sample Data</button>`);
@@ -769,8 +769,12 @@ input[type="number"]{-moz-appearance:textfield}
     if(S.tab!=='holdings'){panel.innerHTML='';return}
     const hasPrices=S.prices&&Object.keys(S.prices).length>0;
     const btnLabel=hasPrices?'↻ Refresh Prices':'📈 Live Prices';
-    let html=`<div style="display:flex;flex-direction:column;gap:14px">`;
-    html+=`<button class="btn ghost" id="fetch-prices-btn" style="align-self:flex-start;margin-top:4px">${btnLabel}</button>`;
+    let html=`<div style="display:flex;flex-direction:column;gap:12px">`;
+    // Header row: section label on left, button on right
+    html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding-top:2px">
+      <span style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Live Prices</span>
+      <button class="btn ghost" id="fetch-prices-btn" style="padding:8px 14px;font-size:12px">${btnLabel}</button>
+    </div>`;
     if(hasPrices){
       const map=new Map();
       S.h.forEach(item=>{
@@ -807,19 +811,36 @@ input[type="number"]{-moz-appearance:textfield}
     if(btn)btn.onclick=fetchLivePrices;
   }
 
+  async function fetchApiKey(){
+    // Silently try to pull the API key from the "API Key" sheet (sheet index 1, cell A1)
+    // via a getApiKey action on the GAS backend. Fails gracefully if not supported yet.
+    if(!S.gsUrl)return;
+    try{
+      const data=await Promise.race([
+        jsonp(`${S.gsUrl}?action=getApiKey`),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))
+      ]);
+      if(data&&data.key){
+        S.fmpKey=String(data.key).trim();
+        localStorage.setItem(LS_FMPKEY,S.fmpKey);
+      }
+    }catch(_){}
+  }
+
   async function fetchLivePrices(){
-    if(!S.fmpKey){toast('Add your FMP API key in Settings first');openSettings();return}
+    if(!S.fmpKey){toast('API key not found — add it in Settings or update your GAS backend');openSettings();return}
     const symbols=[...new Set(S.h.map(x=>x.symbol))];
     if(!symbols.length){toast('No holdings to price');return}
     const btn=document.getElementById('fetch-prices-btn');
     if(btn){btn.disabled=true;btn.textContent='Loading…'}
     setSync('reading','Fetching prices');
     try{
-      const url=`https://financialmodelingprep.com/api/v3/quote/${symbols.join(',')}?apikey=${S.fmpKey}`;
+      // Using FMP stable endpoint: supports comma-separated symbols
+      const url=`https://financialmodelingprep.com/stable/quote?symbol=${symbols.join(',')}&apikey=${S.fmpKey}`;
       const resp=await fetch(url);
-      if(!resp.ok)throw new Error(`FMP API error ${resp.status}`);
+      if(!resp.ok)throw new Error(`FMP API ${resp.status}`);
       const data=await resp.json();
-      if(!Array.isArray(data)||!data.length)throw new Error('No data — verify your API key');
+      if(!Array.isArray(data)||!data.length)throw new Error('No data returned — check your API key');
       S.prices={};
       data.forEach(q=>{S.prices[q.symbol]=q});
       S.pricesFetchedAt=new Date().toISOString();
@@ -930,6 +951,8 @@ input[type="number"]{-moz-appearance:textfield}
   async function init(){
     buildShell();setSync('reading','Reading');
     const restored=restoreLocal();if(restored)renderAll();
+    // Silently attempt to load API key from the "API Key" sheet (second sheet, cell A1)
+    await fetchApiKey();
     const ok=await refreshFromSheet(false);
     if(!ok&&!restored){loadSample();renderAll();setSync('error','Sample mode')}
     if(!ok&&restored)setSync('error','Using cache');
