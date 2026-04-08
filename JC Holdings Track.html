@@ -610,14 +610,31 @@ input[type="number"]{-moz-appearance:textfield}
   const el = document.getElementById('total-cost');
   if (el) el.textContent = total;
   }
+  '#exec-submit-btn');if(b)b.onclick=submitExec;
+  function updateSellSummary(){
+    const item=S.panelData;
+    const sh=Number(S.form.shares||0),pr=Number(S.form.price||0);
+    const proceeds=round2(sh*pr),basis=round2(sh*Number(item.avgCost||0)),pnl=round2(proceeds-basis);
+    const rows=document.querySelectorAll('#overlay .summary .summary-row strong');
+    if(rows[3])rows[3].textContent=money(proceeds);
+    if(rows[4])rows[4].textContent=money(basis);
+    if(rows[5]){rows[5].textContent=money(pnl);rows[5].style.color=statusColor(pnl)}
+    const b=$('#sell-submit-btn');if(b)b.disabled=!(pr>0&&sh>0&&sh<=item.shares);
+  }
+  function updateExecSummary(){
+    const item=S.panelData,fill=Number(S.form.fillPrice||0);
+    const row=document.querySelector('#overlay .summary .summary-row strong');
+    if(row)row.textContent=money(item.shares*fill);
+    const b=$('#exec-submit-btn');if(b)b.disabled=!(fill>0);
+  }
   function bindSellPanel(){
-    $('#sell-shares').oninput=e=>{S.form.shares=e.target.value;renderPanel()};
-    $('#sell-price').oninput=e=>{S.form.price=e.target.value;renderPanel()};
+    $('#sell-shares').oninput=e=>{S.form.shares=e.target.value;updateSellSummary()};
+    $('#sell-price').oninput=e=>{S.form.price=e.target.value;updateSellSummary()};
     $('#sell-date').oninput=e=>{S.form.soldDate=e.target.value};
     const b=$('#sell-submit-btn');if(b)b.onclick=submitSell;
   }
   function bindExecPanel(){
-    $('#exec-price').oninput=e=>{S.form.fillPrice=e.target.value;renderPanel()};
+    $('#exec-price').oninput=e=>{S.form.fillPrice=e.target.value;updateExecSummary()};
     $('#exec-date').oninput=e=>{S.form.fillDate=e.target.value};
     const b=$('#exec-submit-btn');if(b)b.onclick=submitExec;
   }
