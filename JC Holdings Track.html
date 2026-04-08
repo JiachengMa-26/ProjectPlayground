@@ -193,6 +193,13 @@ input[type="number"]{-moz-appearance:textfield}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);padding:11px 18px;background:rgba(14,16,22,.92);color:var(--text);border:1px solid var(--line-strong);border-radius:999px;backdrop-filter:blur(16px);box-shadow:var(--shadow);display:none;z-index:60;font-size:13px;font-weight:500}
 .toast.show{display:block}
 
+/* ── progress bar ─────────────────────────────────────────────── */
+#progress-track{position:fixed;top:0;left:0;right:0;height:3px;z-index:200;pointer-events:none;opacity:0;transition:opacity .25s ease}
+#progress-track.visible{opacity:1}
+#progress-fill{height:100%;width:0%;border-radius:0 2px 2px 0;background:linear-gradient(90deg,#2a6fff,#3b8bff,#7ab8ff,#3b8bff);background-size:300% 100%;transition:width .45s cubic-bezier(.4,0,.2,1),background-color .3s ease;animation:progress-shimmer 2s infinite linear}
+#progress-fill.is-error{background:linear-gradient(90deg,#c0304a,#f0465a,#ff8096,#f0465a);background-size:300% 100%}
+@keyframes progress-shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+
 @media(max-width:1100px){
   .layout{grid-template-columns:1fr}
   .side{order:2}
@@ -217,6 +224,7 @@ input[type="number"]{-moz-appearance:textfield}
 </style>
 </head>
 <body>
+<div id="progress-track"><div id="progress-fill"></div></div>
 <div class="app" id="app"></div>
 <div class="overlay" id="overlay"></div>
 <div class="toast" id="toast"></div>
@@ -269,9 +277,47 @@ input[type="number"]{-moz-appearance:textfield}
 
   function setSync(state,label){
     S.syncState=state;S.syncLabel=label;
-    const badge=$('#sync-badge');if(!badge)return;
-    badge.querySelector('.dot').className=`dot ${state==='idle'?'':state}`;
-    badge.querySelector('.badge-text').textContent=label;
+    const badge=$('#sync-badge');
+    if(badge){
+      badge.querySelector('.dot').className=`dot ${state==='idle'?'':state}`;
+      badge.querySelector('.badge-text').textContent=label;
+    }
+    const track=document.getElementById('progress-track');
+    const fill=document.getElementById('progress-fill');
+    if(!track||!fill)return;
+    clearTimeout(setSync._hide);
+    if(state==='reading'){
+      fill.classList.remove('is-error');
+      track.classList.add('visible');
+      fill.style.width='35%';
+    }else if(state==='writing'){
+      fill.classList.remove('is-error');
+      track.classList.add('visible');
+      fill.style.width='60%';
+    }else if(state==='verifying'){
+      fill.classList.remove('is-error');
+      track.classList.add('visible');
+      fill.style.width='82%';
+    }else if(state==='ok'){
+      fill.classList.remove('is-error');
+      track.classList.add('visible');
+      fill.style.width='100%';
+      setSync._hide=setTimeout(()=>{
+        track.classList.remove('visible');
+        setTimeout(()=>{fill.style.width='0%'},280);
+      },550);
+    }else if(state==='error'){
+      fill.classList.add('is-error');
+      track.classList.add('visible');
+      fill.style.width='100%';
+      setSync._hide=setTimeout(()=>{
+        track.classList.remove('visible');
+        setTimeout(()=>{fill.style.width='0%';fill.classList.remove('is-error')},280);
+      },1100);
+    }else{
+      track.classList.remove('visible');
+      fill.style.width='0%';
+    }
   }
   function toast(msg){
     const el=$('#toast');el.textContent=msg;el.classList.add('show');
