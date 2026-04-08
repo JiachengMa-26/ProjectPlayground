@@ -787,7 +787,7 @@ input[type="number"]{-moz-appearance:textfield}
         const mv=round2(pd.price*e.shares);
         const pnl=round2(mv-e.cost);
         const pnlPct=e.cost?round2(pnl/e.cost*100):0;
-        return{...e,price:pd.price,change:round2(pd.change||0),changePct:round2(pd.changesPercentage||0),mv,pnl,pnlPct};
+        return{...e,price:pd.price,change:round2(pd.change||0),changePct:round2(pd.changePercentage||0),mv,pnl,pnlPct};
       }).filter(Boolean);
       const tCost=round2(dataRows.reduce((a,r)=>a+r.cost,0));
       const tMV=round2(dataRows.reduce((a,r)=>a+r.mv,0));
@@ -828,28 +828,34 @@ input[type="number"]{-moz-appearance:textfield}
   }
 
   async function fetchLivePrices(){
-    if(!S.fmpKey){toast('API key not found — add it in Settings or update your GAS backend');openSettings();return}
+    // Re-check key in case fetchApiKey resolved in background after page load
+    if(!S.fmpKey)S.fmpKey=localStorage.getItem(LS_FMPKEY)||'';
+    if(!S.fmpKey){toast('No FMP API key found — add it in Settings');return}
     const symbols=[...new Set(S.h.map(x=>x.symbol))];
     if(!symbols.length){toast('No holdings to price');return}
     const btn=document.getElementById('fetch-prices-btn');
     if(btn){btn.disabled=true;btn.textContent='Loading…'}
     setSync('reading','Fetching prices');
     try{
-      // Using FMP stable endpoint: supports comma-separated symbols
-      const url=`https://financialmodelingprep.com/stable/quote?symbol=${symbols.join(',')}&apikey=${S.fmpKey}`;
-      const resp=await fetch(url);
-      if(!resp.ok)throw new Error(`FMP API ${resp.status}`);
-      const data=await resp.json();
-      if(!Array.isArray(data)||!data.length)throw new Error('No data returned — check your API key');
+      // FMP free plan: one symbol per request — fetch all in parallel for speed
+      const results=await Promise.all(
+        symbols.map(sym=>
+          fetch(`https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(sym)}&apikey=${S.fmpKey}`)
+            .then(r=>{if(!r.ok)throw new Error(`${sym} HTTP ${r.status}`);return r.json()})
+            .then(d=>Array.isArray(d)&&d.length?d[0]:null)
+            .catch(()=>null)
+        )
+      );
       S.prices={};
-      data.forEach(q=>{S.prices[q.symbol]=q});
+      results.forEach(q=>{if(q&&q.symbol)S.prices[q.symbol]=q});
+      if(!Object.keys(S.prices).length)throw new Error('No price data returned — verify your API key');
       S.pricesFetchedAt=new Date().toISOString();
       setSync('ok','Prices loaded');
       renderPricePanel();
     }catch(err){
       setSync('error','Fetch failed');
       toast(err.message||'Price fetch failed');
-      if(btn){btn.disabled=false;btn.textContent=S.prices?'↻ Refresh Prices':'📈 Live Prices'}
+      if(btn){btn.disabled=false;btn.textContent=S.prices&&Object.keys(S.prices).length?'↻ Refresh Prices':'📈 Live Prices'}
     }
   }
 
@@ -951,8 +957,8 @@ input[type="number"]{-moz-appearance:textfield}
   async function init(){
     buildShell();setSync('reading','Reading');
     const restored=restoreLocal();if(restored)renderAll();
-    // Silently attempt to load API key from the "API Key" sheet (second sheet, cell A1)
-    await fetchApiKey();
+    // Fire-and-forget: load API key from sheet without blocking page load
+    fetchApiKey().catch(()=>{});
     const ok=await refreshFromSheet(false);
     if(!ok&&!restored){loadSample();renderAll();setSync('error','Sample mode')}
     if(!ok&&restored)setSync('error','Using cache');
