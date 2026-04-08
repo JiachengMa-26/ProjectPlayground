@@ -200,6 +200,31 @@ input[type="number"]{-moz-appearance:textfield}
 #progress-fill.is-error{background:linear-gradient(90deg,#c0304a,#f0465a,#ff8096,#f0465a);background-size:300% 100%}
 @keyframes progress-shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
 
+/* ── P&L colors ───────────────────────────────────────────────── */
+.val.pos{color:var(--green)}
+.val.neg{color:var(--red)}
+
+/* ── Sold-view grid override ──────────────────────────────────── */
+.table[data-view="sold"] .thead,
+.table[data-view="sold"] .row{grid-template-columns:90px 1.4fr 72px 160px 120px}
+
+/* ── Price panel ──────────────────────────────────────────────── */
+#price-panel{margin-top:14px}
+.pt-wrap{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:rgba(255,255,255,.018)}
+.pt-head,.pt-row{display:grid;grid-template-columns:80px 100px 145px 72px 120px 130px 88px;align-items:center;padding:12px 18px}
+.pt-head{background:rgba(255,255,255,.03);border-bottom:1px solid var(--line)}
+.pt-head div{font-size:11px;color:var(--faint);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.pt-row{border-bottom:1px solid rgba(255,255,255,.04);transition:.15s background}
+.pt-row:last-child{border-bottom:none}
+.pt-row:hover{background:rgba(255,255,255,.025)}
+.pt-total{background:rgba(255,255,255,.04)!important;border-top:1px solid var(--line-strong)}
+.pt-total .val{font-weight:700}
+.pt-meta{font-size:11px;color:var(--faint);margin-bottom:8px}
+@media(max-width:900px){
+  .pt-wrap{overflow-x:auto}
+  .pt-head,.pt-row{min-width:640px}
+}
+
 @media(max-width:1100px){
   .layout{grid-template-columns:1fr}
   .side{order:2}
@@ -233,6 +258,7 @@ input[type="number"]{-moz-appearance:textfield}
   const DEFAULT_GS_URL = 'https://script.google.com/macros/s/AKfycbzxoWOjwTd_k_ThgrA50WT-NTYncyQv6TbAr-XRDMxI0L4YRLhRRjF3kEDLfJW52Kk/exec';
   const LS_STATE = 'jc-holdings-live-cache-v1';
   const LS_URL = 'jc-holdings-gs-url-v1';
+  const LS_FMPKEY = 'jc-fmp-key';
   const COLORS = ['#3B8BFF','#2DD4A0','#A87BFF','#50C8F0','#F5A623','#F0465A','#6366F1','#34D399','#FACC15','#C49A6C','#FB7185','#818CF8'];
   const MAX_CHIPS_COLLAPSED = 9;
 
@@ -259,6 +285,8 @@ input[type="number"]{-moz-appearance:textfield}
     h:[],g:[],s:[],
     tab:'holdings',q:'',sk:'totalCost',sd:'desc',
     gsUrl:localStorage.getItem(LS_URL)||DEFAULT_GS_URL,
+    fmpKey:localStorage.getItem('jc-fmp-key')||'',
+    prices:null,pricesFetchedAt:null,
     syncState:'idle',syncLabel:'Ready',
     panel:null,panelData:null,form:{},
     busy:false,lastLoadedAt:null,
@@ -420,13 +448,14 @@ input[type="number"]{-moz-appearance:textfield}
               <div class="sorts" id="sorts"></div>
             </div>
           </div>
-          <div class="table">
-            <div class="thead">
+          <div class="table" id="main-table">
+            <div class="thead" id="main-thead">
               <div>Ticker</div><div>Name</div><div style="text-align:right">Shares</div><div style="text-align:right">Avg Cost</div><div style="text-align:right">Total</div><div></div><div style="text-align:right">Weight</div><div style="text-align:right">Actions</div>
             </div>
             <div id="rows"></div>
             <div class="cards" id="cards"></div>
           </div>
+          <div id="price-panel"></div>
         </main>
       </section>`;
     $('#refresh-btn').onclick=()=>refreshFromSheet(true);
@@ -475,37 +504,78 @@ input[type="number"]{-moz-appearance:textfield}
 
   function renderList(){
     const rows=currentList(),total=listTotal(),rowW=$('#rows'),cardW=$('#cards');
+    // Sync data-view for CSS grid switching
+    const tbl=document.getElementById('main-table');
+    const thd=document.getElementById('main-thead');
+    if(tbl)tbl.dataset.view=S.tab;
+    if(thd){
+      if(S.tab==='sold'){
+        thd.innerHTML='<div>Ticker</div><div>Name</div><div style="text-align:right">Shares</div><div style="text-align:right">Realized P&amp;L</div><div style="text-align:right">Actions</div>';
+      }else{
+        thd.innerHTML='<div>Ticker</div><div>Name</div><div style="text-align:right">Shares</div><div style="text-align:right">Avg Cost</div><div style="text-align:right">Total</div><div></div><div style="text-align:right">Weight</div><div style="text-align:right">Actions</div>';
+      }
+    }
     if(!rows.length){
       const l=S.tab==='sold'?'No sold positions yet.':S.tab==='gtc'?'No GTC entries.':'No matches.';
-      rowW.innerHTML=`<div class="empty">${l}</div>`;cardW.innerHTML='';return;
+      rowW.innerHTML=`<div class="empty">${l}</div>`;cardW.innerHTML='';
+      renderPricePanel();return;
     }
-    rowW.innerHTML=rows.map(item=>{
-      const w=total?item.totalCost/total*100:0;
-      return`<div class="row">
-        <div class="sym">${item.symbol}</div>
-        <div class="name"><div class="name-main">${item.name||item.symbol}</div>${statusBadge(item)}</div>
-        <div class="val">${Number(item.shares||0)}</div>
-        <div class="val">${money(item.avgCost)}</div>
-        <div class="val">${money(item.totalCost)}</div>
-        <div></div>
-        <div class="weight"><div class="weight-line"><div class="weight-fill" style="width:${Math.max(4,Math.min(w,100))}%"></div></div><div class="weight-label">${pct(w)}</div></div>
-        <div class="row-actions">${rowActions(item)}</div>
-      </div>`;
-    }).join('');
-    cardW.innerHTML=rows.map(item=>{
-      const w=total?item.totalCost/total*100:0;
-      return`<div class="mobile-card">
-        <div class="mobile-top"><div><div class="sym">${item.symbol}</div><div class="name-main" style="margin-top:4px">${item.name||item.symbol}</div><div style="margin-top:6px">${statusBadge(item)}</div></div></div>
-        <div class="mobile-grid">
-          <div class="mobile-stat"><div class="mobile-stat-label">Shares</div><div class="mobile-stat-value">${Number(item.shares||0)}</div></div>
-          <div class="mobile-stat"><div class="mobile-stat-label">Avg Cost</div><div class="mobile-stat-value">${money(item.avgCost)}</div></div>
-          <div class="mobile-stat"><div class="mobile-stat-label">Total</div><div class="mobile-stat-value">${money(item.totalCost)}</div></div>
-          <div class="mobile-stat"><div class="mobile-stat-label">Weight</div><div class="mobile-stat-value">${pct(w)}</div></div>
-        </div>
-        <div class="row-actions">${rowActions(item)}</div>
-      </div>`;
-    }).join('');
+    if(S.tab==='sold'){
+      rowW.innerHTML=rows.map(item=>{
+        const pnl=round2((Number(item.soldPrice||0)-Number(item.avgCost||0))*Number(item.shares||0));
+        const pc=pnl>=0?'pos':'neg',ps=pnl>=0?'+':'';
+        return`<div class="row">
+          <div class="sym">${item.symbol}</div>
+          <div class="name"><div class="name-main">${item.name||item.symbol}</div>${statusBadge(item)}</div>
+          <div class="val">${Number(item.shares||0)}</div>
+          <div class="val ${pc}">${ps}${money(pnl)}</div>
+          <div class="row-actions">${rowActions(item)}</div>
+        </div>`;
+      }).join('');
+      cardW.innerHTML=rows.map(item=>{
+        const pnl=round2((Number(item.soldPrice||0)-Number(item.avgCost||0))*Number(item.shares||0));
+        const pc=pnl>=0?'pos':'neg',ps=pnl>=0?'+':'';
+        return`<div class="mobile-card">
+          <div class="mobile-top"><div><div class="sym">${item.symbol}</div><div class="name-main" style="margin-top:4px">${item.name||item.symbol}</div><div style="margin-top:6px">${statusBadge(item)}</div></div></div>
+          <div class="mobile-grid">
+            <div class="mobile-stat"><div class="mobile-stat-label">Shares</div><div class="mobile-stat-value">${Number(item.shares||0)}</div></div>
+            <div class="mobile-stat"><div class="mobile-stat-label">Sold Price</div><div class="mobile-stat-value">${money(item.soldPrice||0)}</div></div>
+            <div class="mobile-stat"><div class="mobile-stat-label">Cost/Share</div><div class="mobile-stat-value">${money(item.avgCost||0)}</div></div>
+            <div class="mobile-stat"><div class="mobile-stat-label">Realized P&L</div><div class="mobile-stat-value" style="color:var(--${pnl>=0?'green':'red'})">${ps}${money(pnl)}</div></div>
+          </div>
+          <div class="row-actions">${rowActions(item)}</div>
+        </div>`;
+      }).join('');
+    }else{
+      rowW.innerHTML=rows.map(item=>{
+        const w=total?item.totalCost/total*100:0;
+        return`<div class="row">
+          <div class="sym">${item.symbol}</div>
+          <div class="name"><div class="name-main">${item.name||item.symbol}</div>${statusBadge(item)}</div>
+          <div class="val">${Number(item.shares||0)}</div>
+          <div class="val">${money(item.avgCost)}</div>
+          <div class="val">${money(item.totalCost)}</div>
+          <div></div>
+          <div class="weight"><div class="weight-line"><div class="weight-fill" style="width:${Math.max(4,Math.min(w,100))}%"></div></div><div class="weight-label">${pct(w)}</div></div>
+          <div class="row-actions">${rowActions(item)}</div>
+        </div>`;
+      }).join('');
+      cardW.innerHTML=rows.map(item=>{
+        const w=total?item.totalCost/total*100:0;
+        return`<div class="mobile-card">
+          <div class="mobile-top"><div><div class="sym">${item.symbol}</div><div class="name-main" style="margin-top:4px">${item.name||item.symbol}</div><div style="margin-top:6px">${statusBadge(item)}</div></div></div>
+          <div class="mobile-grid">
+            <div class="mobile-stat"><div class="mobile-stat-label">Shares</div><div class="mobile-stat-value">${Number(item.shares||0)}</div></div>
+            <div class="mobile-stat"><div class="mobile-stat-label">Avg Cost</div><div class="mobile-stat-value">${money(item.avgCost)}</div></div>
+            <div class="mobile-stat"><div class="mobile-stat-label">Total</div><div class="mobile-stat-value">${money(item.totalCost)}</div></div>
+            <div class="mobile-stat"><div class="mobile-stat-label">Weight</div><div class="mobile-stat-value">${pct(w)}</div></div>
+          </div>
+          <div class="row-actions">${rowActions(item)}</div>
+        </div>`;
+      }).join('');
+    }
     bindRowActions();
+    renderPricePanel();
   }
   function bindRowActions(){
     $$('[data-action="sell"]').forEach(b=>b.onclick=()=>{const i=S.h.find(x=>String(x.rowNumber)===b.dataset.row);if(i)openSell(i)});
@@ -530,7 +600,7 @@ input[type="number"]{-moz-appearance:textfield}
     }
     if(kind==='sell')S.form={shares:String(data.shares),price:'',soldDate:isoDate()};
     if(kind==='exec')S.form={fillPrice:String(data.avgCost||''),fillDate:isoDate()};
-    if(kind==='settings')S.form={gsUrl:S.gsUrl||''};
+    if(kind==='settings')S.form={gsUrl:S.gsUrl||'',fmpKey:S.fmpKey||''};
     renderPanel();
   }
   function closePanel(){S.panel=null;S.panelData=null;S.form={};renderPanel()}
@@ -553,11 +623,19 @@ input[type="number"]{-moz-appearance:textfield}
     if(S.panel==='settings'){
       panelShell('Settings','Connection & cache',`
         <div class="field"><label>Apps Script URL</label><input id="set-url" value="${escapeHtml(S.form.gsUrl||'')}" placeholder="https://script.google.com/macros/s/…/exec"><div class="hint">JSONP for reads, dual-path (JSONP GET + fetch POST fallback) for writes.</div></div>
-        <div class="row2"><button class="btn ghost" id="test-read-btn">Test Read</button><button class="btn primary" id="save-url-btn">Save URL</button></div>
+        <div class="field"><label>FMP API Key</label><input id="set-fmp" type="password" value="${escapeHtml(S.form.fmpKey||'')}" placeholder="financialmodelingprep.com key"><div class="hint">Required for live price fetching in Holdings view. Free key at financialmodelingprep.com</div></div>
+        <div class="row2"><button class="btn ghost" id="test-read-btn">Test Read</button><button class="btn primary" id="save-url-btn">Save</button></div>
         <div class="summary"><div class="summary-row"><span>Holdings</span><strong>${S.h.length}</strong></div><div class="summary-row"><span>GTC</span><strong>${S.g.length}</strong></div><div class="summary-row"><span>Sold</span><strong>${S.s.length}</strong></div></div>
         <button class="btn ghost" id="load-sample-btn">Load Sample Data</button>`);
       $('#set-url').oninput=e=>{S.form.gsUrl=e.target.value};
-      $('#save-url-btn').onclick=()=>{S.gsUrl=(S.form.gsUrl||'').trim();localStorage.setItem(LS_URL,S.gsUrl);toast('Saved');closePanel()};
+      $('#set-fmp').oninput=e=>{S.form.fmpKey=e.target.value};
+      $('#save-url-btn').onclick=()=>{
+        S.gsUrl=(S.form.gsUrl||'').trim();
+        S.fmpKey=(S.form.fmpKey||'').trim();
+        localStorage.setItem(LS_URL,S.gsUrl);
+        localStorage.setItem(LS_FMPKEY,S.fmpKey);
+        toast('Saved');closePanel();
+      };
       $('#test-read-btn').onclick=async()=>{const c=(S.form.gsUrl||'').trim();if(!c)return toast('Paste a URL first');const p=S.gsUrl;S.gsUrl=c;const ok=await refreshFromSheet(false);if(!ok)S.gsUrl=p;else toast('Read OK')};
       $('#load-sample-btn').onclick=()=>{loadSample();renderAll();toast('Loaded sample data')};
       return;
@@ -682,6 +760,76 @@ input[type="number"]{-moz-appearance:textfield}
     $('#exec-price').oninput=e=>{S.form.fillPrice=e.target.value;updateExecSummary()};
     $('#exec-date').oninput=e=>{S.form.fillDate=e.target.value};
     const b=$('#exec-submit-btn');if(b)b.onclick=submitExec;
+  }
+
+  /* ── price panel ────────────────────────────────────────────────── */
+  function renderPricePanel(){
+    const panel=document.getElementById('price-panel');
+    if(!panel)return;
+    if(S.tab!=='holdings'){panel.innerHTML='';return}
+    const hasPrices=S.prices&&Object.keys(S.prices).length>0;
+    const btnLabel=hasPrices?'↻ Refresh Prices':'📈 Live Prices';
+    let html=`<div style="display:flex;flex-direction:column;gap:14px">`;
+    html+=`<button class="btn ghost" id="fetch-prices-btn" style="align-self:flex-start;margin-top:4px">${btnLabel}</button>`;
+    if(hasPrices){
+      const map=new Map();
+      S.h.forEach(item=>{
+        const sym=item.symbol;
+        if(!map.has(sym))map.set(sym,{symbol:sym,name:item.name,shares:0,cost:0});
+        const e=map.get(sym);e.shares+=Number(item.shares||0);e.cost+=Number(item.totalCost||0);
+      });
+      const dataRows=Array.from(map.values()).map(e=>{
+        const pd=S.prices[e.symbol];if(!pd)return null;
+        const mv=round2(pd.price*e.shares);
+        const pnl=round2(mv-e.cost);
+        const pnlPct=e.cost?round2(pnl/e.cost*100):0;
+        return{...e,price:pd.price,change:round2(pd.change||0),changePct:round2(pd.changesPercentage||0),mv,pnl,pnlPct};
+      }).filter(Boolean);
+      const tCost=round2(dataRows.reduce((a,r)=>a+r.cost,0));
+      const tMV=round2(dataRows.reduce((a,r)=>a+r.mv,0));
+      const tPnl=round2(tMV-tCost);
+      const tPnlPct=tCost?round2(tPnl/tCost*100):0;
+      const ts=S.pricesFetchedAt?new Date(S.pricesFetchedAt).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}):'';
+      if(ts)html+=`<div class="pt-meta">Last updated: ${ts}</div>`;
+      html+=`<div class="pt-wrap"><div class="pt-head"><div>Ticker</div><div style="text-align:right">Price</div><div style="text-align:right">Day Chg</div><div style="text-align:right">Shares</div><div style="text-align:right">Market Val</div><div style="text-align:right">P&amp;L</div><div style="text-align:right">P&amp;L %</div></div>`;
+      dataRows.forEach(r=>{
+        const pc=r.pnl>=0?'pos':'neg',ps=r.pnl>=0?'+':'';
+        const cc=r.change>=0?'pos':'neg',cs=r.change>=0?'+':'';
+        html+=`<div class="pt-row"><div class="sym">${r.symbol}</div><div class="val">${money(r.price)}</div><div class="val ${cc}">${cs}${money(r.change)} <span style="font-size:11px;opacity:.65">(${cs}${r.changePct.toFixed(2)}%)</span></div><div class="val">${r.shares}</div><div class="val">${money(r.mv)}</div><div class="val ${pc}">${ps}${money(r.pnl)}</div><div class="val ${pc}">${ps}${r.pnlPct.toFixed(2)}%</div></div>`;
+      });
+      const tpc=tPnl>=0?'pos':'neg',tps=tPnl>=0?'+':'';
+      html+=`<div class="pt-row pt-total"><div class="sym" style="color:var(--muted);font-size:11px;letter-spacing:.06em">TOTAL</div><div></div><div></div><div></div><div class="val">${money(tMV)}</div><div class="val ${tpc}">${tps}${money(tPnl)}</div><div class="val ${tpc}">${tps}${tPnlPct.toFixed(2)}%</div></div>`;
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+    panel.innerHTML=html;
+    const btn=document.getElementById('fetch-prices-btn');
+    if(btn)btn.onclick=fetchLivePrices;
+  }
+
+  async function fetchLivePrices(){
+    if(!S.fmpKey){toast('Add your FMP API key in Settings first');openSettings();return}
+    const symbols=[...new Set(S.h.map(x=>x.symbol))];
+    if(!symbols.length){toast('No holdings to price');return}
+    const btn=document.getElementById('fetch-prices-btn');
+    if(btn){btn.disabled=true;btn.textContent='Loading…'}
+    setSync('reading','Fetching prices');
+    try{
+      const url=`https://financialmodelingprep.com/api/v3/quote/${symbols.join(',')}?apikey=${S.fmpKey}`;
+      const resp=await fetch(url);
+      if(!resp.ok)throw new Error(`FMP API error ${resp.status}`);
+      const data=await resp.json();
+      if(!Array.isArray(data)||!data.length)throw new Error('No data — verify your API key');
+      S.prices={};
+      data.forEach(q=>{S.prices[q.symbol]=q});
+      S.pricesFetchedAt=new Date().toISOString();
+      setSync('ok','Prices loaded');
+      renderPricePanel();
+    }catch(err){
+      setSync('error','Fetch failed');
+      toast(err.message||'Price fetch failed');
+      if(btn){btn.disabled=false;btn.textContent=S.prices?'↻ Refresh Prices':'📈 Live Prices'}
+    }
   }
 
   /* ── JSONP transport ─────────────────────────────────────────── */
