@@ -259,6 +259,7 @@ input[type="number"]{-moz-appearance:textfield}
   const LS_STATE = 'jc-holdings-live-cache-v1';
   const LS_URL = 'jc-holdings-gs-url-v1';
   const LS_FMPKEY = 'jc-fmp-key';
+  const DEFAULT_FMP_KEY = 'El8YbKAlHsR4Kau3ao9ZwEnPVTFqS0q3'; // embedded fallback — works in any browser/incognito
   const COLORS = ['#3B8BFF','#2DD4A0','#A87BFF','#50C8F0','#F5A623','#F0465A','#6366F1','#34D399','#FACC15','#C49A6C','#FB7185','#818CF8'];
   const MAX_CHIPS_COLLAPSED = 9;
 
@@ -285,7 +286,7 @@ input[type="number"]{-moz-appearance:textfield}
     h:[],g:[],s:[],
     tab:'holdings',q:'',sk:'totalCost',sd:'desc',
     gsUrl:localStorage.getItem(LS_URL)||DEFAULT_GS_URL,
-    fmpKey:localStorage.getItem('jc-fmp-key')||'',
+    fmpKey:localStorage.getItem('jc-fmp-key')||DEFAULT_FMP_KEY,
     prices:null,pricesFetchedAt:null,
     syncState:'idle',syncLabel:'Ready',
     panel:null,panelData:null,form:{},
@@ -818,7 +819,7 @@ input[type="number"]{-moz-appearance:textfield}
     try{
       const data=await Promise.race([
         jsonp(`${S.gsUrl}?action=getApiKey`),
-        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),3000))
       ]);
       if(data&&data.key){
         S.fmpKey=String(data.key).trim();
@@ -827,28 +828,39 @@ input[type="number"]{-moz-appearance:textfield}
     }catch(_){}
   }
 
+  async function fetchOnePrice(sym){
+    const key=S.fmpKey||DEFAULT_FMP_KEY;
+    // Primary: /stable/quote
+    try{
+      const r=await fetch(`https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(sym)}&apikey=${key}`);
+      if(r.ok){const d=await r.json();if(Array.isArray(d)&&d.length)return d[0];}
+    }catch(_){}
+    // Fallback: /stable/profile — covers ETFs & stocks not on free quote plan
+    try{
+      const r=await fetch(`https://financialmodelingprep.com/stable/profile?symbol=${encodeURIComponent(sym)}&apikey=${key}`);
+      if(r.ok){
+        const d=await r.json();
+        if(Array.isArray(d)&&d.length){
+          const p=d[0];
+          return{symbol:sym,price:p.price,change:p.change,changePercentage:p.changePercentage};
+        }
+      }
+    }catch(_){}
+    return null;
+  }
+
   async function fetchLivePrices(){
-    // Re-check key in case fetchApiKey resolved in background after page load
-    if(!S.fmpKey)S.fmpKey=localStorage.getItem(LS_FMPKEY)||'';
-    if(!S.fmpKey){toast('No FMP API key found — add it in Settings');return}
     const symbols=[...new Set(S.h.map(x=>x.symbol))];
     if(!symbols.length){toast('No holdings to price');return}
     const btn=document.getElementById('fetch-prices-btn');
     if(btn){btn.disabled=true;btn.textContent='Loading…'}
     setSync('reading','Fetching prices');
     try{
-      // FMP free plan: one symbol per request — fetch all in parallel for speed
-      const results=await Promise.all(
-        symbols.map(sym=>
-          fetch(`https://financialmodelingprep.com/stable/quote?symbol=${encodeURIComponent(sym)}&apikey=${S.fmpKey}`)
-            .then(r=>{if(!r.ok)throw new Error(`${sym} HTTP ${r.status}`);return r.json()})
-            .then(d=>Array.isArray(d)&&d.length?d[0]:null)
-            .catch(()=>null)
-        )
-      );
+      // All symbols fetched in parallel — quote first, profile as fallback
+      const results=await Promise.all(symbols.map(sym=>fetchOnePrice(sym)));
       S.prices={};
       results.forEach(q=>{if(q&&q.symbol)S.prices[q.symbol]=q});
-      if(!Object.keys(S.prices).length)throw new Error('No price data returned — verify your API key');
+      if(!Object.keys(S.prices).length)throw new Error('No price data returned');
       S.pricesFetchedAt=new Date().toISOString();
       setSync('ok','Prices loaded');
       renderPricePanel();
@@ -871,7 +883,7 @@ input[type="number"]{-moz-appearance:textfield}
       script.src=finalUrl;
       script.onerror=()=>{if(done)return;cleanup();reject(new Error('JSONP request failed'))};
       document.body.appendChild(script);
-      setTimeout(()=>{if(done)return;cleanup();reject(new Error('JSONP request timed out'))},15000);
+      setTimeout(()=>{if(done)return;cleanup();reject(new Error('JSONP request timed out'))},8000);
     });
   }
 
@@ -955,13 +967,18 @@ input[type="number"]{-moz-appearance:textfield}
 
   /* ── init ────────────────────────────────────────────────────── */
   async function init(){
-    buildShell();setSync('reading','Reading');
-    const restored=restoreLocal();if(restored)renderAll();
-    // Fire-and-forget: load API key from sheet without blocking page load
-    fetchApiKey().catch(()=>{});
-    const ok=await refreshFromSheet(false);
-    if(!ok&&!restored){loadSample();renderAll();setSync('error','Sample mode')}
-    if(!ok&&restored)setSync('error','Using cache');
+    buildShell();
+    const restored=restoreLocal();
+    if(restored){
+      renderAll(); // Show cached content immediately — user sees UI at once
+      fetchApiKey().catch(()=>{});
+      refreshFromSheet(false).catch(()=>{}); // Background refresh, don't block
+    }else{
+      setSync('reading','Loading');
+      fetchApiKey().catch(()=>{});
+      const ok=await refreshFromSheet(false);
+      if(!ok){loadSample();renderAll();setSync('error','Sample mode');}
+    }
   }
   window.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.panel)closePanel()});
   init();
