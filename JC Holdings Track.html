@@ -44,12 +44,10 @@ button{cursor:pointer;border:none}
 a{color:inherit;text-decoration:none}
 ::selection{background:rgba(59,139,255,.28)}
 
-/* ── number input: kill spinners ─────────────────────────────── */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 input[type="number"]{-moz-appearance:textfield}
 
-/* ── layout ──────────────────────────────────────────────────── */
 .app{max-width:1320px;margin:0 auto;padding:32px 24px 60px}
 .topbar{display:flex;justify-content:space-between;gap:16px;align-items:flex-end;margin-bottom:28px}
 .title-wrap{display:flex;flex-direction:column;gap:6px}
@@ -58,7 +56,6 @@ input[type="number"]{-moz-appearance:textfield}
 .subtitle{font-size:14px;color:var(--muted);font-weight:400}
 .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 
-/* ── badge ────────────────────────────────────────────────────── */
 .badge{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border:1px solid var(--line);background:rgba(255,255,255,.025);border-radius:999px;color:var(--muted);font-size:12px;font-weight:500}
 .dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
 .dot.reading,.dot.writing,.dot.verifying{background:var(--amber);animation:pulse 1.2s infinite}
@@ -66,7 +63,6 @@ input[type="number"]{-moz-appearance:textfield}
 .dot.error{background:var(--red)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* ── buttons ──────────────────────────────────────────────────── */
 .btn{border-radius:999px;padding:11px 18px;background:rgba(255,255,255,.06);color:var(--text);font-weight:600;font-size:13px;transition:.18s ease;letter-spacing:-.01em}
 .btn:hover{background:rgba(255,255,255,.1);transform:translateY(-1px)}
 .btn:active{transform:translateY(0)}
@@ -76,7 +72,6 @@ input[type="number"]{-moz-appearance:textfield}
 .btn.ghost:hover{border-color:var(--line-strong);background:rgba(255,255,255,.04)}
 .btn:disabled{opacity:.4;cursor:default;transform:none!important}
 
-/* ── KPI grid ─────────────────────────────────────────────────── */
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
 .card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.025));backdrop-filter:blur(20px);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
 .kpi{padding:20px 22px}
@@ -84,7 +79,6 @@ input[type="number"]{-moz-appearance:textfield}
 .kpi-value{font-size:30px;font-weight:700;letter-spacing:-.04em;color:var(--text-bright)}
 .kpi-sub{margin-top:8px;font-size:12px;color:var(--faint);font-weight:400}
 
-/* ── 2-col layout ─────────────────────────────────────────────── */
 .layout{display:grid;grid-template-columns:320px 1fr;gap:16px}
 .side{padding:22px}
 .side-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
@@ -98,7 +92,6 @@ input[type="number"]{-moz-appearance:textfield}
 .legend-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .legend-pct{font-size:12px;color:var(--muted);font-family:var(--mono);font-weight:500}
 
-/* ── main table area ──────────────────────────────────────────── */
 .main{padding:18px}
 .toolbar{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
 .search{flex:1 1 280px;position:relative}
@@ -112,7 +105,6 @@ input[type="number"]{-moz-appearance:textfield}
 .pill:hover{background:rgba(255,255,255,.07)}
 .pill.on{background:var(--blue-soft);color:#a5ccff;box-shadow:inset 0 0 0 1px rgba(59,139,255,.3)}
 
-/* ── table ────────────────────────────────────────────────────── */
 .table{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:rgba(255,255,255,.018)}
 .thead,.row{display:grid;grid-template-columns:90px 1.4fr 72px 100px 110px 26px 1fr 140px;align-items:center}
 .thead{padding:12px 18px;background:rgba(255,255,255,.03);border-bottom:1px solid var(--line)}
@@ -125,7 +117,6 @@ input[type="number"]{-moz-appearance:textfield}
 .name{display:flex;flex-direction:column;gap:5px;min-width:0}
 .name-main{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400}
 
-/* ── status badges ────────────────────────────────────────────── */
 .status-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;width:max-content;max-width:100%;letter-spacing:.01em}
 .status-badge.active{background:var(--green-dim);color:var(--green)}
 .status-badge.gtc{background:var(--amber-dim);color:var(--amber)}
@@ -134,7 +125,6 @@ input[type="number"]{-moz-appearance:textfield}
 
 .val{font-family:var(--mono);font-size:13px;text-align:right;font-weight:500}
 
-/* ── weight column — spacer col gives visual breathing room ──── */
 .weight{display:flex;flex-direction:column;gap:6px;padding-left:4px}
 .weight-line{height:6px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
 .weight-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#5ea0ff,var(--blue))}
@@ -150,7 +140,6 @@ input[type="number"]{-moz-appearance:textfield}
 
 .empty{padding:44px 20px;text-align:center;color:var(--faint);font-size:14px}
 
-/* ── mobile cards ─────────────────────────────────────────────── */
 .cards{display:none}
 .mobile-card{padding:16px;border-bottom:1px solid rgba(255,255,255,.04)}
 .mobile-card:last-child{border-bottom:none}
@@ -160,7 +149,6 @@ input[type="number"]{-moz-appearance:textfield}
 .mobile-stat-label{font-size:10px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
 .mobile-stat-value{font-family:var(--mono);font-size:13px;font-weight:500}
 
-/* ── slide-over panel ─────────────────────────────────────────── */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(14px);display:none;align-items:flex-end;justify-content:flex-end;z-index:50}
 .overlay.open{display:flex}
 .sheet{width:min(440px,100vw);height:100vh;height:100dvh;background:linear-gradient(180deg,#10131a,#0a0d12);border-left:1px solid var(--line-strong);box-shadow:var(--shadow);display:flex;flex-direction:column}
@@ -171,14 +159,12 @@ input[type="number"]{-moz-appearance:textfield}
 .sheet-close:hover{background:rgba(255,255,255,.1)}
 .sheet-body{padding:18px 20px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;flex:1}
 
-/* ── form fields ──────────────────────────────────────────────── */
 .field{display:flex;flex-direction:column;gap:6px}
 .field label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .field input,.field select,.field textarea{width:100%;border:none;background:rgba(255,255,255,.06);border-radius:var(--radius-xs);padding:12px 14px;color:var(--text);outline:none;border:1px solid transparent;font-size:14px;transition:.18s}
 .field input::placeholder{color:var(--faint)}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(59,139,255,.35);background:rgba(255,255,255,.07)}
 
-/* ── select dropdown fix for dark theme ──────────────────────── */
 .field select{
   -webkit-appearance:none;-moz-appearance:none;appearance:none;cursor:pointer;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1.5l5 5 5-5' stroke='%238a93a5' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
@@ -189,12 +175,10 @@ input[type="number"]{-moz-appearance:textfield}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .hint{font-size:11px;color:var(--faint);line-height:1.45}
 
-/* ── summary card ─────────────────────────────────────────────── */
 .summary{display:flex;flex-direction:column;gap:9px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:var(--radius-sm);padding:13px 15px}
 .summary-row{display:flex;justify-content:space-between;gap:12px;font-size:13px}
 .summary-row strong{font-size:14px;font-weight:600;color:var(--text-bright)}
 
-/* ── chips (quick-fill) ───────────────────────────────────────── */
 .chips-wrap{position:relative}
 .chips{display:flex;flex-wrap:wrap;gap:7px}
 .chips.collapsed{max-height:108px;overflow:hidden}
@@ -206,11 +190,9 @@ input[type="number"]{-moz-appearance:textfield}
 
 .footer-note{font-size:11px;color:var(--faint);line-height:1.5}
 
-/* ── toast ────────────────────────────────────────────────────── */
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);padding:11px 18px;background:rgba(14,16,22,.92);color:var(--text);border:1px solid var(--line-strong);border-radius:999px;backdrop-filter:blur(16px);box-shadow:var(--shadow);display:none;z-index:60;font-size:13px;font-weight:500}
 .toast.show{display:block}
 
-/* ── responsive ───────────────────────────────────────────────── */
 @media(max-width:1100px){
   .layout{grid-template-columns:1fr}
   .side{order:2}
@@ -567,10 +549,21 @@ input[type="number"]{-moz-appearance:textfield}
       const item=S.panelData,sh=Number(S.form.shares||0),pr=Number(S.form.price||0);
       const proceeds=round2(sh*pr),basis=round2(sh*Number(item.avgCost||0)),pnl=round2(proceeds-basis);
       panelShell(`Sell ${escapeHtml(item.symbol)}`,'Record a sale',`
-        <div class="summary"><div class="summary-row"><span>Shares held</span><strong>${item.shares}</strong></div><div class="summary-row"><span>Avg cost</span><strong>${money(item.avgCost)}</strong></div><div class="summary-row"><span>Lot cost</span><strong>${money(item.totalCost)}</strong></div></div>
-        <div class="row2"><div class="field"><label>Shares to sell</label><input id="sell-shares" type="number" inputmode="decimal" step="any" value="${escapeHtml(S.form.shares||'')}"></div><div class="field"><label>Sold price / share</label><input id="sell-price" type="number" inputmode="decimal" step="any" value="${escapeHtml(S.form.price||'')}" placeholder="0.00"></div></div>
+        <div class="summary">
+          <div class="summary-row"><span>Shares held</span><strong>${item.shares}</strong></div>
+          <div class="summary-row"><span>Avg cost</span><strong>${money(item.avgCost)}</strong></div>
+          <div class="summary-row"><span>Lot cost</span><strong>${money(item.totalCost)}</strong></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Shares to sell</label><input id="sell-shares" type="number" inputmode="decimal" step="any" value="${escapeHtml(S.form.shares||'')}"></div>
+          <div class="field"><label>Sold price / share</label><input id="sell-price" type="text" inputmode="decimal" value="${escapeHtml(S.form.price||'')}" placeholder="0.00"></div>
+        </div>
         <div class="field"><label>Date</label><input id="sell-date" type="date" value="${escapeHtml(S.form.soldDate||isoDate())}"></div>
-        <div class="summary"><div class="summary-row"><span>Proceeds</span><strong>${money(proceeds)}</strong></div><div class="summary-row"><span>Basis</span><strong>${money(basis)}</strong></div><div class="summary-row"><span>P&L</span><strong style="color:${statusColor(pnl)}">${money(pnl)}</strong></div></div>
+        <div class="summary">
+          <div class="summary-row"><span>Proceeds</span><strong id="sell-proceeds">${money(proceeds)}</strong></div>
+          <div class="summary-row"><span>Basis</span><strong id="sell-basis">${money(basis)}</strong></div>
+          <div class="summary-row"><span>P&L</span><strong id="sell-pnl" style="color:${statusColor(pnl)}">${money(pnl)}</strong></div>
+        </div>
         <button class="btn primary" id="sell-submit-btn" ${pr>0&&sh>0&&sh<=item.shares?'':'disabled'}>Confirm Sale</button>`);
       bindSellPanel();return;
     }
@@ -578,14 +571,23 @@ input[type="number"]{-moz-appearance:textfield}
     if(S.panel==='exec'){
       const item=S.panelData,fill=Number(S.form.fillPrice||0);
       panelShell(`Execute ${escapeHtml(item.symbol)}`,'Move GTC → Holdings',`
-        <div class="summary"><div class="summary-row"><span>Shares</span><strong>${item.shares}</strong></div><div class="summary-row"><span>Listed avg</span><strong>${money(item.avgCost)}</strong></div></div>
-        <div class="row2"><div class="field"><label>Fill price / share</label><input id="exec-price" type="number" inputmode="decimal" step="any" value="${escapeHtml(S.form.fillPrice||'')}"></div><div class="field"><label>Fill date</label><input id="exec-date" type="date" value="${escapeHtml(S.form.fillDate||isoDate())}"></div></div>
-        <div class="summary"><div class="summary-row"><span>New lot cost</span><strong>${money(item.shares*fill)}</strong></div></div>
+        <div class="summary">
+          <div class="summary-row"><span>Shares</span><strong>${item.shares}</strong></div>
+          <div class="summary-row"><span>Listed avg</span><strong>${money(item.avgCost)}</strong></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Fill price / share</label><input id="exec-price" type="text" inputmode="decimal" value="${escapeHtml(S.form.fillPrice||'')}" placeholder="0.00"></div>
+          <div class="field"><label>Fill date</label><input id="exec-date" type="date" value="${escapeHtml(S.form.fillDate||isoDate())}"></div>
+        </div>
+        <div class="summary">
+          <div class="summary-row"><span>New lot cost</span><strong id="exec-lot-cost">${money(item.shares*fill)}</strong></div>
+        </div>
         <button class="btn primary" id="exec-submit-btn" ${fill>0?'':'disabled'}>Execute</button>`);
       bindExecPanel();return;
     }
   }
 
+  /* ── bind helpers ────────────────────────────────────────────── */
   function bindAddPanel(){
     const symbols=allSymbols();
     $$('#quick-chips .chip').forEach(c=>c.onclick=()=>{const f=symbols.find(x=>x.symbol===c.dataset.chip);S.form.symbol=f?.symbol||c.dataset.chip;S.form.name=f?.name||'';renderPanel()});
@@ -595,37 +597,34 @@ input[type="number"]{-moz-appearance:textfield}
     $('#add-status').onchange=e=>{S.form.status=e.target.value};
     $('#add-symbol').oninput=e=>{S.form.symbol=e.target.value.toUpperCase()};
     $('#add-name').oninput=e=>{S.form.name=e.target.value};
-    $('#add-shares').oninput = e => {S.form.shares = e.target.value;updateAddSummary();}
-    $('#add-cost').oninput = e => {S.form.cost = e.target.value;updateAddSummary();}
+    $('#add-shares').oninput=e=>{S.form.shares=e.target.value;updateAddSummary()};
+    $('#add-cost').oninput=e=>{S.form.cost=e.target.value;updateAddSummary()};
     $('#add-submit-btn').onclick=submitAdd;
   }
-  function updateAddSummary() {
-  const shares = Number(S.form.shares || 0);
-  const cost = Number(S.form.cost || 0);
-
-  const total = (shares > 0 && cost > 0)
-    ? money(round2(shares * cost))
-    : '—';
-
-  const el = document.getElementById('total-cost');
-  if (el) el.textContent = total;
+  function updateAddSummary(){
+    const shares=Number(S.form.shares||0),cost=Number(S.form.cost||0);
+    const el=document.getElementById('total-cost');
+    if(el)el.textContent=(shares>0&&cost>0)?money(round2(shares*cost)):'—';
   }
-  '#exec-submit-btn');if(b)b.onclick=submitExec;
   function updateSellSummary(){
     const item=S.panelData;
     const sh=Number(S.form.shares||0),pr=Number(S.form.price||0);
     const proceeds=round2(sh*pr),basis=round2(sh*Number(item.avgCost||0)),pnl=round2(proceeds-basis);
-    const rows=document.querySelectorAll('#overlay .summary .summary-row strong');
-    if(rows[3])rows[3].textContent=money(proceeds);
-    if(rows[4])rows[4].textContent=money(basis);
-    if(rows[5]){rows[5].textContent=money(pnl);rows[5].style.color=statusColor(pnl)}
-    const b=$('#sell-submit-btn');if(b)b.disabled=!(pr>0&&sh>0&&sh<=item.shares);
+    const elP=document.getElementById('sell-proceeds');
+    const elB=document.getElementById('sell-basis');
+    const elPL=document.getElementById('sell-pnl');
+    if(elP)elP.textContent=money(proceeds);
+    if(elB)elB.textContent=money(basis);
+    if(elPL){elPL.textContent=money(pnl);elPL.style.color=statusColor(pnl)}
+    const btn=$('#sell-submit-btn');
+    if(btn)btn.disabled=!(pr>0&&sh>0&&sh<=item.shares);
   }
   function updateExecSummary(){
     const item=S.panelData,fill=Number(S.form.fillPrice||0);
-    const row=document.querySelector('#overlay .summary .summary-row strong');
-    if(row)row.textContent=money(item.shares*fill);
-    const b=$('#exec-submit-btn');if(b)b.disabled=!(fill>0);
+    const el=document.getElementById('exec-lot-cost');
+    if(el)el.textContent=money(item.shares*fill);
+    const btn=$('#exec-submit-btn');
+    if(btn)btn.disabled=!(fill>0);
   }
   function bindSellPanel(){
     $('#sell-shares').oninput=e=>{S.form.shares=e.target.value;updateSellSummary()};
